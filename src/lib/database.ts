@@ -55,14 +55,29 @@ export async function createActivityLog(data: ActivityLog) {
 }
 
 export async function getVolunteerStats() {
-  const result = await sql`
-    SELECT 
-      COUNT(*) as total_volunteers,
-      SUM(total_hours) as total_hours,
-      COUNT(DISTINCT organization) as total_organizations
-    FROM volunteer_stats
-  `;
-  return result.rows[0];
+  try {
+    const result = await sql`
+      SELECT 
+        COUNT(*)::INTEGER as total_volunteers,
+        COALESCE(SUM(total_hours), 0)::DECIMAL as total_hours,
+        COUNT(DISTINCT organization)::INTEGER as total_organizations
+      FROM volunteer_stats
+      WHERE total_hours IS NOT NULL
+    `;
+    
+    return {
+      total_volunteers: result.rows[0]?.total_volunteers || 0,
+      total_hours: parseFloat(result.rows[0]?.total_hours || '0'),
+      total_organizations: result.rows[0]?.total_organizations || 0
+    };
+  } catch (error) {
+    console.error('Error getting volunteer stats:', error);
+    return {
+      total_volunteers: 0,
+      total_hours: 0,
+      total_organizations: 0
+    };
+  }
 }
 
 export async function searchVolunteers(searchParams: {
@@ -71,36 +86,56 @@ export async function searchVolunteers(searchParams: {
   fromDate?: string;
   toDate?: string;
 }) {
-  let query = `SELECT * FROM volunteer_stats WHERE 1=1`;
-  const params: string[] = [];
-  let paramCount = 0;
+  try {
+    let query = `
+      SELECT 
+        log_type,
+        name,
+        email,
+        organization,
+        COALESCE(total_hours, 0) as total_hours,
+        impact_metric,
+        created_at
+      FROM volunteer_stats 
+      WHERE 1=1
+    `;
+    
+    const params: string[] = [];
+    let paramCount = 0;
 
-  if (searchParams.name) {
-    paramCount++;
-    query += ` AND name ILIKE $${paramCount}`;
-    params.push(`%${searchParams.name}%`);
+    if (searchParams.name) {
+      paramCount++;
+      query += ` AND name ILIKE $${paramCount}`;
+      params.push(`%${searchParams.name}%`);
+    }
+
+    if (searchParams.organization) {
+      paramCount++;
+      query += ` AND organization ILIKE $${paramCount}`;
+      params.push(`%${searchParams.organization}%`);
+    }
+
+    if (searchParams.fromDate) {
+      paramCount++;
+      query += ` AND created_at >= $${paramCount}::timestamp`;
+      params.push(searchParams.fromDate);
+    }
+
+    if (searchParams.toDate) {
+      paramCount++;
+      query += ` AND created_at <= $${paramCount}::timestamp`;
+      params.push(searchParams.toDate);
+    }
+
+    query += ` ORDER BY created_at DESC LIMIT 100`;
+
+    const result = await sql.query(query, params);
+    return result.rows.map(row => ({
+      ...row,
+      total_hours: parseFloat(row.total_hours || '0')
+    }));
+  } catch (error) {
+    console.error('Error searching volunteers:', error);
+    return [];
   }
-
-  if (searchParams.organization) {
-    paramCount++;
-    query += ` AND organization ILIKE $${paramCount}`;
-    params.push(`%${searchParams.organization}%`);
-  }
-
-  if (searchParams.fromDate) {
-    paramCount++;
-    query += ` AND created_at >= $${paramCount}`;
-    params.push(searchParams.fromDate);
-  }
-
-  if (searchParams.toDate) {
-    paramCount++;
-    query += ` AND created_at <= $${paramCount}`;
-    params.push(searchParams.toDate);
-  }
-
-  query += ` ORDER BY created_at DESC LIMIT 100`;
-
-  const result = await sql.query(query, params);
-  return result.rows;
 }
