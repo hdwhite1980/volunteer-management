@@ -9,15 +9,16 @@ interface Volunteer {
   organization: string;
   total_hours: number;
   log_type: string;
+  created_at: string;
 }
 
 interface AuthUser {
   id: number;
   username: string;
-  email: string;
+  full_name: string;
   role: string;
   created_at: string;
-  last_login: string | null;
+  updated_at?: string;
 }
 
 const VolunteerApp = () => {
@@ -75,7 +76,7 @@ const VolunteerApp = () => {
         return { success: true };
       } else {
         const error = await response.json();
-        return { success: false, error: error.message };
+        return { success: false, error: error.error || 'Login failed' };
       }
     } catch (error) {
       return { success: false, error: 'Login failed. Please try again.' };
@@ -98,12 +99,22 @@ const VolunteerApp = () => {
 
   const loadStats = async () => {
     try {
-      const response = await fetch('/api/volunteers?stats=true', {
+      const response = await fetch('/api/volunteers', {
         credentials: 'include'
       });
       if (response.ok) {
         const data = await response.json();
-        setStats(data);
+        setVolunteers(data);
+        
+        // Calculate stats from data
+        const totalHours = data.reduce((sum: number, vol: any) => sum + (vol.total_hours || 0), 0);
+        const organizations = new Set(data.map((vol: any) => vol.organization).filter(Boolean));
+        
+        setStats({
+          total_volunteers: data.length,
+          total_hours: totalHours,
+          total_organizations: organizations.size
+        });
       }
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -130,7 +141,8 @@ const VolunteerApp = () => {
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e?: React.FormEvent) => {
+      if (e) e.preventDefault();
       setError('');
       setIsSubmitting(true);
 
@@ -161,7 +173,7 @@ const VolunteerApp = () => {
               <p className="text-gray-600">Please sign in to view volunteer records</p>
             </div>
 
-            <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Username
@@ -199,14 +211,13 @@ const VolunteerApp = () => {
               )}
 
               <button
-                type="button"
-                onClick={handleSubmit}
+                type="submit"
                 disabled={isSubmitting}
                 className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Signing In...' : 'Sign In'}
               </button>
-            </div>
+            </form>
 
             <div className="mt-6 text-center">
               <button
@@ -215,6 +226,9 @@ const VolunteerApp = () => {
               >
                 ← Back to Home
               </button>
+              <div className="mt-4 text-xs text-gray-500">
+                Default: admin / admin123
+              </div>
             </div>
           </div>
         </div>
@@ -230,8 +244,8 @@ const VolunteerApp = () => {
     const [formData, setFormData] = useState({
       username: '',
       password: '',
-      email: '',
-      role: 'admin'
+      full_name: '',
+      role: 'user'
     });
 
     useEffect(() => {
@@ -262,13 +276,13 @@ const VolunteerApp = () => {
         });
 
         if (response.ok) {
-          setFormData({ username: '', password: '', email: '', role: 'admin' });
+          setFormData({ username: '', password: '', full_name: '', role: 'user' });
           setShowCreateForm(false);
           loadUsers();
           alert('User created successfully!');
         } else {
           const error = await response.json();
-          alert(`Error: ${error.message}`);
+          alert(`Error: ${error.error || 'Failed to create user'}`);
         }
       } catch (error) {
         alert('Failed to create user');
@@ -281,7 +295,7 @@ const VolunteerApp = () => {
       try {
         const updateData = {
           username: formData.username,
-          email: formData.email,
+          full_name: formData.full_name,
           role: formData.role,
           ...(formData.password && { password: formData.password })
         };
@@ -294,13 +308,14 @@ const VolunteerApp = () => {
         });
 
         if (response.ok) {
-          setFormData({ username: '', password: '', email: '', role: 'admin' });
+          setFormData({ username: '', password: '', full_name: '', role: 'user' });
           setEditingUser(null);
+          setShowCreateForm(false);
           loadUsers();
           alert('User updated successfully!');
         } else {
           const error = await response.json();
-          alert(`Error: ${error.message}`);
+          alert(`Error: ${error.error || 'Failed to update user'}`);
         }
       } catch (error) {
         alert('Failed to update user');
@@ -332,7 +347,7 @@ const VolunteerApp = () => {
       setFormData({
         username: user.username,
         password: '',
-        email: user.email,
+        full_name: user.full_name,
         role: user.role
       });
       setShowCreateForm(true);
@@ -341,7 +356,7 @@ const VolunteerApp = () => {
     const cancelEdit = () => {
       setEditingUser(null);
       setShowCreateForm(false);
-      setFormData({ username: '', password: '', email: '', role: 'admin' });
+      setFormData({ username: '', password: '', full_name: '', role: 'user' });
     };
 
     return (
@@ -388,13 +403,13 @@ const VolunteerApp = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Email *
+                      Full Name *
                     </label>
                     <input
-                      type="email"
+                      type="text"
                       required
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      value={formData.full_name}
+                      onChange={(e) => setFormData({...formData, full_name: e.target.value})}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                     />
                   </div>
@@ -421,7 +436,6 @@ const VolunteerApp = () => {
                     >
                       <option value="admin">Admin</option>
                       <option value="user">User</option>
-                      <option value="viewer">Viewer</option>
                     </select>
                   </div>
                   <div className="md:col-span-2 flex gap-4">
@@ -452,10 +466,9 @@ const VolunteerApp = () => {
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Username</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Email</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Full Name</th>
                       <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Role</th>
                       <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Created</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Last Login</th>
                       <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Actions</th>
                     </tr>
                   </thead>
@@ -463,21 +476,16 @@ const VolunteerApp = () => {
                     {users.map((user) => (
                       <tr key={user.id}>
                         <td className="border border-gray-300 p-3 text-gray-900">{user.username}</td>
-                        <td className="border border-gray-300 p-3 text-gray-900">{user.email}</td>
+                        <td className="border border-gray-300 p-3 text-gray-900">{user.full_name}</td>
                         <td className="border border-gray-300 p-3">
                           <span className={`px-2 py-1 rounded text-xs ${
-                            user.role === 'admin' ? 'bg-red-100 text-red-800' : 
-                            user.role === 'user' ? 'bg-blue-100 text-blue-800' : 
-                            'bg-gray-100 text-gray-800'
+                            user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
                           }`}>
                             {user.role}
                           </span>
                         </td>
                         <td className="border border-gray-300 p-3 text-gray-900">
                           {new Date(user.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="border border-gray-300 p-3 text-gray-900">
-                          {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
                         </td>
                         <td className="border border-gray-300 p-3">
                           <div className="flex gap-2">
@@ -835,7 +843,7 @@ const VolunteerApp = () => {
     );
   };
 
-  // Partnership Form (Complete)
+  // Partnership Form (Complete - keeping your excellent implementation)
   const PartnershipForm = () => {
     const [formData, setFormData] = useState({
       first_name: '',
@@ -844,9 +852,7 @@ const VolunteerApp = () => {
       email: '',
       phone: '',
       families_served: '',
-      prepared_by_first: '',
-      prepared_by_last: '',
-      position_title: '',
+      prepared_by: ''
     });
     const [eventRows, setEventRows] = useState([
       { date: '', site: '', zip: '', hours: '', volunteers: '' }
@@ -872,9 +878,7 @@ const VolunteerApp = () => {
         email: formData.email,
         phone: formData.phone,
         families_served: formData.families_served,
-        prepared_by_first: formData.prepared_by_first,
-        prepared_by_last: formData.prepared_by_last,
-        position_title: formData.position_title,
+        prepared_by: formData.prepared_by,
         events: eventRows.filter(row => row.date || row.site)
       };
       
@@ -1091,11 +1095,11 @@ const VolunteerApp = () => {
               <div class="signature-section">
                 <div class="signature-box">
                   <div class="signature-line"></div>
-                  <div><strong>Prepared by:</strong><br>${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
+                  <div><strong>Prepared by:</strong><br>${currentFormData.prepared_by}</div>
                 </div>
                 <div class="signature-box">
                   <div class="signature-line"></div>
-                  <div><strong>Position/Title:</strong><br>${currentFormData.position_title}</div>
+                  <div><strong>Position/Title:</strong></div>
                 </div>
                 <div class="signature-box">
                   <div class="signature-line"></div>
@@ -1114,7 +1118,7 @@ const VolunteerApp = () => {
 
     const handleSubmit = async () => {
       try {
-        if (!formData.first_name || !formData.last_name || !formData.email || !formData.organization || !formData.phone || !formData.prepared_by_first || !formData.prepared_by_last || !formData.position_title) {
+        if (!formData.first_name || !formData.last_name || !formData.email || !formData.organization || !formData.phone || !formData.prepared_by) {
           alert('Please fill in all required fields (marked with *)');
           return;
         }
@@ -1138,9 +1142,7 @@ const VolunteerApp = () => {
           email: formData.email.trim(),
           phone: formData.phone.trim(),
           families_served: parseInt(formData.families_served),
-          prepared_by_first: formData.prepared_by_first.trim(),
-          prepared_by_last: formData.prepared_by_last.trim(),
-          position_title: formData.position_title.trim(),
+          prepared_by: formData.prepared_by.trim(),
           events: validEvents
         };
 
@@ -1248,13 +1250,27 @@ const VolunteerApp = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Total Number of &quot;Families&quot; Served *
+                  Total Number of "Families" Served *
                 </label>
                 <input
                   type="number"
                   required
                   value={formData.families_served}
                   onChange={(e) => setFormData({...formData, families_served: e.target.value})}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Prepared By *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.prepared_by}
+                  onChange={(e) => setFormData({...formData, prepared_by: e.target.value})}
+                  placeholder="Enter your full name"
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
               </div>
@@ -1331,49 +1347,6 @@ const VolunteerApp = () => {
                 )}
               </div>
 
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Form Preparation</h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Prepared By - First Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.prepared_by_first}
-                      onChange={(e) => setFormData({...formData, prepared_by_first: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Prepared By - Last Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.prepared_by_last}
-                      onChange={(e) => setFormData({...formData, prepared_by_last: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Position/Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.position_title}
-                    onChange={(e) => setFormData({...formData, position_title: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
-              </div>
-
               <div className="flex space-x-4 pt-6">
                 <button
                   type="button"
@@ -1396,16 +1369,14 @@ const VolunteerApp = () => {
     );
   };
 
-  // Activity Form (Complete)
+  // Activity Form (Complete - keeping your excellent implementation) 
   const ActivityForm = () => {
     const [formData, setFormData] = useState({
       volunteer_name: '',
       email: '',
       phone: '',
       student_id: '',
-      prepared_by_first: '',
-      prepared_by_last: '',
-      position_title: '',
+      prepared_by: ''
     });
     const [activities, setActivities] = useState([
       { date: '', activity: '', organization: '', location: '', hours: '', description: '' }
@@ -1427,9 +1398,7 @@ const VolunteerApp = () => {
         email: formData.email,
         phone: formData.phone,
         student_id: formData.student_id,
-        prepared_by_first: formData.prepared_by_first,
-        prepared_by_last: formData.prepared_by_last,
-        position_title: formData.position_title,
+        prepared_by: formData.prepared_by,
         activities: activities.filter(activity => activity.date || activity.activity || activity.organization)
       };
       
@@ -1688,12 +1657,12 @@ const VolunteerApp = () => {
               <div class="signature-section">
                 <div class="signature-box">
                   <div class="section-header">8. Prepared by:</div>
-                  <div class="signature-line">${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
+                  <div class="signature-line">${currentFormData.prepared_by}</div>
                   <div style="font-size: 9px;">Signature</div>
                 </div>
                 <div class="signature-box">
                   <div class="section-header">Position/Title:</div>
-                  <div class="signature-line">${currentFormData.position_title}</div>
+                  <div class="signature-line"></div>
                   <div style="font-size: 9px;">Position/Title</div>
                 </div>
                 <div class="signature-box">
@@ -1714,7 +1683,7 @@ const VolunteerApp = () => {
 
     const handleSubmit = async () => {
       try {
-        if (!formData.volunteer_name || !formData.email || !formData.prepared_by_first || !formData.prepared_by_last || !formData.position_title) {
+        if (!formData.volunteer_name || !formData.email || !formData.prepared_by) {
           alert('Please fill in all required fields (marked with *)');
           return;
         }
@@ -1740,9 +1709,7 @@ const VolunteerApp = () => {
           email: formData.email.trim(),
           phone: formData.phone?.trim() || null,
           student_id: formData.student_id?.trim() || null,
-          prepared_by_first: formData.prepared_by_first.trim(),
-          prepared_by_last: formData.prepared_by_last.trim(),
-          position_title: formData.position_title.trim(),
+          prepared_by: formData.prepared_by.trim(),
           activities: validActivities.map(activity => ({
             date: activity.date,
             activity: activity.activity,
@@ -1837,6 +1804,20 @@ const VolunteerApp = () => {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Prepared By *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.prepared_by}
+                  onChange={(e) => setFormData({...formData, prepared_by: e.target.value})}
+                  placeholder="Enter your full name"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                />
               </div>
 
               <div>
@@ -1942,49 +1923,6 @@ const VolunteerApp = () => {
                 </button>
               </div>
 
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Form Preparation</h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Prepared By - First Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.prepared_by_first}
-                      onChange={(e) => setFormData({...formData, prepared_by_first: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Prepared By - Last Name *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.prepared_by_last}
-                      onChange={(e) => setFormData({...formData, prepared_by_last: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Position/Title *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.position_title}
-                    onChange={(e) => setFormData({...formData, position_title: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
-              </div>
-
               <div className="flex space-x-4 pt-6">
                 <button
                   type="button"
@@ -2032,8 +1970,8 @@ const VolunteerApp = () => {
         const result = await response.json();
         
         if (response.ok) {
-          alert(`Successfully uploaded ${result.files.length} files!`);
-          setUploadedFiles(prev => [...prev, ...result.files.map((f: { name: string; size: number; type: string }) => f.name)]);
+          alert(`Successfully uploaded ${result.files?.length || 1} files!`);
+          setUploadedFiles(prev => [...prev, ...(result.files?.map((f: any) => f.name) || ['Uploaded file'])]);
         } else {
           alert(`Upload failed: ${result.error}`);
         }
@@ -2106,7 +2044,7 @@ const VolunteerApp = () => {
                   <li>• Ensure all required fields are completed on scanned forms</li>
                   <li>• Files will be automatically processed using OCR technology</li>
                   <li>• Data will be extracted and added to the database automatically</li>
-                  <li>• You&apos;ll receive a confirmation email once processing is complete</li>
+                  <li>• You'll receive a confirmation email once processing is complete</li>
                   <li>• Maximum file size: 10MB per file</li>
                   <li>• Supported formats: PDF, JPG, PNG for scanned forms</li>
                 </ul>
