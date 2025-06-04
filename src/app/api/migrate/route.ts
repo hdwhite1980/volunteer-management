@@ -126,14 +126,20 @@ export async function GET() {
   } catch (error) {
     console.error('Migration error:', error);
     
-    // Enhanced error reporting
+    // Type-safe error handling
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetail = (error as any)?.detail || 'No additional details';
+    const errorHint = (error as any)?.hint || 'No hint available';
+    const errorPosition = (error as any)?.position || 'Unknown position';
+    const errorCode = (error as any)?.code || 'Unknown error code';
+    
     return NextResponse.json({ 
       error: 'Migration failed',
-      message: error.message,
-      detail: error.detail || 'No additional details',
-      hint: error.hint || 'No hint available',
-      position: error.position || 'Unknown position',
-      code: error.code || 'Unknown error code'
+      message: errorMessage,
+      detail: errorDetail,
+      hint: errorHint,
+      position: errorPosition,
+      code: errorCode
     }, { status: 500 });
   }
 }
