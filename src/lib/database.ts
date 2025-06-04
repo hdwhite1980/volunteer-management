@@ -1,4 +1,9 @@
-import { sql } from '@vercel/postgres';
+import { neon } from '@neondatabase/serverless';
+
+// Initialize database connection
+const sql = neon(process.env.DATABASE_URL!);
+
+export { sql };
 
 export interface PartnershipLog {
   id?: number;
@@ -15,6 +20,7 @@ export interface PartnershipLog {
     hours: string;
     volunteers: string;
   }>;
+  prepared_by?: string;
   created_at?: string;
 }
 
@@ -33,25 +39,44 @@ export interface ActivityLog {
     description: string;
   }>;
   total_hours?: number;
+  prepared_by?: string;
+  created_at?: string;
+}
+
+// Authentication interfaces
+export interface User {
+  id?: number;
+  username: string;
+  password_hash: string;
+  full_name: string;
+  role: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface Session {
+  id: string;
+  user_id: number;
+  expires_at: string;
   created_at?: string;
 }
 
 export async function createPartnershipLog(data: PartnershipLog) {
   const result = await sql`
-    INSERT INTO partnership_logs (first_name, last_name, organization, email, phone, families_served, events)
-    VALUES (${data.first_name}, ${data.last_name}, ${data.organization}, ${data.email}, ${data.phone}, ${data.families_served}, ${JSON.stringify(data.events)})
+    INSERT INTO partnership_logs (first_name, last_name, organization, email, phone, families_served, events, prepared_by)
+    VALUES (${data.first_name}, ${data.last_name}, ${data.organization}, ${data.email}, ${data.phone}, ${data.families_served}, ${JSON.stringify(data.events)}, ${data.prepared_by || 'System'})
     RETURNING *
   `;
-  return result.rows[0];
+  return result[0];
 }
 
 export async function createActivityLog(data: ActivityLog) {
   const result = await sql`
-    INSERT INTO activity_logs (volunteer_name, email, phone, student_id, activities)
-    VALUES (${data.volunteer_name}, ${data.email}, ${data.phone || null}, ${data.student_id || null}, ${JSON.stringify(data.activities)})
+    INSERT INTO activity_logs (volunteer_name, email, phone, student_id, activities, prepared_by)
+    VALUES (${data.volunteer_name}, ${data.email}, ${data.phone || null}, ${data.student_id || null}, ${JSON.stringify(data.activities)}, ${data.prepared_by || 'System'})
     RETURNING *
   `;
-  return result.rows[0];
+  return result[0];
 }
 
 export async function getVolunteerStats() {
@@ -65,9 +90,9 @@ export async function getVolunteerStats() {
     `;
     
     return {
-      total_volunteers: result.rows[0]?.total_volunteers || 0,
-      total_hours: parseFloat(result.rows[0]?.total_hours || '0'),
-      total_organizations: result.rows[0]?.total_organizations || 0
+      total_volunteers: result[0]?.total_volunteers || 0,
+      total_hours: parseFloat(result[0]?.total_hours || '0'),
+      total_organizations: result[0]?.total_organizations || 0
     };
   } catch (error) {
     console.error('Error getting volunteer stats:', error);
@@ -101,35 +126,37 @@ export async function searchVolunteers(searchParams: {
     
     const params: string[] = [];
     let paramCount = 0;
-
+    
     if (searchParams.name) {
       paramCount++;
-      query += ` AND name ILIKE $${paramCount}`;
+      query += ` AND name ILIKE ${paramCount}`;
       params.push(`%${searchParams.name}%`);
     }
-
+    
     if (searchParams.organization) {
       paramCount++;
-      query += ` AND organization ILIKE $${paramCount}`;
+      query += ` AND organization ILIKE ${paramCount}`;
       params.push(`%${searchParams.organization}%`);
     }
-
+    
     if (searchParams.fromDate) {
       paramCount++;
-      query += ` AND created_at >= $${paramCount}::timestamp`;
+      query += ` AND created_at >= ${paramCount}::timestamp`;
       params.push(searchParams.fromDate);
     }
-
+    
     if (searchParams.toDate) {
       paramCount++;
-      query += ` AND created_at <= $${paramCount}::timestamp`;
+      query += ` AND created_at <= ${paramCount}::timestamp`;
       params.push(searchParams.toDate);
     }
-
+    
     query += ` ORDER BY created_at DESC LIMIT 100`;
-
-    const result = await sql.query(query, params);
-    return result.rows.map(row => ({
+    
+    // Use the neon sql function with parameterized query
+    const result = await sql(query, params);
+    
+    return result.map(row => ({
       ...row,
       total_hours: parseFloat(row.total_hours || '0')
     }));
