@@ -1438,11 +1438,11 @@ const VolunteerApp = () => {
         
         if (response.ok) {
           alert(`Successfully uploaded ${result.files.length} files!`);
-          setUploadedFiles(prev => [...prev, ...result.files.map((f: any) => f.name)]);
+          setUploadedFiles(prev => [...prev, ...result.files.map((f: { name: string; size: number; type: string }) => f.name)]);
         } else {
           alert(`Upload failed: ${result.error}`);
         }
-      } catch (error) {
+      } catch {
         alert('Upload failed. Please try again.');
       } finally {
         setUploading(false);
