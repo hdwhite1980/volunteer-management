@@ -142,7 +142,7 @@ const VolunteerApp = () => {
       }
     };
 
-    const updateEventRow = (index: number, field: string, value: string) => {
+    const updateEventRow = (index: number, field: keyof typeof eventRows[0], value: string) => {
       const newRows = [...eventRows];
       newRows[index][field] = value;
       setEventRows(newRows);
@@ -379,7 +379,7 @@ const VolunteerApp = () => {
       setActivities([...activities, { date: '', activity: '', organization: '', location: '', hours: '', description: '' }]);
     };
 
-    const updateActivity = (index: number, field: string, value: string) => {
+    const updateActivity = (index: number, field: keyof typeof activities[0], value: string) => {
       const newActivities = [...activities];
       newActivities[index][field] = value;
       setActivities(newActivities);
