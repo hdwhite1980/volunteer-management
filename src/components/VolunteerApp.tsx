@@ -199,7 +199,7 @@ const VolunteerApp = () => {
                     required
                     value={formData.first_name}
                     onChange={(e) => setFormData({...formData, first_name: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   />
                 </div>
                 <div>
@@ -211,7 +211,7 @@ const VolunteerApp = () => {
                     required
                     value={formData.last_name}
                     onChange={(e) => setFormData({...formData, last_name: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   />
                 </div>
               </div>
@@ -225,7 +225,7 @@ const VolunteerApp = () => {
                   required
                   value={formData.organization}
                   onChange={(e) => setFormData({...formData, organization: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
               </div>
 
@@ -240,7 +240,7 @@ const VolunteerApp = () => {
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                     placeholder="example@example.com"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
                   />
                 </div>
                 <div>
@@ -252,7 +252,7 @@ const VolunteerApp = () => {
                     required
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   />
                 </div>
               </div>
@@ -266,7 +266,7 @@ const VolunteerApp = () => {
                   required
                   value={formData.families_served}
                   onChange={(e) => setFormData({...formData, families_served: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
               </div>
 
@@ -291,7 +291,7 @@ const VolunteerApp = () => {
                               type="date"
                               value={row.date}
                               onChange={(e) => updateEventRow(index, 'date', e.target.value)}
-                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500"
+                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500 text-gray-900"
                             />
                           </td>
                           <td className="border border-gray-300 p-2">
@@ -299,7 +299,7 @@ const VolunteerApp = () => {
                               type="text"
                               value={row.site}
                               onChange={(e) => updateEventRow(index, 'site', e.target.value)}
-                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500"
+                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500 text-gray-900"
                             />
                           </td>
                           <td className="border border-gray-300 p-2">
@@ -307,7 +307,7 @@ const VolunteerApp = () => {
                               type="text"
                               value={row.zip}
                               onChange={(e) => updateEventRow(index, 'zip', e.target.value)}
-                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500"
+                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500 text-gray-900"
                             />
                           </td>
                           <td className="border border-gray-300 p-2">
@@ -315,7 +315,7 @@ const VolunteerApp = () => {
                               type="number"
                               value={row.hours}
                               onChange={(e) => updateEventRow(index, 'hours', e.target.value)}
-                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500"
+                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500 text-gray-900"
                             />
                           </td>
                           <td className="border border-gray-300 p-2">
@@ -323,7 +323,7 @@ const VolunteerApp = () => {
                               type="number"
                               value={row.volunteers}
                               onChange={(e) => updateEventRow(index, 'volunteers', e.target.value)}
-                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500"
+                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500 text-gray-900"
                             />
                           </td>
                         </tr>
@@ -435,7 +435,7 @@ const VolunteerApp = () => {
                     required
                     value={formData.volunteer_name}
                     onChange={(e) => setFormData({...formData, volunteer_name: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                   />
                 </div>
                 <div>
@@ -447,7 +447,7 @@ const VolunteerApp = () => {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                   />
                 </div>
               </div>
@@ -461,7 +461,7 @@ const VolunteerApp = () => {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                   />
                 </div>
                 <div>
@@ -472,7 +472,7 @@ const VolunteerApp = () => {
                     type="text"
                     value={formData.student_id}
                     onChange={(e) => setFormData({...formData, student_id: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                   />
                 </div>
               </div>
@@ -492,7 +492,7 @@ const VolunteerApp = () => {
                             value={activity.date}
                             onChange={(e) => updateActivity(index, 'date', e.target.value)}
                             required
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900"
                           />
                         </div>
                         <div>
@@ -505,7 +505,7 @@ const VolunteerApp = () => {
                             value={activity.hours}
                             onChange={(e) => updateActivity(index, 'hours', e.target.value)}
                             required
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900"
                           />
                         </div>
                         <div>
@@ -517,7 +517,7 @@ const VolunteerApp = () => {
                             value={activity.organization}
                             onChange={(e) => updateActivity(index, 'organization', e.target.value)}
                             required
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900"
                           />
                         </div>
                       </div>
@@ -530,7 +530,7 @@ const VolunteerApp = () => {
                             value={activity.activity}
                             onChange={(e) => updateActivity(index, 'activity', e.target.value)}
                             required
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900"
                           >
                             <option value="">Select Activity Type</option>
                             <option value="Community Service">Community Service</option>
@@ -551,7 +551,7 @@ const VolunteerApp = () => {
                             type="text"
                             value={activity.location}
                             onChange={(e) => updateActivity(index, 'location', e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900"
                           />
                         </div>
                       </div>
@@ -564,7 +564,7 @@ const VolunteerApp = () => {
                           onChange={(e) => updateActivity(index, 'description', e.target.value)}
                           required
                           rows={3}
-                          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500"
+                          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900 placeholder-gray-400"
                           placeholder="Describe the volunteer activity performed..."
                         />
                       </div>
