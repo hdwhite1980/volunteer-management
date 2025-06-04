@@ -1,12 +1,20 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Upload, Download, Search, Calendar, Clock, Users, Building2 } from 'lucide-react';
+import { Upload, Download, Search, Clock, Users, Building2 } from 'lucide-react';
+
+interface Volunteer {
+  name: string;
+  email: string;
+  organization: string;
+  total_hours: number;
+  log_type: string;
+}
 
 const VolunteerApp = () => {
   const [currentView, setCurrentView] = useState('landing');
   const [stats, setStats] = useState({ total_volunteers: 0, total_hours: 0, total_organizations: 0 });
-  const [volunteers, setVolunteers] = useState([]);
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
 
   // Load stats for dashboard
   useEffect(() => {
@@ -251,7 +259,7 @@ const VolunteerApp = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Total Number of "Families" Served *
+                  Total Number of &quot;Families&quot; Served *
                 </label>
                 <input
                   type="number"
@@ -659,7 +667,7 @@ const VolunteerApp = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {volunteers.map((volunteer: any, index) => (
+                  {volunteers.map((volunteer, index) => (
                     <tr key={index}>
                       <td className="border border-gray-300 p-3">{volunteer.name}</td>
                       <td className="border border-gray-300 p-3">{volunteer.email}</td>
@@ -720,7 +728,7 @@ const VolunteerApp = () => {
               <ul className="text-sm text-blue-700 space-y-1">
                 <li>• Ensure all required fields are completed</li>
                 <li>• Files will be automatically processed and added to the database</li>
-                <li>• You'll receive a confirmation email once processing is complete</li>
+                <li>• You&apos;ll receive a confirmation email once processing is complete</li>
                 <li>• Maximum file size: 10MB per file</li>
               </ul>
             </div>

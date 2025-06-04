@@ -72,7 +72,7 @@ export async function searchVolunteers(searchParams: {
   toDate?: string;
 }) {
   let query = `SELECT * FROM volunteer_stats WHERE 1=1`;
-  const params: any[] = [];
+  const params: string[] = [];
   let paramCount = 0;
 
   if (searchParams.name) {
