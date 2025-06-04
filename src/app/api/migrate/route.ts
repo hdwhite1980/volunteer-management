@@ -1,10 +1,30 @@
 import { NextResponse } from 'next/server';
-import { sql } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
 
 export async function GET() {
   try {
+    // Try multiple connection string sources
+    const connectionString = 
+      process.env.POSTGRES_URL || 
+      process.env.DATABASE_URL || 
+      process.env.POSTGRES_PRISMA_URL;
+
+    if (!connectionString) {
+      return NextResponse.json({
+        error: 'No database connection string found',
+        available_vars: Object.keys(process.env).filter(key => 
+          key.includes('POSTGRES') || key.includes('DATABASE')
+        )
+      }, { status: 500 });
+    }
+
+    // Create connection with explicit string
+    const db = createPool({
+      connectionString: connectionString
+    });
+
     // Create partnership_logs table
-    await sql`
+    await db.sql`
       CREATE TABLE IF NOT EXISTS partnership_logs (
         id SERIAL PRIMARY KEY,
         first_name VARCHAR(100) NOT NULL,
@@ -19,8 +39,8 @@ export async function GET() {
       );
     `;
 
-    // Create activity_logs table without computed column
-    await sql`
+    // Create activity_logs table
+    await db.sql`
       CREATE TABLE IF NOT EXISTS activity_logs (
         id SERIAL PRIMARY KEY,
         volunteer_name VARCHAR(200) NOT NULL,
@@ -34,15 +54,15 @@ export async function GET() {
     `;
 
     // Create indexes
-    await sql`CREATE INDEX IF NOT EXISTS idx_partnership_logs_email ON partnership_logs(email);`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_partnership_logs_organization ON partnership_logs(organization);`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_partnership_logs_created_at ON partnership_logs(created_at);`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_activity_logs_email ON activity_logs(email);`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_activity_logs_volunteer_name ON activity_logs(volunteer_name);`;
-    await sql`CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at);`;
+    await db.sql`CREATE INDEX IF NOT EXISTS idx_partnership_logs_email ON partnership_logs(email);`;
+    await db.sql`CREATE INDEX IF NOT EXISTS idx_partnership_logs_organization ON partnership_logs(organization);`;
+    await db.sql`CREATE INDEX IF NOT EXISTS idx_partnership_logs_created_at ON partnership_logs(created_at);`;
+    await db.sql`CREATE INDEX IF NOT EXISTS idx_activity_logs_email ON activity_logs(email);`;
+    await db.sql`CREATE INDEX IF NOT EXISTS idx_activity_logs_volunteer_name ON activity_logs(volunteer_name);`;
+    await db.sql`CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs(created_at);`;
 
-    // Create properly structured view
-    await sql`
+    // Create view
+    await db.sql`
       CREATE OR REPLACE VIEW volunteer_stats AS
       SELECT 
         'partnership' as log_type,
@@ -98,21 +118,14 @@ export async function GET() {
     `;
 
     // Test the created structures
-    const tableCheck = await sql`
-      SELECT COUNT(*) as partnership_count FROM partnership_logs;
-    `;
-    
-    const activityCheck = await sql`
-      SELECT COUNT(*) as activity_count FROM activity_logs;
-    `;
-    
-    const viewCheck = await sql`
-      SELECT COUNT(*) as total_volunteers FROM volunteer_stats;
-    `;
+    const tableCheck = await db.sql`SELECT COUNT(*) as partnership_count FROM partnership_logs;`;
+    const activityCheck = await db.sql`SELECT COUNT(*) as activity_count FROM activity_logs;`;
+    const viewCheck = await db.sql`SELECT COUNT(*) as total_volunteers FROM volunteer_stats;`;
 
     return NextResponse.json({ 
       success: true, 
       message: 'Database tables created successfully',
+      connection_string_source: connectionString ? 'Found' : 'Missing',
       tests: {
         partnership_logs: tableCheck.rows[0].partnership_count,
         activity_logs: activityCheck.rows[0].activity_count,
@@ -123,21 +136,19 @@ export async function GET() {
   } catch (error) {
     console.error('Migration error:', error);
     
-    // Type-safe error handling
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const postgresError = error as { detail?: string; hint?: string; position?: string; code?: string };
-    const errorDetail = postgresError.detail || 'No additional details';
-    const errorHint = postgresError.hint || 'No hint available';
-    const errorPosition = postgresError.position || 'Unknown position';
-    const errorCode = postgresError.code || 'Unknown error code';
     
     return NextResponse.json({ 
       error: 'Migration failed',
       message: errorMessage,
-      detail: errorDetail,
-      hint: errorHint,
-      position: errorPosition,
-      code: errorCode
+      detail: postgresError.detail || 'No additional details',
+      hint: postgresError.hint || 'No hint available',
+      position: postgresError.position || 'Unknown position',
+      code: postgresError.code || 'Unknown error code',
+      available_env_vars: Object.keys(process.env).filter(key => 
+        key.includes('POSTGRES') || key.includes('DATABASE')
+      )
     }, { status: 500 });
   }
 }
