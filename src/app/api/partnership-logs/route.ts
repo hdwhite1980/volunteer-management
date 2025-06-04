@@ -1,111 +1,122 @@
+// src/app/api/partnership-logs/route.ts (Updated with new fields)
 import { NextRequest, NextResponse } from 'next/server';
-import { createPartnershipLog } from '@/lib/database';
+import { neon } from '@neondatabase/serverless';
 
-interface EventData {
-  date: string;
-  site: string;
-  zip: string;
-  hours: string;
-  volunteers: string;
-}
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json();
-    console.log('Received partnership log data:', data);
-    
-    // Enhanced validation
-    if (!data.first_name || !data.last_name || !data.email || !data.organization) {
-      return NextResponse.json({ 
-        error: 'Missing required fields',
-        details: {
-          first_name: !data.first_name ? 'Required' : 'OK',
-          last_name: !data.last_name ? 'Required' : 'OK', 
-          email: !data.email ? 'Required' : 'OK',
-          organization: !data.organization ? 'Required' : 'OK'
-        }
-      }, { status: 400 });
+    const {
+      first_name,
+      last_name,
+      organization,
+      email,
+      phone,
+      families_served,
+      prepared_by_first,
+      prepared_by_last,
+      position_title,
+      events
+    } = await request.json();
+
+    // Validate required fields
+    if (!first_name || !last_name || !organization || !email || !phone) {
+      return NextResponse.json(
+        { error: 'Missing required fields: first_name, last_name, organization, email, phone' },
+        { status: 400 }
+      );
     }
 
-    if (!data.phone) {
-      return NextResponse.json({ 
-        error: 'Missing required field: phone' 
-      }, { status: 400 });
+    if (!prepared_by_first || !prepared_by_last || !position_title) {
+      return NextResponse.json(
+        { error: 'Missing required prepared by fields: prepared_by_first, prepared_by_last, position_title' },
+        { status: 400 }
+      );
     }
 
-    // Validate families_served
-    const familiesServed = parseInt(data.families_served);
-    if (isNaN(familiesServed) || familiesServed < 0) {
-      return NextResponse.json({ 
-        error: 'Invalid families served number. Must be a positive number.' 
-      }, { status: 400 });
+    if (!families_served || isNaN(parseInt(families_served))) {
+      return NextResponse.json(
+        { error: 'families_served must be a valid number' },
+        { status: 400 }
+      );
     }
 
-    // Validate events array
-    if (!data.events || !Array.isArray(data.events)) {
-      return NextResponse.json({ 
-        error: 'Events must be an array' 
-      }, { status: 400 });
+    if (!events || !Array.isArray(events) || events.length === 0) {
+      return NextResponse.json(
+        { error: 'At least one event is required' },
+        { status: 400 }
+      );
     }
 
-    // Clean and validate events
-    const cleanEvents = data.events.filter((event: EventData) => {
-      return event.date && event.site; // Only keep events with at least date and site
-    }).map((event: EventData) => ({
-      date: event.date || '',
-      site: event.site || '',
-      zip: event.zip || '',
-      hours: event.hours || '0',
-      volunteers: event.volunteers || '0'
-    }));
+    // Validate events
+    for (const event of events) {
+      if (!event.date || !event.site) {
+        return NextResponse.json(
+          { error: 'Each event must have a date and site' },
+          { status: 400 }
+        );
+      }
+    }
 
-    // Prepare cleaned data for database
-    const cleanedData = {
-      first_name: data.first_name.trim(),
-      last_name: data.last_name.trim(),
-      organization: data.organization.trim(),
-      email: data.email.trim().toLowerCase(),
-      phone: data.phone.trim(),
-      families_served: familiesServed,
-      events: cleanEvents
-    };
+    // Insert the partnership log
+    const result = await sql`
+      INSERT INTO partnership_logs (
+        first_name, 
+        last_name, 
+        organization, 
+        email, 
+        phone, 
+        families_served, 
+        events,
+        prepared_by_first,
+        prepared_by_last,
+        position_title
+      )
+      VALUES (
+        ${first_name.trim()}, 
+        ${last_name.trim()}, 
+        ${organization.trim()}, 
+        ${email.trim()}, 
+        ${phone.trim()}, 
+        ${parseInt(families_served)}, 
+        ${JSON.stringify(events)},
+        ${prepared_by_first.trim()},
+        ${prepared_by_last.trim()},
+        ${position_title.trim()}
+      )
+      RETURNING id, created_at
+    `;
 
-    console.log('Cleaned data for database:', cleanedData);
-
-    const result = await createPartnershipLog(cleanedData);
-    console.log('Database insert result:', result);
-
-    return NextResponse.json({ 
-      success: true, 
-      data: result,
-      message: 'Partnership log created successfully'
+    return NextResponse.json({
+      success: true,
+      id: result[0].id,
+      created_at: result[0].created_at,
+      message: 'Partnership volunteer log created successfully'
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating partnership log:', error);
-    
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const postgresError = error as { detail?: string; hint?: string; code?: string };
+    console.error('Database error:', error);
     
     // Handle specific database errors
-    if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
-      return NextResponse.json({ 
-        error: 'Database tables not found. Please visit /api/migrate first.',
-        details: 'Run migration endpoint before submitting data'
-      }, { status: 500 });
+    if (error instanceof Error) {
+      if (error.message.includes('unique constraint')) {
+        return NextResponse.json(
+          { error: 'A record with this information already exists' },
+          { status: 409 }
+        );
+      }
+      
+      if (error.message.includes('invalid input syntax')) {
+        return NextResponse.json(
+          { error: 'Invalid data format provided' },
+          { status: 400 }
+        );
+      }
     }
 
-    if (errorMessage.includes('duplicate key')) {
-      return NextResponse.json({ 
-        error: 'Duplicate entry detected',
-        details: postgresError.detail || 'A similar record may already exist'
-      }, { status: 409 });
-    }
-
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      message: errorMessage,
-      details: postgresError.detail || 'Database operation failed'
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to create partnership volunteer log', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }

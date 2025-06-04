@@ -1,109 +1,116 @@
+// src/app/api/activity-logs/route.ts (Updated with new fields)
 import { NextRequest, NextResponse } from 'next/server';
-import { createActivityLog } from '@/lib/database';
+import { neon } from '@neondatabase/serverless';
 
-interface ActivityData {
-  date: string;
-  activity: string;
-  organization: string;
-  location: string;
-  hours: string;
-  description: string;
-}
+const sql = neon(process.env.DATABASE_URL!);
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json();
-    console.log('Received activity log data:', data);
-    
-    // Enhanced validation
-    if (!data.volunteer_name || !data.email) {
-      return NextResponse.json({ 
-        error: 'Missing required fields',
-        details: {
-          volunteer_name: !data.volunteer_name ? 'Required' : 'OK',
-          email: !data.email ? 'Required' : 'OK'
-        }
-      }, { status: 400 });
+    const {
+      volunteer_name,
+      email,
+      phone,
+      student_id,
+      prepared_by_first,
+      prepared_by_last,
+      position_title,
+      activities
+    } = await request.json();
+
+    // Validate required fields
+    if (!volunteer_name || !email) {
+      return NextResponse.json(
+        { error: 'Missing required fields: volunteer_name, email' },
+        { status: 400 }
+      );
     }
 
-    // Validate activities array
-    if (!data.activities || !Array.isArray(data.activities) || data.activities.length === 0) {
-      return NextResponse.json({ 
-        error: 'At least one activity is required' 
-      }, { status: 400 });
+    if (!prepared_by_first || !prepared_by_last || !position_title) {
+      return NextResponse.json(
+        { error: 'Missing required prepared by fields: prepared_by_first, prepared_by_last, position_title' },
+        { status: 400 }
+      );
     }
 
-    // Validate each activity
-    for (let i = 0; i < data.activities.length; i++) {
-      const activity = data.activities[i];
+    if (!activities || !Array.isArray(activities) || activities.length === 0) {
+      return NextResponse.json(
+        { error: 'At least one activity is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate activities
+    for (const activity of activities) {
       if (!activity.date || !activity.activity || !activity.organization || !activity.description) {
-        return NextResponse.json({ 
-          error: `Activity ${i + 1} is missing required fields (date, activity type, organization, or description)` 
-        }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Each activity must have date, activity type, organization, and description' },
+          { status: 400 }
+        );
       }
       
       if (!activity.hours || isNaN(parseFloat(activity.hours))) {
-        return NextResponse.json({ 
-          error: `Activity ${i + 1} has invalid hours. Must be a number.` 
-        }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Each activity must have valid hours' },
+          { status: 400 }
+        );
       }
     }
 
-    // Clean and validate activities
-    const cleanActivities = data.activities.map((activity: ActivityData) => ({
-      date: activity.date,
-      activity: activity.activity,
-      organization: activity.organization.trim(),
-      location: activity.location?.trim() || '',
-      hours: activity.hours,
-      description: activity.description.trim()
-    }));
+    // Insert the activity log
+    const result = await sql`
+      INSERT INTO activity_logs (
+        volunteer_name, 
+        email, 
+        phone, 
+        student_id, 
+        activities,
+        prepared_by_first,
+        prepared_by_last,
+        position_title
+      )
+      VALUES (
+        ${volunteer_name.trim()}, 
+        ${email.trim()}, 
+        ${phone?.trim() || null}, 
+        ${student_id?.trim() || null}, 
+        ${JSON.stringify(activities)},
+        ${prepared_by_first.trim()},
+        ${prepared_by_last.trim()},
+        ${position_title.trim()}
+      )
+      RETURNING id, created_at
+    `;
 
-    // Prepare cleaned data for database
-    const cleanedData = {
-      volunteer_name: data.volunteer_name.trim(),
-      email: data.email.trim().toLowerCase(),
-      phone: data.phone?.trim() || null,
-      student_id: data.student_id?.trim() || null,
-      activities: cleanActivities
-    };
-
-    console.log('Cleaned data for database:', cleanedData);
-
-    const result = await createActivityLog(cleanedData);
-    console.log('Database insert result:', result);
-
-    return NextResponse.json({ 
-      success: true, 
-      data: result,
-      message: 'Activity log created successfully'
+    return NextResponse.json({
+      success: true,
+      id: result[0].id,
+      created_at: result[0].created_at,
+      message: 'Activity volunteer log created successfully'
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating activity log:', error);
-    
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const postgresError = error as { detail?: string; hint?: string; code?: string };
+    console.error('Database error:', error);
     
     // Handle specific database errors
-    if (errorMessage.includes('relation') && errorMessage.includes('does not exist')) {
-      return NextResponse.json({ 
-        error: 'Database tables not found. Please visit /api/migrate first.',
-        details: 'Run migration endpoint before submitting data'
-      }, { status: 500 });
+    if (error instanceof Error) {
+      if (error.message.includes('unique constraint')) {
+        return NextResponse.json(
+          { error: 'A record with this information already exists' },
+          { status: 409 }
+        );
+      }
+      
+      if (error.message.includes('invalid input syntax')) {
+        return NextResponse.json(
+          { error: 'Invalid data format provided' },
+          { status: 400 }
+        );
+      }
     }
 
-    if (errorMessage.includes('duplicate key')) {
-      return NextResponse.json({ 
-        error: 'Duplicate entry detected',
-        details: postgresError.detail || 'A similar record may already exist'
-      }, { status: 409 });
-    }
-
-    return NextResponse.json({ 
-      error: 'Internal server error',
-      message: errorMessage,
-      details: postgresError.detail || 'Database operation failed'
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to create activity volunteer log', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 }

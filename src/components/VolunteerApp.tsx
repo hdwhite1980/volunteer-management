@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Upload, Download, Search, Clock, Users, Building2 } from 'lucide-react';
+import { Upload, Download, Search, Clock, Users, Building2, User, Lock, Plus, Edit, Trash2, LogOut } from 'lucide-react';
 
 interface Volunteer {
   name: string;
@@ -11,22 +11,96 @@ interface Volunteer {
   log_type: string;
 }
 
+interface AuthUser {
+  id: number;
+  username: string;
+  email: string;
+  role: string;
+  created_at: string;
+  last_login: string | null;
+}
+
 const VolunteerApp = () => {
   const [currentView, setCurrentView] = useState('landing');
   const [stats, setStats] = useState({ total_volunteers: 0, total_hours: 0, total_organizations: 0 });
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Load stats for dashboard
+  // Check authentication on app load
   useEffect(() => {
-    if (currentView === 'dashboard') {
+    checkAuthStatus();
+  }, []);
+
+  // Load data when viewing dashboard
+  useEffect(() => {
+    if (currentView === 'dashboard' && isAuthenticated) {
       loadStats();
       loadVolunteers();
     }
-  }, [currentView]);
+  }, [currentView, isAuthenticated]);
+
+  const checkAuthStatus = async () => {
+    try {
+      const response = await fetch('/api/auth/session', {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const user = await response.json();
+        setIsAuthenticated(true);
+        setCurrentUser(user);
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = async (username: string, password: string) => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (response.ok) {
+        const user = await response.json();
+        setIsAuthenticated(true);
+        setCurrentUser(user);
+        setCurrentView('dashboard');
+        return { success: true };
+      } else {
+        const error = await response.json();
+        return { success: false, error: error.message };
+      }
+    } catch (error) {
+      return { success: false, error: 'Login failed. Please try again.' };
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      setCurrentView('landing');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   const loadStats = async () => {
     try {
-      const response = await fetch('/api/volunteers?stats=true');
+      const response = await fetch('/api/volunteers?stats=true', {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setStats(data);
@@ -38,7 +112,9 @@ const VolunteerApp = () => {
 
   const loadVolunteers = async () => {
     try {
-      const response = await fetch('/api/volunteers');
+      const response = await fetch('/api/volunteers', {
+        credentials: 'include'
+      });
       if (response.ok) {
         const data = await response.json();
         setVolunteers(data);
@@ -48,13 +124,400 @@ const VolunteerApp = () => {
     }
   };
 
-  // Landing Page Component
+  // Login Component
+  const LoginPage = () => {
+    const [formData, setFormData] = useState({ username: '', password: '' });
+    const [error, setError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async () => {
+      setError('');
+      setIsSubmitting(true);
+
+      const result = await handleLogin(formData.username, formData.password);
+      
+      if (!result.success) {
+        setError(result.error || 'Login failed');
+      }
+      
+      setIsSubmitting(false);
+    };
+
+    const handleKeyPress = (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        handleSubmit();
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center py-12">
+        <div className="max-w-md w-full mx-4">
+          <div className="bg-white rounded-2xl shadow-xl p-8">
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
+                <Lock className="w-8 h-8 text-blue-600" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">Database Access</h1>
+              <p className="text-gray-600">Please sign in to view volunteer records</p>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.username}
+                  onChange={(e) => setFormData({...formData, username: e.target.value})}
+                  onKeyPress={handleKeyPress}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  placeholder="Enter your username"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({...formData, password: e.target.value})}
+                  onKeyPress={handleKeyPress}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  placeholder="Enter your password"
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-red-600 text-sm">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Signing In...' : 'Sign In'}
+              </button>
+            </div>
+
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setCurrentView('landing')}
+                className="text-blue-600 hover:text-blue-800 text-sm"
+              >
+                ← Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // User Management Component
+  const UserManagement = () => {
+    const [users, setUsers] = useState<AuthUser[]>([]);
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [editingUser, setEditingUser] = useState<AuthUser | null>(null);
+    const [formData, setFormData] = useState({
+      username: '',
+      password: '',
+      email: '',
+      role: 'admin'
+    });
+
+    useEffect(() => {
+      loadUsers();
+    }, []);
+
+    const loadUsers = async () => {
+      try {
+        const response = await fetch('/api/users', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setUsers(data);
+        }
+      } catch (error) {
+        console.error('Error loading users:', error);
+      }
+    };
+
+    const handleCreateUser = async () => {
+      try {
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(formData),
+        });
+
+        if (response.ok) {
+          setFormData({ username: '', password: '', email: '', role: 'admin' });
+          setShowCreateForm(false);
+          loadUsers();
+          alert('User created successfully!');
+        } else {
+          const error = await response.json();
+          alert(`Error: ${error.message}`);
+        }
+      } catch (error) {
+        alert('Failed to create user');
+      }
+    };
+
+    const handleUpdateUser = async () => {
+      if (!editingUser) return;
+
+      try {
+        const updateData = {
+          username: formData.username,
+          email: formData.email,
+          role: formData.role,
+          ...(formData.password && { password: formData.password })
+        };
+
+        const response = await fetch(`/api/users/${editingUser.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(updateData),
+        });
+
+        if (response.ok) {
+          setFormData({ username: '', password: '', email: '', role: 'admin' });
+          setEditingUser(null);
+          loadUsers();
+          alert('User updated successfully!');
+        } else {
+          const error = await response.json();
+          alert(`Error: ${error.message}`);
+        }
+      } catch (error) {
+        alert('Failed to update user');
+      }
+    };
+
+    const handleDeleteUser = async (userId: number) => {
+      if (!confirm('Are you sure you want to delete this user?')) return;
+
+      try {
+        const response = await fetch(`/api/users/${userId}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+
+        if (response.ok) {
+          loadUsers();
+          alert('User deleted successfully!');
+        } else {
+          alert('Failed to delete user');
+        }
+      } catch (error) {
+        alert('Failed to delete user');
+      }
+    };
+
+    const startEdit = (user: AuthUser) => {
+      setEditingUser(user);
+      setFormData({
+        username: user.username,
+        password: '',
+        email: user.email,
+        role: user.role
+      });
+      setShowCreateForm(true);
+    };
+
+    const cancelEdit = () => {
+      setEditingUser(null);
+      setShowCreateForm(false);
+      setFormData({ username: '', password: '', email: '', role: 'admin' });
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
+              <div className="flex gap-4">
+                <button
+                  onClick={() => setShowCreateForm(true)}
+                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4 inline mr-2" />
+                  Create User
+                </button>
+                <button
+                  onClick={() => setCurrentView('dashboard')}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  ← Back to Dashboard
+                </button>
+              </div>
+            </div>
+
+            {/* Create/Edit User Form */}
+            {showCreateForm && (
+              <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4">
+                  {editingUser ? 'Edit User' : 'Create New User'}
+                </h2>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Username *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.username}
+                      onChange={(e) => setFormData({...formData, username: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Password {editingUser ? '(leave blank to keep current)' : '*'}
+                    </label>
+                    <input
+                      type="password"
+                      required={!editingUser}
+                      value={formData.password}
+                      onChange={(e) => setFormData({...formData, password: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Role *
+                    </label>
+                    <select
+                      value={formData.role}
+                      onChange={(e) => setFormData({...formData, role: e.target.value})}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="user">User</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2 flex gap-4">
+                    <button
+                      type="button"
+                      onClick={editingUser ? handleUpdateUser : handleCreateUser}
+                      className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      {editingUser ? 'Update User' : 'Create User'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="bg-gray-300 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Users Table */}
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4">Existing Users</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Username</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Email</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Role</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Created</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Last Login</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user) => (
+                      <tr key={user.id}>
+                        <td className="border border-gray-300 p-3 text-gray-900">{user.username}</td>
+                        <td className="border border-gray-300 p-3 text-gray-900">{user.email}</td>
+                        <td className="border border-gray-300 p-3">
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            user.role === 'admin' ? 'bg-red-100 text-red-800' : 
+                            user.role === 'user' ? 'bg-blue-100 text-blue-800' : 
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="border border-gray-300 p-3 text-gray-900">
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="border border-gray-300 p-3 text-gray-900">
+                          {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                        </td>
+                        <td className="border border-gray-300 p-3">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => startEdit(user)}
+                              className="text-blue-600 hover:text-blue-800 p-1"
+                              title="Edit User"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            {user.id !== currentUser?.id && (
+                              <button
+                                onClick={() => handleDeleteUser(user.id)}
+                                className="text-red-600 hover:text-red-800 p-1"
+                                title="Delete User"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Landing Page Component with Auth Button
   const LandingPage = () => (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-800 mb-4">
-            VCEG Volunteer Management System
+            Virtu Volunteer Management System
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Track volunteer hours, manage partnerships, and maintain comprehensive records 
@@ -104,7 +567,7 @@ const VolunteerApp = () => {
 
         <div className="mt-12 text-center">
           <button
-            onClick={() => setCurrentView('dashboard')}
+            onClick={() => setCurrentView(isAuthenticated ? 'dashboard' : 'login')}
             className="bg-gray-600 text-white py-3 px-8 rounded-lg font-semibold hover:bg-gray-700 transition-colors duration-200 mr-4"
           >
             <Search className="w-5 h-5 inline mr-2" />
@@ -127,7 +590,252 @@ const VolunteerApp = () => {
     </div>
   );
 
-  // Partnership Volunteer Log Form
+  // Enhanced Dashboard with Logout
+  const Dashboard = () => {
+    const [filterType, setFilterType] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    const filteredVolunteers = volunteers.filter(volunteer => {
+      const matchesType = filterType === 'all' || volunteer.log_type === filterType;
+      const matchesSearch = searchTerm === '' || 
+        volunteer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        volunteer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        volunteer.organization.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesType && matchesSearch;
+    });
+
+    const exportPDFReport = () => {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Virtu Volunteer Management Report</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+                .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+                .stat { text-align: center; padding: 15px; border: 1px solid #d1d5db; border-radius: 8px; }
+                .stat-number { font-size: 24px; font-weight: bold; color: #1f2937; }
+                .stat-label { color: #6b7280; margin-top: 5px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+                th { background-color: #f9fafb; font-weight: bold; }
+                .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+                .badge-partnership { background-color: #dbeafe; color: #1e40af; }
+                .badge-activity { background-color: #d1fae5; color: #065f46; }
+                .powered-by { position: fixed; bottom: 10px; right: 10px; font-size: 8px; color: #999; }
+                @media print { body { margin: 0; } .stats { display: block; } .stat { margin: 10px 0; } .powered-by { position: absolute; } }
+              </style>
+            </head>
+            <body>
+              <h1>Virtu Volunteer Management Report</h1>
+              <p>Generated on: ${new Date().toLocaleDateString()}</p>
+              <p>Filter Applied: ${filterType === 'all' ? 'All Records' : filterType.charAt(0).toUpperCase() + filterType.slice(1)} ${searchTerm ? `| Search: "${searchTerm}"` : ''}</p>
+              
+              <div class="stats">
+                <div class="stat">
+                  <div class="stat-number">${stats.total_volunteers}</div>
+                  <div class="stat-label">Total Volunteers</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-number">${Math.round(stats.total_hours)}</div>
+                  <div class="stat-label">Total Hours</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-number">${stats.total_organizations}</div>
+                  <div class="stat-label">Organizations</div>
+                </div>
+              </div>
+              
+              <h2>Volunteer Details (${filteredVolunteers.length} records)</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Organization</th>
+                    <th>Total Hours</th>
+                    <th>Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filteredVolunteers.map(volunteer => `
+                    <tr>
+                      <td>${volunteer.name}</td>
+                      <td>${volunteer.email}</td>
+                      <td>${volunteer.organization}</td>
+                      <td>${Math.round(volunteer.total_hours || 0)}</td>
+                      <td>
+                        <span class="badge ${volunteer.log_type === 'partnership' ? 'badge-partnership' : 'badge-activity'}">
+                          ${volunteer.log_type}
+                        </span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+              
+              <div class="powered-by">Powered by AHTS</div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-3xl font-bold text-gray-800">Volunteer Database</h1>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-gray-600">
+                  Welcome, {currentUser?.username}
+                </span>
+                {currentUser?.role === 'admin' && (
+                  <button
+                    onClick={() => setCurrentView('users')}
+                    className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <User className="w-4 h-4 inline mr-2" />
+                    Manage Users
+                  </button>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <LogOut className="w-4 h-4 inline mr-2" />
+                  Logout
+                </button>
+                <button
+                  onClick={() => setCurrentView('landing')}
+                  className="text-blue-600 hover:text-blue-800"
+                >
+                  ← Back to Home
+                </button>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <Users className="w-8 h-8 text-blue-600 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Total Volunteers</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats.total_volunteers || 0}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <Clock className="w-8 h-8 text-green-600 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Total Hours</p>
+                    <p className="text-2xl font-bold text-gray-800">{Math.round(stats.total_hours || 0)}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <Building2 className="w-8 h-8 text-purple-600 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Organizations</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats.total_organizations || 0}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h2 className="text-xl font-semibold text-gray-800">Volunteer Records</h2>
+                
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                  <div className="flex items-center gap-2">
+                    <Search className="w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search volunteers..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    />
+                  </div>
+                  
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="partnership">Partnership Only</option>
+                    <option value="activity">Activity Only</option>
+                  </select>
+                  
+                  <button 
+                    onClick={exportPDFReport}
+                    className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                  >
+                    <Download className="w-4 h-4 inline mr-2" />
+                    Export PDF
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-4 text-sm text-gray-600">
+                Showing {filteredVolunteers.length} of {volunteers.length} records
+                {filterType !== 'all' && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded">{filterType}</span>}
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Name</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Email</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Organization</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Total Hours</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredVolunteers.map((volunteer, index) => (
+                      <tr key={index}>
+                        <td className="border border-gray-300 p-3 text-gray-900">{volunteer.name}</td>
+                        <td className="border border-gray-300 p-3 text-gray-900">{volunteer.email}</td>
+                        <td className="border border-gray-300 p-3 text-gray-900">{volunteer.organization}</td>
+                        <td className="border border-gray-300 p-3 text-gray-900">{Math.round(volunteer.total_hours || 0)}</td>
+                        <td className="border border-gray-300 p-3">
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            volunteer.log_type === 'partnership' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                          }`}>
+                            {volunteer.log_type}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                    {filteredVolunteers.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="border border-gray-300 p-8 text-center text-gray-500">
+                          No volunteers found matching your criteria.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Partnership Form (Complete)
   const PartnershipForm = () => {
     const [formData, setFormData] = useState({
       first_name: '',
@@ -309,7 +1017,7 @@ const VolunteerApp = () => {
             </head>
             <body>
               <div class="header">
-                <h1>VCEG Community Enhancement Group</h1>
+                <h1>Virtu Community Enhancement Group</h1>
                 <h2>Agency Partnership Volunteer Log</h2>
               </div>
               
@@ -406,7 +1114,6 @@ const VolunteerApp = () => {
 
     const handleSubmit = async () => {
       try {
-        // Validate required fields
         if (!formData.first_name || !formData.last_name || !formData.email || !formData.organization || !formData.phone || !formData.prepared_by_first || !formData.prepared_by_last || !formData.position_title) {
           alert('Please fill in all required fields (marked with *)');
           return;
@@ -417,7 +1124,6 @@ const VolunteerApp = () => {
           return;
         }
 
-        // Filter events to only include those with at least date and site
         const validEvents = eventRows.filter(row => row.date && row.site);
         
         if (validEvents.length === 0) {
@@ -438,23 +1144,18 @@ const VolunteerApp = () => {
           events: validEvents
         };
 
-        console.log('Submitting partnership data:', submitData);
-
         const response = await fetch('/api/partnership-logs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(submitData),
         });
 
-        const result = await response.json();
-        console.log('Server response:', result);
-
         if (response.ok) {
           alert('Partnership log submitted successfully!');
           setCurrentView('landing');
         } else {
-          console.error('Server error:', result);
-          alert(`Error submitting form: ${result.error || 'Unknown error'}\n${result.details || ''}`);
+          const result = await response.json();
+          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
         }
       } catch (error) {
         console.error('Submission error:', error);
@@ -630,7 +1331,6 @@ const VolunteerApp = () => {
                 )}
               </div>
 
-              {/* Prepared By Fields */}
               <div className="border-t pt-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Form Preparation</h3>
                 <div className="grid md:grid-cols-2 gap-6">
@@ -696,7 +1396,7 @@ const VolunteerApp = () => {
     );
   };
 
-  // Activity Log Form
+  // Activity Form (Complete)
   const ActivityForm = () => {
     const [formData, setFormData] = useState({
       volunteer_name: '',
@@ -929,7 +1629,7 @@ const VolunteerApp = () => {
                 </div>
                 <div class="field">
                   <span class="field-label">5. Home Agency (and Unit):</span>
-                  <div class="field-line">VCEG Community Enhancement Group</div>
+                  <div class="field-line">Virtu Community Enhancement Group</div>
                 </div>
               </div>
               
@@ -1014,13 +1714,11 @@ const VolunteerApp = () => {
 
     const handleSubmit = async () => {
       try {
-        // Validate required fields
         if (!formData.volunteer_name || !formData.email || !formData.prepared_by_first || !formData.prepared_by_last || !formData.position_title) {
           alert('Please fill in all required fields (marked with *)');
           return;
         }
 
-        // Filter activities to only include valid ones
         const validActivities = activities.filter(activity => 
           activity.date && activity.activity && activity.organization && activity.description
         );
@@ -1030,7 +1728,6 @@ const VolunteerApp = () => {
           return;
         }
 
-        // Validate hours in activities
         for (const activity of validActivities) {
           if (!activity.hours || isNaN(parseFloat(activity.hours))) {
             alert('Please enter valid hours for all activities');
@@ -1056,23 +1753,18 @@ const VolunteerApp = () => {
           }))
         };
 
-        console.log('Submitting activity data:', submitData);
-
         const response = await fetch('/api/activity-logs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(submitData),
         });
 
-        const result = await response.json();
-        console.log('Server response:', result);
-
         if (response.ok) {
           alert('Activity log submitted successfully!');
           setCurrentView('landing');
         } else {
-          console.error('Server error:', result);
-          alert(`Error submitting form: ${result.error || 'Unknown error'}\n${result.details || ''}`);
+          const result = await response.json();
+          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
         }
       } catch (error) {
         console.error('Submission error:', error);
@@ -1250,7 +1942,6 @@ const VolunteerApp = () => {
                 </button>
               </div>
 
-              {/* Prepared By Fields */}
               <div className="border-t pt-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Form Preparation</h3>
                 <div className="grid md:grid-cols-2 gap-6">
@@ -1316,231 +2007,6 @@ const VolunteerApp = () => {
     );
   };
 
-  // Database Dashboard with filtering
-  const Dashboard = () => {
-    const [filterType, setFilterType] = useState('all');
-    const [searchTerm, setSearchTerm] = useState('');
-    
-    const filteredVolunteers = volunteers.filter(volunteer => {
-      const matchesType = filterType === 'all' || volunteer.log_type === filterType;
-      const matchesSearch = searchTerm === '' || 
-        volunteer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        volunteer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        volunteer.organization.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesType && matchesSearch;
-    });
-
-    const exportPDFReport = () => {
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>VCEG Volunteer Management Report</title>
-              <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                h1 { color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
-                .stats { display: flex; justify-content: space-around; margin: 20px 0; }
-                .stat { text-align: center; padding: 15px; border: 1px solid #d1d5db; border-radius: 8px; }
-                .stat-number { font-size: 24px; font-weight: bold; color: #1f2937; }
-                .stat-label { color: #6b7280; margin-top: 5px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
-                th { background-color: #f9fafb; font-weight: bold; }
-                .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-                .badge-partnership { background-color: #dbeafe; color: #1e40af; }
-                .badge-activity { background-color: #d1fae5; color: #065f46; }
-                .powered-by { position: fixed; bottom: 10px; right: 10px; font-size: 8px; color: #999; }
-                @media print { body { margin: 0; } .stats { display: block; } .stat { margin: 10px 0; } .powered-by { position: absolute; } }
-              </style>
-            </head>
-            <body>
-              <h1>VCEG Volunteer Management Report</h1>
-              <p>Generated on: ${new Date().toLocaleDateString()}</p>
-              <p>Filter Applied: ${filterType === 'all' ? 'All Records' : filterType.charAt(0).toUpperCase() + filterType.slice(1)} ${searchTerm ? `| Search: "${searchTerm}"` : ''}</p>
-              
-              <div class="stats">
-                <div class="stat">
-                  <div class="stat-number">${stats.total_volunteers}</div>
-                  <div class="stat-label">Total Volunteers</div>
-                </div>
-                <div class="stat">
-                  <div class="stat-number">${Math.round(stats.total_hours)}</div>
-                  <div class="stat-label">Total Hours</div>
-                </div>
-                <div class="stat">
-                  <div class="stat-number">${stats.total_organizations}</div>
-                  <div class="stat-label">Organizations</div>
-                </div>
-              </div>
-              
-              <h2>Volunteer Details (${filteredVolunteers.length} records)</h2>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Organization</th>
-                    <th>Total Hours</th>
-                    <th>Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${filteredVolunteers.map(volunteer => `
-                    <tr>
-                      <td>${volunteer.name}</td>
-                      <td>${volunteer.email}</td>
-                      <td>${volunteer.organization}</td>
-                      <td>${Math.round(volunteer.total_hours || 0)}</td>
-                      <td>
-                        <span class="badge ${volunteer.log_type === 'partnership' ? 'badge-partnership' : 'badge-activity'}">
-                          ${volunteer.log_type}
-                        </span>
-                      </td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-              
-              <div class="powered-by">Powered by AHTS</div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-      }
-    };
-
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-bold text-gray-800">Volunteer Database</h1>
-              <button
-                onClick={() => setCurrentView('landing')}
-                className="text-blue-600 hover:text-blue-800"
-              >
-                ← Back to Home
-              </button>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Users className="w-8 h-8 text-blue-600 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-600">Total Volunteers</p>
-                    <p className="text-2xl font-bold text-gray-800">{stats.total_volunteers || 0}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Clock className="w-8 h-8 text-green-600 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-600">Total Hours</p>
-                    <p className="text-2xl font-bold text-gray-800">{Math.round(stats.total_hours || 0)}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Building2 className="w-8 h-8 text-purple-600 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-600">Organizations</p>
-                    <p className="text-2xl font-bold text-gray-800">{stats.total_organizations || 0}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h2 className="text-xl font-semibold text-gray-800">Volunteer Records</h2>
-                
-                {/* Search and Filter Controls */}
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                  <div className="flex items-center gap-2">
-                    <Search className="w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search volunteers..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                    />
-                  </div>
-                  
-                  <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  >
-                    <option value="all">All Types</option>
-                    <option value="partnership">Partnership Only</option>
-                    <option value="activity">Activity Only</option>
-                  </select>
-                  
-                  <button 
-                    onClick={exportPDFReport}
-                    className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
-                  >
-                    <Download className="w-4 h-4 inline mr-2" />
-                    Export PDF
-                  </button>
-                </div>
-              </div>
-
-              <div className="mb-4 text-sm text-gray-600">
-                Showing {filteredVolunteers.length} of {volunteers.length} records
-                {filterType !== 'all' && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded">{filterType}</span>}
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Name</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Email</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Organization</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Total Hours</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Type</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredVolunteers.map((volunteer, index) => (
-                      <tr key={index}>
-                        <td className="border border-gray-300 p-3 text-gray-900">{volunteer.name}</td>
-                        <td className="border border-gray-300 p-3 text-gray-900">{volunteer.email}</td>
-                        <td className="border border-gray-300 p-3 text-gray-900">{volunteer.organization}</td>
-                        <td className="border border-gray-300 p-3 text-gray-900">{Math.round(volunteer.total_hours || 0)}</td>
-                        <td className="border border-gray-300 p-3">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            volunteer.log_type === 'partnership' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                          }`}>
-                            {volunteer.log_type}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredVolunteers.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="border border-gray-300 p-8 text-center text-gray-500">
-                          No volunteers found matching your criteria.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // Upload Component with working functionality
   const UploadComponent = () => {
     const [uploading, setUploading] = useState(false);
@@ -1575,7 +2041,6 @@ const VolunteerApp = () => {
         alert('Upload failed. Please try again.');
       } finally {
         setUploading(false);
-        // Reset the input
         event.target.value = '';
       }
     };
@@ -1607,7 +2072,7 @@ const VolunteerApp = () => {
                 <input
                   type="file"
                   multiple
-                  accept=".pdf,.xlsx,.xls,.doc,.docx"
+                  accept=".pdf,.xlsx,.xls,.doc,.docx,.jpg,.png"
                   onChange={handleFileUpload}
                   className="hidden"
                   id="fileInput"
@@ -1620,7 +2085,7 @@ const VolunteerApp = () => {
                 </label>
                 
                 <p className="text-sm text-gray-400 mt-2">
-                  Supported formats: PDF, Excel, Word documents
+                  Supported formats: PDF, Excel, Word, JPG, PNG
                 </p>
               </div>
 
@@ -1638,11 +2103,21 @@ const VolunteerApp = () => {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-medium text-blue-800 mb-2">Upload Instructions:</h4>
                 <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Ensure all required fields are completed</li>
-                  <li>• Files will be automatically processed and added to the database</li>
+                  <li>• Ensure all required fields are completed on scanned forms</li>
+                  <li>• Files will be automatically processed using OCR technology</li>
+                  <li>• Data will be extracted and added to the database automatically</li>
                   <li>• You&apos;ll receive a confirmation email once processing is complete</li>
                   <li>• Maximum file size: 10MB per file</li>
+                  <li>• Supported formats: PDF, JPG, PNG for scanned forms</li>
                 </ul>
+              </div>
+
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h4 className="font-medium text-yellow-800 mb-2">OCR Processing:</h4>
+                <p className="text-sm text-yellow-700">
+                  Uploaded forms will be processed using Optical Character Recognition (OCR) to automatically extract 
+                  volunteer information, hours, and activities. This data will be verified and added to your database.
+                </p>
               </div>
             </div>
           </div>
@@ -1651,7 +2126,19 @@ const VolunteerApp = () => {
     );
   };
 
-  // Render current view
+  // Loading screen
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render current view with authentication checks
   const renderCurrentView = () => {
     switch (currentView) {
       case 'partnership':
@@ -1659,7 +2146,11 @@ const VolunteerApp = () => {
       case 'activity':
         return <ActivityForm />;
       case 'dashboard':
-        return <Dashboard />;
+        return isAuthenticated ? <Dashboard /> : <LoginPage />;
+      case 'users':
+        return isAuthenticated ? <UserManagement /> : <LoginPage />;
+      case 'login':
+        return <LoginPage />;
       case 'upload':
         return <UploadComponent />;
       default:

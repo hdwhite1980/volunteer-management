@@ -1,26 +1,87 @@
+// src/app/api/volunteers/route.ts (Updated with Authentication)
 import { NextRequest, NextResponse } from 'next/server';
-import { getVolunteerStats, searchVolunteers } from '@/lib/database';
+import { neon } from '@neondatabase/serverless';
+
+const sql = neon(process.env.DATABASE_URL!);
+
+// Helper function to check authentication
+async function checkAuth(request: NextRequest) {
+  const sessionToken = request.cookies.get('session_token')?.value;
+  
+  if (!sessionToken) {
+    return null;
+  }
+
+  const sessions = await sql`
+    SELECT 
+      u.id, u.username, u.email, u.role
+    FROM user_sessions s
+    JOIN users u ON s.user_id = u.id
+    WHERE s.session_token = ${sessionToken}
+      AND s.expires_at > CURRENT_TIMESTAMP
+      AND u.is_active = true
+  `;
+
+  return sessions.length > 0 ? sessions[0] : null;
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    // Check authentication
+    const currentUser = await checkAuth(request);
     
-    if (searchParams.get('stats') === 'true') {
-      const stats = await getVolunteerStats();
-      return NextResponse.json(stats);
+    if (!currentUser) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
-    const searchData = {
-      name: searchParams.get('name') || undefined,
-      organization: searchParams.get('organization') || undefined,
-      fromDate: searchParams.get('fromDate') || undefined,
-      toDate: searchParams.get('toDate') || undefined,
-    };
+    const url = new URL(request.url);
+    const statsOnly = url.searchParams.get('stats') === 'true';
 
-    const volunteers = await searchVolunteers(searchData);
+    if (statsOnly) {
+      // Return summary statistics
+      const stats = await sql`
+        SELECT 
+          COUNT(DISTINCT volunteer_name) as total_volunteers,
+          COUNT(DISTINCT organization) as total_organizations,
+          COALESCE(SUM(total_hours), 0) as total_hours
+        FROM comprehensive_volunteer_view
+        WHERE volunteer_name IS NOT NULL
+      `;
+
+      return NextResponse.json(stats[0] || {
+        total_volunteers: 0,
+        total_organizations: 0,
+        total_hours: 0
+      });
+    }
+
+    // Return detailed volunteer data
+    const volunteers = await sql`
+      SELECT 
+        volunteer_name as name,
+        email,
+        organization,
+        COALESCE(total_hours, 0) as total_hours,
+        log_type,
+        created_at,
+        prepared_by,
+        position_title
+      FROM comprehensive_volunteer_view
+      WHERE volunteer_name IS NOT NULL
+      ORDER BY created_at DESC
+      LIMIT 1000
+    `;
+
     return NextResponse.json(volunteers);
+
   } catch (error) {
-    console.error('Error fetching volunteers:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Database error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch volunteer data' },
+      { status: 500 }
+    );
   }
 }
