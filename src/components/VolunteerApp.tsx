@@ -15,6 +15,7 @@ const VolunteerApp = () => {
   const [currentView, setCurrentView] = useState('landing');
   const [stats, setStats] = useState({ total_volunteers: 0, total_hours: 0, total_organizations: 0 });
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // For future authentication implementation
 
   // Load stats for dashboard
   useEffect(() => {
@@ -118,6 +119,11 @@ const VolunteerApp = () => {
             Upload Forms
           </button>
         </div>
+
+        {/* Powered by AHTS */}
+        <div className="fixed bottom-4 right-4">
+          <p className="text-xs text-gray-400">Powered by AHTS</p>
+        </div>
       </div>
     </div>
   );
@@ -170,217 +176,227 @@ const VolunteerApp = () => {
         printWindow.document.write(`
           <html>
             <head>
-              <title>Virtu Partnership Volunteer Log</title>
+              <title>Agency Partnership Volunteer Log</title>
               <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-                
+                @page { margin: 0.5in; }
                 body { 
-                  font-family: 'Inter', Arial, sans-serif; 
+                  font-family: Arial, sans-serif; 
                   margin: 0; 
-                  padding: 30px;
-                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                  min-height: 100vh;
-                }
-                
-                .container {
+                  padding: 20px;
+                  font-size: 12px;
+                  line-height: 1.4;
                   background: white;
-                  border-radius: 15px;
-                  padding: 40px;
-                  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-                  max-width: 800px;
-                  margin: 0 auto;
                 }
                 
                 .header {
                   text-align: center;
-                  margin-bottom: 40px;
-                  border-bottom: 3px solid #667eea;
-                  padding-bottom: 20px;
+                  margin-bottom: 30px;
+                  border-bottom: 2px solid #000;
+                  padding-bottom: 15px;
                 }
                 
                 .header h1 {
-                  color: #2d3748;
-                  font-size: 28px;
-                  font-weight: 700;
-                  margin: 0;
-                  background: linear-gradient(135deg, #667eea, #764ba2);
-                  -webkit-background-clip: text;
-                  -webkit-text-fill-color: transparent;
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin: 0 0 5px 0;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
                 }
                 
-                .subtitle {
-                  color: #718096;
-                  font-size: 14px;
-                  margin-top: 10px;
+                .header h2 {
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin: 5px 0;
+                  text-transform: uppercase;
                 }
                 
-                .section {
-                  margin: 30px 0;
-                  padding: 25px;
-                  background: #f8fafc;
-                  border-radius: 10px;
-                  border-left: 4px solid #667eea;
+                .date-section {
+                  text-align: right;
+                  margin-bottom: 20px;
+                  font-weight: bold;
                 }
                 
-                .section h2 {
-                  color: #2d3748;
-                  font-size: 20px;
-                  font-weight: 600;
-                  margin: 0 0 20px 0;
+                .form-section {
+                  margin-bottom: 20px;
                 }
                 
-                .field-grid {
-                  display: grid;
-                  grid-template-columns: 1fr 1fr;
-                  gap: 20px;
-                  margin-bottom: 15px;
-                }
-                
-                .field {
-                  margin-bottom: 15px;
+                .field-row {
+                  display: flex;
+                  margin-bottom: 8px;
+                  align-items: center;
                 }
                 
                 .field-label {
-                  font-weight: 600;
-                  color: #4a5568;
-                  font-size: 12px;
-                  text-transform: uppercase;
-                  letter-spacing: 0.5px;
-                  margin-bottom: 5px;
+                  font-weight: bold;
+                  min-width: 120px;
+                  margin-right: 10px;
                 }
                 
-                .field-value {
-                  color: #2d3748;
-                  font-size: 16px;
-                  padding: 8px 12px;
-                  background: white;
-                  border-radius: 6px;
-                  border: 1px solid #e2e8f0;
+                .field-line {
+                  flex: 1;
+                  border-bottom: 1px solid #000;
+                  height: 20px;
+                  padding-left: 5px;
+                  padding-bottom: 2px;
                 }
                 
-                table {
+                .volunteer-table {
                   width: 100%;
                   border-collapse: collapse;
                   margin-top: 20px;
-                  background: white;
-                  border-radius: 10px;
-                  overflow: hidden;
-                  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+                  border: 2px solid #000;
                 }
                 
-                th {
-                  background: linear-gradient(135deg, #667eea, #764ba2);
-                  color: white;
-                  padding: 15px 12px;
-                  font-weight: 600;
-                  text-align: left;
-                  font-size: 14px;
-                }
-                
-                td {
-                  padding: 12px;
-                  border-bottom: 1px solid #e2e8f0;
-                  color: #2d3748;
-                }
-                
-                tr:nth-child(even) {
-                  background-color: #f8fafc;
-                }
-                
-                .footer {
-                  margin-top: 40px;
-                  padding-top: 20px;
-                  border-top: 2px solid #e2e8f0;
+                .volunteer-table th {
+                  border: 1px solid #000;
+                  padding: 8px 4px;
                   text-align: center;
-                  color: #718096;
-                  font-size: 12px;
+                  font-weight: bold;
+                  background-color: #f0f0f0;
+                  font-size: 10px;
+                  vertical-align: middle;
+                }
+                
+                .volunteer-table td {
+                  border: 1px solid #000;
+                  padding: 8px 4px;
+                  text-align: center;
+                  height: 25px;
+                  vertical-align: middle;
+                }
+                
+                .table-title {
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 14px;
+                  margin: 20px 0 10px 0;
+                  text-transform: uppercase;
+                }
+                
+                .total-row {
+                  background-color: #f0f0f0;
+                  font-weight: bold;
+                }
+                
+                .signature-section {
+                  margin-top: 30px;
+                  display: flex;
+                  justify-content: space-between;
+                }
+                
+                .signature-box {
+                  width: 30%;
+                  text-align: center;
+                }
+                
+                .signature-line {
+                  border-bottom: 1px solid #000;
+                  height: 30px;
+                  margin-bottom: 5px;
+                }
+                
+                .powered-by {
+                  position: fixed;
+                  bottom: 10px;
+                  right: 10px;
+                  font-size: 8px;
+                  color: #999;
                 }
                 
                 @media print {
-                  body { background: white; padding: 0; }
-                  .container { box-shadow: none; }
+                  .powered-by { position: absolute; }
                 }
               </style>
             </head>
             <body>
-              <div class="container">
-                <div class="header">
-                  <h1>Virtu Community Enhancement Group</h1>
-                  <div class="subtitle">Agency Partnership Volunteer Log</div>
-                  <div class="subtitle">Generated on ${new Date().toLocaleDateString()}</div>
+              <div class="header">
+                <h1>Virtu Community Enhancement Group</h1>
+                <h2>Agency Partnership Volunteer Log</h2>
+              </div>
+              
+              <div class="date-section">
+                Date: ${new Date().toLocaleDateString('en-US', { 
+                  month: '2-digit', 
+                  day: '2-digit', 
+                  year: 'numeric' 
+                }).replace(/\//g, '/')}
+              </div>
+              
+              <div class="form-section">
+                <div class="field-row">
+                  <span class="field-label">Name:</span>
+                  <div class="field-line">${currentFormData.first_name} ${currentFormData.last_name}</div>
                 </div>
-                
-                <div class="section">
-                  <h2>Volunteer Information</h2>
-                  <div class="field-grid">
-                    <div class="field">
-                      <div class="field-label">Full Name</div>
-                      <div class="field-value">${currentFormData.first_name} ${currentFormData.last_name}</div>
-                    </div>
-                    <div class="field">
-                      <div class="field-label">Organization</div>
-                      <div class="field-value">${currentFormData.organization}</div>
-                    </div>
-                    <div class="field">
-                      <div class="field-label">Email Address</div>
-                      <div class="field-value">${currentFormData.email}</div>
-                    </div>
-                    <div class="field">
-                      <div class="field-label">Phone Number</div>
-                      <div class="field-value">${currentFormData.phone}</div>
-                    </div>
-                  </div>
-                  <div class="field">
-                    <div class="field-label">Total Families Served</div>
-                    <div class="field-value">${currentFormData.families_served} families</div>
-                  </div>
+                <div class="field-row">
+                  <span class="field-label">Organization:</span>
+                  <div class="field-line">${currentFormData.organization}</div>
                 </div>
-                
-                <div class="section">
-                  <h2>Volunteer Activities</h2>
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Location</th>
-                        <th>Zip Code</th>
-                        <th>Hours</th>
-                        <th>Volunteers</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      ${currentFormData.events.map(event => `
-                        <tr>
-                          <td>${new Date(event.date).toLocaleDateString()}</td>
-                          <td>${event.site}</td>
-                          <td>${event.zip}</td>
-                          <td>${event.hours}h</td>
-                          <td>${event.volunteers}</td>
-                        </tr>
-                      `).join('')}
-                    </tbody>
-                  </table>
+                <div class="field-row">
+                  <span class="field-label">Email:</span>
+                  <div class="field-line">${currentFormData.email}</div>
                 </div>
-                
-                <div class="section">
-                  <h2>Form Completion</h2>
-                  <div class="field-grid">
-                    <div class="field">
-                      <div class="field-label">Prepared By</div>
-                      <div class="field-value">${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
-                    </div>
-                    <div class="field">
-                      <div class="field-label">Position/Title</div>
-                      <div class="field-value">${currentFormData.position_title}</div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="footer">
-                  <p>Virtu Community Enhancement Group | Building Connected Communities</p>
-                  <p>This document was automatically generated by the Virtu Volunteer Management System</p>
+                <div class="field-row">
+                  <span class="field-label">Phone:</span>
+                  <div class="field-line">${currentFormData.phone}</div>
                 </div>
               </div>
+              
+              <div class="table-title">Agency Partnership Volunteer Log</div>
+              
+              <table class="volunteer-table">
+                <thead>
+                  <tr>
+                    <th>Event Date</th>
+                    <th>Event Site Zip</th>
+                    <th>Total Number of<br>Hours Worked</th>
+                    <th>Total Number of<br>Volunteers</th>
+                    <th>Total Volunteer<br>Hours</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${Array.from({length: 10}, (_, i) => {
+                    const event = currentFormData.events[i];
+                    const totalHours = event ? (parseInt(event.hours || '0') * parseInt(event.volunteers || '1')) : '';
+                    return `
+                      <tr>
+                        <td>${event ? new Date(event.date).toLocaleDateString() : ''}</td>
+                        <td>${event ? event.zip : ''}</td>
+                        <td>${event ? event.hours : ''}</td>
+                        <td>${event ? event.volunteers : ''}</td>
+                        <td>${totalHours}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                  <tr class="total-row">
+                    <td colspan="4" style="text-align: center; font-weight: bold;">TOTAL VOLUNTEER HOURS</td>
+                    <td style="font-weight: bold;">
+                      ${currentFormData.events.reduce((total, event) => {
+                        if (event.hours && event.volunteers) {
+                          return total + (parseInt(event.hours) * parseInt(event.volunteers));
+                        }
+                        return total;
+                      }, 0)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              
+              <div class="signature-section">
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div><strong>Prepared by:</strong><br>${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
+                </div>
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div><strong>Position/Title:</strong><br>${currentFormData.position_title}</div>
+                </div>
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div><strong>Date/Time:</strong><br>${new Date().toLocaleDateString()}</div>
+                </div>
+              </div>
+              
+              <div class="powered-by">Powered by AHTS</div>
             </body>
           </html>
         `);
@@ -723,211 +739,272 @@ const VolunteerApp = () => {
         printWindow.document.write(`
           <html>
             <head>
-              <title>Volunteer Activity Log</title>
+              <title>Activity Log (ICS 214)</title>
               <style>
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-                
+                @page { margin: 0.5in; }
                 body { 
-                  font-family: 'Inter', Arial, sans-serif; 
+                  font-family: Arial, sans-serif; 
                   margin: 0; 
-                  padding: 30px;
-                  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-                  min-height: 100vh;
-                }
-                
-                .container {
+                  padding: 15px;
+                  font-size: 11px;
+                  line-height: 1.3;
                   background: white;
-                  border-radius: 15px;
-                  padding: 40px;
-                  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-                  max-width: 800px;
-                  margin: 0 auto;
                 }
                 
                 .header {
                   text-align: center;
-                  margin-bottom: 40px;
-                  border-bottom: 3px solid #10b981;
-                  padding-bottom: 20px;
+                  margin-bottom: 15px;
+                  border: 2px solid #000;
+                  padding: 10px;
                 }
                 
                 .header h1 {
-                  color: #2d3748;
-                  font-size: 28px;
-                  font-weight: 700;
+                  font-size: 16px;
+                  font-weight: bold;
                   margin: 0;
-                  background: linear-gradient(135deg, #10b981, #059669);
-                  -webkit-background-clip: text;
-                  -webkit-text-fill-color: transparent;
+                  text-transform: uppercase;
                 }
                 
-                .subtitle {
-                  color: #718096;
-                  font-size: 14px;
-                  margin-top: 10px;
+                .form-section {
+                  border: 1px solid #000;
+                  margin-bottom: 10px;
+                  padding: 8px;
                 }
                 
-                .section {
-                  margin: 30px 0;
-                  padding: 25px;
-                  background: #f0fdf4;
-                  border-radius: 10px;
-                  border-left: 4px solid #10b981;
-                }
-                
-                .section h2 {
-                  color: #2d3748;
-                  font-size: 20px;
-                  font-weight: 600;
-                  margin: 0 0 20px 0;
+                .section-header {
+                  font-weight: bold;
+                  margin-bottom: 8px;
+                  font-size: 12px;
                 }
                 
                 .field-grid {
                   display: grid;
-                  grid-template-columns: 1fr 1fr;
-                  gap: 20px;
-                  margin-bottom: 15px;
+                  grid-template-columns: 1fr 1fr 1fr;
+                  gap: 15px;
+                  margin-bottom: 8px;
                 }
                 
                 .field {
-                  margin-bottom: 15px;
+                  display: flex;
+                  align-items: center;
                 }
                 
                 .field-label {
-                  font-weight: 600;
-                  color: #4a5568;
-                  font-size: 12px;
-                  text-transform: uppercase;
-                  letter-spacing: 0.5px;
-                  margin-bottom: 5px;
+                  font-weight: bold;
+                  margin-right: 5px;
+                  min-width: 80px;
+                  font-size: 10px;
                 }
                 
-                .field-value {
-                  color: #2d3748;
-                  font-size: 16px;
-                  padding: 8px 12px;
-                  background: white;
-                  border-radius: 6px;
-                  border: 1px solid #e2e8f0;
+                .field-line {
+                  flex: 1;
+                  border-bottom: 1px solid #000;
+                  height: 18px;
+                  padding-left: 3px;
+                  padding-bottom: 1px;
                 }
                 
-                .activity-card {
-                  background: white;
-                  border-radius: 10px;
-                  padding: 20px;
-                  margin: 15px 0;
-                  border: 1px solid #e2e8f0;
-                  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+                .resources-table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin: 10px 0;
                 }
                 
-                .activity-title {
-                  color: #065f46;
-                  font-size: 18px;
-                  font-weight: 600;
-                  margin-bottom: 15px;
-                  border-bottom: 2px solid #10b981;
-                  padding-bottom: 10px;
-                }
-                
-                .footer {
-                  margin-top: 40px;
-                  padding-top: 20px;
-                  border-top: 2px solid #e2e8f0;
+                .resources-table th {
+                  border: 1px solid #000;
+                  padding: 4px;
                   text-align: center;
-                  color: #718096;
-                  font-size: 12px;
+                  font-weight: bold;
+                  background-color: #f0f0f0;
+                  font-size: 10px;
+                }
+                
+                .resources-table td {
+                  border: 1px solid #000;
+                  padding: 4px;
+                  height: 20px;
+                }
+                
+                .activity-table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin: 10px 0;
+                }
+                
+                .activity-table th {
+                  border: 1px solid #000;
+                  padding: 6px 4px;
+                  text-align: center;
+                  font-weight: bold;
+                  background-color: #f0f0f0;
+                  font-size: 10px;
+                }
+                
+                .activity-table td {
+                  border: 1px solid #000;
+                  padding: 4px;
+                  vertical-align: top;
+                  min-height: 25px;
+                  font-size: 10px;
+                }
+                
+                .signature-section {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr 1fr;
+                  gap: 20px;
+                  margin-top: 20px;
+                  border: 1px solid #000;
+                  padding: 10px;
+                }
+                
+                .signature-box {
+                  text-align: center;
+                }
+                
+                .signature-line {
+                  border-bottom: 1px solid #000;
+                  height: 25px;
+                  margin-bottom: 3px;
+                }
+                
+                .powered-by {
+                  position: fixed;
+                  bottom: 10px;
+                  right: 10px;
+                  font-size: 8px;
+                  color: #999;
                 }
                 
                 @media print {
-                  body { background: white; padding: 0; }
-                  .container { box-shadow: none; }
+                  .powered-by { position: absolute; }
                 }
               </style>
             </head>
             <body>
-              <div class="container">
-                <div class="header">
-                  <h1>Virtu Community Enhancement Group</h1>
-                  <div class="subtitle">Volunteer Activity Log (ICS 214)</div>
-                  <div class="subtitle">Generated on ${new Date().toLocaleDateString()}</div>
-                </div>
-                
-                <div class="section">
-                  <h2>Volunteer Information</h2>
-                  <div class="field-grid">
-                    <div class="field">
-                      <div class="field-label">Volunteer Name</div>
-                      <div class="field-value">${currentFormData.volunteer_name}</div>
-                    </div>
-                    <div class="field">
-                      <div class="field-label">Email Address</div>
-                      <div class="field-value">${currentFormData.email}</div>
-                    </div>
-                    <div class="field">
-                      <div class="field-label">Phone Number</div>
-                      <div class="field-value">${currentFormData.phone}</div>
-                    </div>
-                    <div class="field">
-                      <div class="field-label">Student ID</div>
-                      <div class="field-value">${currentFormData.student_id}</div>
-                    </div>
+              <div class="header">
+                <h1>Activity Log (ICS 214)</h1>
+              </div>
+              
+              <div class="form-section">
+                <div class="field-grid">
+                  <div class="field">
+                    <span class="field-label">1. Incident Name:</span>
+                    <div class="field-line">Volunteer Service</div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">2. Operational Period:</span>
+                    <div class="field-line"></div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">Date From:</span>
+                    <div class="field-line"></div>
                   </div>
                 </div>
-                
-                <div class="section">
-                  <h2>Activity Details</h2>
-                  ${currentFormData.activities.map((activity, index) => `
-                    <div class="activity-card">
-                      <div class="activity-title">Activity ${index + 1}</div>
-                      <div class="field-grid">
-                        <div class="field">
-                          <div class="field-label">Date</div>
-                          <div class="field-value">${new Date(activity.date).toLocaleDateString()}</div>
-                        </div>
-                        <div class="field">
-                          <div class="field-label">Hours</div>
-                          <div class="field-value">${activity.hours}h</div>
-                        </div>
-                        <div class="field">
-                          <div class="field-label">Organization</div>
-                          <div class="field-value">${activity.organization}</div>
-                        </div>
-                        <div class="field">
-                          <div class="field-label">Activity Type</div>
-                          <div class="field-value">${activity.activity}</div>
-                        </div>
-                      </div>
-                      <div class="field">
-                        <div class="field-label">Location</div>
-                        <div class="field-value">${activity.location}</div>
-                      </div>
-                      <div class="field">
-                        <div class="field-label">Description</div>
-                        <div class="field-value">${activity.description}</div>
-                      </div>
-                    </div>
-                  `).join('')}
-                </div>
-                
-                <div class="section">
-                  <h2>Form Completion</h2>
-                  <div class="field-grid">
-                    <div class="field">
-                      <div class="field-label">Prepared By</div>
-                      <div class="field-value">${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
-                    </div>
-                    <div class="field">
-                      <div class="field-label">Position/Title</div>
-                      <div class="field-value">${currentFormData.position_title}</div>
-                    </div>
+                <div class="field-grid">
+                  <div class="field">
+                    <span class="field-label">3. Name:</span>
+                    <div class="field-line">${currentFormData.volunteer_name}</div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">4. ICS Position:</span>
+                    <div class="field-line">Volunteer</div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">Date To:</span>
+                    <div class="field-line"></div>
                   </div>
                 </div>
-                
-                <div class="footer">
-                  <p>Virtu Community Enhancement Group | Building Connected Communities</p>
-                  <p>This document was automatically generated by the Virtu Volunteer Management System</p>
+                <div class="field-grid">
+                  <div class="field">
+                    <span class="field-label"></span>
+                    <div class="field-line"></div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label"></span>
+                    <div class="field-line"></div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">Time To:</span>
+                    <div class="field-line"></div>
+                  </div>
+                </div>
+                <div class="field">
+                  <span class="field-label">5. Home Agency (and Unit):</span>
+                  <div class="field-line">Virtu Community Enhancement Group</div>
                 </div>
               </div>
+              
+              <div class="form-section">
+                <div class="section-header">6. Resources Assigned:</div>
+                <table class="resources-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>ICS Position</th>
+                      <th>Home Agency (and Unit)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>${currentFormData.volunteer_name}</td>
+                      <td>Volunteer</td>
+                      <td>Individual Volunteer</td>
+                    </tr>
+                    ${Array.from({length: 4}, () => '<tr><td></td><td></td><td></td></tr>').join('')}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="form-section">
+                <div class="section-header">7. Activity Log:</div>
+                <table class="activity-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 20%;">Date/Time</th>
+                      <th style="width: 80%;">Notable Activities</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${currentFormData.activities.map(activity => `
+                      <tr>
+                        <td style="text-align: center;">
+                          ${activity.date ? new Date(activity.date).toLocaleDateString() : ''}<br>
+                          ${activity.hours ? activity.hours + ' hrs' : ''}
+                        </td>
+                        <td>
+                          <strong>${activity.activity || ''}</strong><br>
+                          Organization: ${activity.organization || ''}<br>
+                          Location: ${activity.location || ''}<br>
+                          ${activity.description || ''}
+                        </td>
+                      </tr>
+                    `).join('')}
+                    ${Array.from({length: Math.max(0, 8 - currentFormData.activities.length)}, () => 
+                      '<tr><td style="height: 30px;"></td><td></td></tr>'
+                    ).join('')}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="signature-section">
+                <div class="signature-box">
+                  <div class="section-header">8. Prepared by:</div>
+                  <div class="signature-line">${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
+                  <div style="font-size: 9px;">Signature</div>
+                </div>
+                <div class="signature-box">
+                  <div class="section-header">Position/Title:</div>
+                  <div class="signature-line">${currentFormData.position_title}</div>
+                  <div style="font-size: 9px;">Position/Title</div>
+                </div>
+                <div class="signature-box">
+                  <div class="section-header">Date/Time:</div>
+                  <div class="signature-line">${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                  <div style="font-size: 9px;">Date/Time</div>
+                </div>
+              </div>
+              
+              <div class="powered-by">Powered by AHTS</div>
             </body>
           </html>
         `);
@@ -1240,8 +1317,20 @@ const VolunteerApp = () => {
     );
   };
 
-  // Database Dashboard
+  // Database Dashboard with filtering
   const Dashboard = () => {
+    const [filterType, setFilterType] = useState('all');
+    const [searchTerm, setSearchTerm] = useState('');
+    
+    const filteredVolunteers = volunteers.filter(volunteer => {
+      const matchesType = filterType === 'all' || volunteer.log_type === filterType;
+      const matchesSearch = searchTerm === '' || 
+        volunteer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        volunteer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        volunteer.organization.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesType && matchesSearch;
+    });
+
     const exportPDFReport = () => {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
@@ -1262,12 +1351,14 @@ const VolunteerApp = () => {
                 .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
                 .badge-partnership { background-color: #dbeafe; color: #1e40af; }
                 .badge-activity { background-color: #d1fae5; color: #065f46; }
-                @media print { body { margin: 0; } .stats { display: block; } .stat { margin: 10px 0; } }
+                .powered-by { position: fixed; bottom: 10px; right: 10px; font-size: 8px; color: #999; }
+                @media print { body { margin: 0; } .stats { display: block; } .stat { margin: 10px 0; } .powered-by { position: absolute; } }
               </style>
             </head>
             <body>
               <h1>Virtu Volunteer Management Report</h1>
               <p>Generated on: ${new Date().toLocaleDateString()}</p>
+              <p>Filter Applied: ${filterType === 'all' ? 'All Records' : filterType.charAt(0).toUpperCase() + filterType.slice(1)} ${searchTerm ? `| Search: "${searchTerm}"` : ''}</p>
               
               <div class="stats">
                 <div class="stat">
@@ -1284,7 +1375,7 @@ const VolunteerApp = () => {
                 </div>
               </div>
               
-              <h2>Volunteer Details</h2>
+              <h2>Volunteer Details (${filteredVolunteers.length} records)</h2>
               <table>
                 <thead>
                   <tr>
@@ -1296,7 +1387,7 @@ const VolunteerApp = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  ${volunteers.map(volunteer => `
+                  ${filteredVolunteers.map(volunteer => `
                     <tr>
                       <td>${volunteer.name}</td>
                       <td>${volunteer.email}</td>
@@ -1311,6 +1402,8 @@ const VolunteerApp = () => {
                   `).join('')}
                 </tbody>
               </table>
+              
+              <div class="powered-by">Powered by AHTS</div>
             </body>
           </html>
         `);
@@ -1364,15 +1457,45 @@ const VolunteerApp = () => {
             </div>
 
             <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-gray-800">Recent Volunteers</h2>
-                <button 
-                  onClick={exportPDFReport}
-                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Download className="w-4 h-4 inline mr-2" />
-                  Export PDF Report
-                </button>
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <h2 className="text-xl font-semibold text-gray-800">Volunteer Records</h2>
+                
+                {/* Search and Filter Controls */}
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+                  <div className="flex items-center gap-2">
+                    <Search className="w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search volunteers..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    />
+                  </div>
+                  
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="partnership">Partnership Only</option>
+                    <option value="activity">Activity Only</option>
+                  </select>
+                  
+                  <button 
+                    onClick={exportPDFReport}
+                    className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                  >
+                    <Download className="w-4 h-4 inline mr-2" />
+                    Export PDF
+                  </button>
+                </div>
+              </div>
+
+              <div className="mb-4 text-sm text-gray-600">
+                Showing {filteredVolunteers.length} of {volunteers.length} records
+                {filterType !== 'all' && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded">{filterType}</span>}
               </div>
 
               <div className="overflow-x-auto">
@@ -1387,7 +1510,7 @@ const VolunteerApp = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {volunteers.map((volunteer, index) => (
+                    {filteredVolunteers.map((volunteer, index) => (
                       <tr key={index}>
                         <td className="border border-gray-300 p-3 text-gray-900">{volunteer.name}</td>
                         <td className="border border-gray-300 p-3 text-gray-900">{volunteer.email}</td>
@@ -1402,6 +1525,13 @@ const VolunteerApp = () => {
                         </td>
                       </tr>
                     ))}
+                    {filteredVolunteers.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="border border-gray-300 p-8 text-center text-gray-500">
+                          No volunteers found matching your criteria.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -1524,6 +1654,11 @@ const VolunteerApp = () => {
 
   // Render current view
   const renderCurrentView = () => {
+    // Future: Add authentication check here
+    // if (!isAuthenticated && currentView === 'dashboard') {
+    //   return <LoginForm />;
+    // }
+    
     switch (currentView) {
       case 'partnership':
         return <PartnershipForm />;
