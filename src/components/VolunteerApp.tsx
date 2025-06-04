@@ -15,7 +15,7 @@ interface Volunteer {
 interface AuthUser {
   id: number;
   username: string;
-  full_name: string;
+  email: string;
   role: string;
   created_at: string;
   updated_at?: string;
@@ -31,7 +31,11 @@ const VolunteerApp = () => {
 
   // Check authentication on app load
   useEffect(() => {
-    checkAuthStatus();
+    // Only check auth status if we're not already authenticated
+    if (!isAuthenticated) {
+      console.log('Frontend: Component mounted, checking auth status...');
+      checkAuthStatus();
+    }
   }, []);
 
   // Load data when viewing dashboard
@@ -44,16 +48,34 @@ const VolunteerApp = () => {
 
   const checkAuthStatus = async () => {
     try {
+      console.log('Frontend: Checking auth status...');
       const response = await fetch('/api/auth/session', {
         credentials: 'include'
       });
+      
+      console.log('Frontend: Auth check response status:', response.status);
+      
       if (response.ok) {
-        const user = await response.json();
-        setIsAuthenticated(true);
-        setCurrentUser(user);
+        const data = await response.json();
+        console.log('Frontend: Auth check successful:', data);
+        
+        // Our session API returns {authenticated: true, user: {...}}
+        if (data.authenticated && data.user) {
+          setIsAuthenticated(true);
+          setCurrentUser(data.user);
+        } else {
+          setIsAuthenticated(false);
+          setCurrentUser(null);
+        }
+      } else {
+        console.log('Frontend: Auth check failed, status:', response.status);
+        setIsAuthenticated(false);
+        setCurrentUser(null);
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('Frontend: Auth check error:', error);
+      setIsAuthenticated(false);
+      setCurrentUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -61,6 +83,7 @@ const VolunteerApp = () => {
 
   const handleLogin = async (username: string, password: string) => {
     try {
+      console.log('Frontend: Starting login...');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -68,40 +91,55 @@ const VolunteerApp = () => {
         body: JSON.stringify({ username, password }),
       });
 
-      if (response.ok) {
-        const user = await response.json();
+      const data = await response.json();
+      console.log('Frontend: Login response:', data);
+
+      if (response.ok && data.success) {
+        console.log('Frontend: Login successful, setting user state...');
+        // Our login API returns {success: true, user: {...}}
         setIsAuthenticated(true);
-        setCurrentUser(user);
+        setCurrentUser(data.user);
         setCurrentView('dashboard');
         return { success: true };
       } else {
-        const error = await response.json();
-        return { success: false, error: error.error || 'Login failed' };
+        console.log('Frontend: Login failed:', data.error);
+        return { success: false, error: data.error || 'Login failed' };
       }
     } catch (error) {
+      console.error('Frontend: Login error:', error);
       return { success: false, error: 'Login failed. Please try again.' };
     }
   };
 
   const handleLogout = async () => {
     try {
+      console.log('Frontend: Starting logout...');
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       });
+      console.log('Frontend: Logout successful');
       setIsAuthenticated(false);
       setCurrentUser(null);
       setCurrentView('landing');
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('Frontend: Logout error:', error);
+      // Still clear local state even if logout request fails
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      setCurrentView('landing');
     }
   };
 
   const loadStats = async () => {
     try {
+      console.log('Dashboard: Fetching volunteers for stats...');
       const response = await fetch('/api/volunteers', {
         credentials: 'include'
       });
+      
+      console.log('Dashboard: Volunteers response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
         setVolunteers(data);
@@ -115,23 +153,37 @@ const VolunteerApp = () => {
           total_hours: totalHours,
           total_organizations: organizations.size
         });
+      } else if (response.status === 401) {
+        console.log('Dashboard: Unauthorized, redirecting to login...');
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+        setCurrentView('login');
       }
     } catch (error) {
-      console.error('Error loading stats:', error);
+      console.error('Dashboard: Error loading stats:', error);
     }
   };
 
   const loadVolunteers = async () => {
     try {
+      console.log('Dashboard: Fetching volunteers...');
       const response = await fetch('/api/volunteers', {
         credentials: 'include'
       });
+      
+      console.log('Dashboard: Volunteers response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
         setVolunteers(data);
+      } else if (response.status === 401) {
+        console.log('Dashboard: Unauthorized, redirecting to login...');
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+        setCurrentView('login');
       }
     } catch (error) {
-      console.error('Error loading volunteers:', error);
+      console.error('Dashboard: Error loading volunteers:', error);
     }
   };
 
@@ -244,7 +296,7 @@ const VolunteerApp = () => {
     const [formData, setFormData] = useState({
       username: '',
       password: '',
-      full_name: '',
+      email: '',
       role: 'user'
     });
 
@@ -254,20 +306,30 @@ const VolunteerApp = () => {
 
     const loadUsers = async () => {
       try {
+        console.log('UserManagement: Fetching users...');
         const response = await fetch('/api/users', {
           credentials: 'include'
         });
+        
+        console.log('UserManagement: Users response status:', response.status);
+        
         if (response.ok) {
           const data = await response.json();
           setUsers(data);
+        } else if (response.status === 401) {
+          console.log('UserManagement: Unauthorized access');
+          setIsAuthenticated(false);
+          setCurrentUser(null);
+          setCurrentView('login');
         }
       } catch (error) {
-        console.error('Error loading users:', error);
+        console.error('UserManagement: Error loading users:', error);
       }
     };
 
     const handleCreateUser = async () => {
       try {
+        console.log('UserManagement: Creating user...');
         const response = await fetch('/api/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -276,7 +338,7 @@ const VolunteerApp = () => {
         });
 
         if (response.ok) {
-          setFormData({ username: '', password: '', full_name: '', role: 'user' });
+          setFormData({ username: '', password: '', email: '', role: 'user' });
           setShowCreateForm(false);
           loadUsers();
           alert('User created successfully!');
@@ -285,6 +347,7 @@ const VolunteerApp = () => {
           alert(`Error: ${error.error || 'Failed to create user'}`);
         }
       } catch (error) {
+        console.error('UserManagement: Error creating user:', error);
         alert('Failed to create user');
       }
     };
@@ -293,9 +356,10 @@ const VolunteerApp = () => {
       if (!editingUser) return;
 
       try {
+        console.log('UserManagement: Updating user...');
         const updateData = {
           username: formData.username,
-          full_name: formData.full_name,
+          email: formData.email,
           role: formData.role,
           ...(formData.password && { password: formData.password })
         };
@@ -308,7 +372,7 @@ const VolunteerApp = () => {
         });
 
         if (response.ok) {
-          setFormData({ username: '', password: '', full_name: '', role: 'user' });
+          setFormData({ username: '', password: '', email: '', role: 'user' });
           setEditingUser(null);
           setShowCreateForm(false);
           loadUsers();
@@ -318,6 +382,7 @@ const VolunteerApp = () => {
           alert(`Error: ${error.error || 'Failed to update user'}`);
         }
       } catch (error) {
+        console.error('UserManagement: Error updating user:', error);
         alert('Failed to update user');
       }
     };
@@ -347,7 +412,7 @@ const VolunteerApp = () => {
       setFormData({
         username: user.username,
         password: '',
-        full_name: user.full_name,
+        email: user.email,
         role: user.role
       });
       setShowCreateForm(true);
@@ -356,7 +421,7 @@ const VolunteerApp = () => {
     const cancelEdit = () => {
       setEditingUser(null);
       setShowCreateForm(false);
-      setFormData({ username: '', password: '', full_name: '', role: 'user' });
+      setFormData({ username: '', password: '', email: '', role: 'user' });
     };
 
     return (
@@ -403,13 +468,13 @@ const VolunteerApp = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Full Name *
+                      Email *
                     </label>
                     <input
-                      type="text"
+                      type="email"
                       required
-                      value={formData.full_name}
-                      onChange={(e) => setFormData({...formData, full_name: e.target.value})}
+                      value={formData.email}
+                      onChange={(e) => setFormData({...formData, email: e.target.value})}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                     />
                   </div>
@@ -466,7 +531,7 @@ const VolunteerApp = () => {
                   <thead>
                     <tr className="bg-gray-50">
                       <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Username</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Full Name</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Email</th>
                       <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Role</th>
                       <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Created</th>
                       <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Actions</th>
@@ -476,7 +541,7 @@ const VolunteerApp = () => {
                     {users.map((user) => (
                       <tr key={user.id}>
                         <td className="border border-gray-300 p-3 text-gray-900">{user.username}</td>
-                        <td className="border border-gray-300 p-3 text-gray-900">{user.full_name}</td>
+                        <td className="border border-gray-300 p-3 text-gray-900">{user.email}</td>
                         <td className="border border-gray-300 p-3">
                           <span className={`px-2 py-1 rounded text-xs ${
                             user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
@@ -864,11 +929,11 @@ const VolunteerApp = () => {
       }
     };
 
-   const updateEventRow = (index: number, field: keyof typeof eventRows[0], value: string) => {
-  	const newRows = [...eventRows];
-  	newRows[index][field] = value;  
- 	 setEventRows(newRows);
-};
+    const updateEventRow = (index: number, field: keyof typeof eventRows[0], value: string) => {
+      const newRows = [...eventRows];
+      newRows[index][field] = value;  
+      setEventRows(newRows);
+    };
 
     const generatePDF = () => {
       const currentFormData = {
@@ -1149,6 +1214,7 @@ const VolunteerApp = () => {
         const response = await fetch('/api/partnership-logs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(submitData),
         });
 
@@ -1723,6 +1789,7 @@ const VolunteerApp = () => {
         const response = await fetch('/api/activity-logs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(submitData),
         });
 
@@ -1964,6 +2031,7 @@ const VolunteerApp = () => {
       try {
         const response = await fetch('/api/upload', {
           method: 'POST',
+          credentials: 'include',
           body: formData
         });
 
