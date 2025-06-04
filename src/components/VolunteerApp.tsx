@@ -15,7 +15,6 @@ const VolunteerApp = () => {
   const [currentView, setCurrentView] = useState('landing');
   const [stats, setStats] = useState({ total_volunteers: 0, total_hours: 0, total_organizations: 0 });
   const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
-  const [isAuthenticated, setIsAuthenticated] = useState(false); // For future authentication implementation
 
   // Load stats for dashboard
   useEffect(() => {
@@ -1654,11 +1653,6 @@ const VolunteerApp = () => {
 
   // Render current view
   const renderCurrentView = () => {
-    // Future: Add authentication check here
-    // if (!isAuthenticated && currentView === 'dashboard') {
-    //   return <LoginForm />;
-    // }
-    
     switch (currentView) {
       case 'partnership':
         return <PartnershipForm />;
