@@ -62,7 +62,6 @@ export async function getVolunteerStats() {
         COALESCE(SUM(total_hours), 0)::DECIMAL as total_hours,
         COUNT(DISTINCT organization)::INTEGER as total_organizations
       FROM volunteer_stats
-      WHERE total_hours IS NOT NULL
     `;
     
     return {

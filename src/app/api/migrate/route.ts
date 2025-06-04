@@ -19,7 +19,7 @@ export async function GET() {
       );
     `;
 
-    // Create activity_logs table with proper computed column syntax
+    // Create activity_logs table without computed column
     await sql`
       CREATE TABLE IF NOT EXISTS activity_logs (
         id SERIAL PRIMARY KEY,
@@ -28,20 +28,6 @@ export async function GET() {
         phone VARCHAR(20),
         student_id VARCHAR(50),
         activities JSONB NOT NULL,
-        total_hours DECIMAL(10,2) GENERATED ALWAYS AS (
-          COALESCE((
-            SELECT SUM(
-              CASE 
-                WHEN jsonb_typeof(activity->'hours') = 'string' AND (activity->>'hours') ~ '^[0-9]+\.?[0-9]*$'
-                THEN (activity->>'hours')::DECIMAL
-                WHEN jsonb_typeof(activity->'hours') = 'number'
-                THEN (activity->'hours')::DECIMAL
-                ELSE 0
-              END
-            )
-            FROM jsonb_array_elements(activities) AS activity
-          ), 0)
-        ) STORED,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
@@ -91,7 +77,18 @@ export async function GET() {
           WHERE activity->>'organization' IS NOT NULL AND activity->>'organization' != ''
           LIMIT 1
         ), 'Unknown') as organization,
-        total_hours,
+        COALESCE((
+          SELECT SUM(
+            CASE 
+              WHEN jsonb_typeof(activity->'hours') = 'string' AND (activity->>'hours') ~ '^[0-9]+\.?[0-9]*$'
+              THEN (activity->>'hours')::DECIMAL
+              WHEN jsonb_typeof(activity->'hours') = 'number'
+              THEN (activity->'hours')::DECIMAL
+              ELSE 0
+            END
+          )
+          FROM jsonb_array_elements(activities) AS activity
+        ), 0) as total_hours,
         (
           SELECT COUNT(*)::INTEGER
           FROM jsonb_array_elements(activities)
