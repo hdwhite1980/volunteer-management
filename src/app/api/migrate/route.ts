@@ -128,10 +128,11 @@ export async function GET() {
     
     // Type-safe error handling
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorDetail = (error as any)?.detail || 'No additional details';
-    const errorHint = (error as any)?.hint || 'No hint available';
-    const errorPosition = (error as any)?.position || 'Unknown position';
-    const errorCode = (error as any)?.code || 'Unknown error code';
+    const postgresError = error as { detail?: string; hint?: string; position?: string; code?: string };
+    const errorDetail = postgresError.detail || 'No additional details';
+    const errorHint = postgresError.hint || 'No hint available';
+    const errorPosition = postgresError.position || 'Unknown position';
+    const errorCode = postgresError.code || 'Unknown error code';
     
     return NextResponse.json({ 
       error: 'Migration failed',
