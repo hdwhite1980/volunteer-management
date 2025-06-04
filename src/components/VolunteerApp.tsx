@@ -54,7 +54,7 @@ const VolunteerApp = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-800 mb-4">
-            Volunteer Management System
+            Virtu Volunteer Management System
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Track volunteer hours, manage partnerships, and maintain comprehensive records 
@@ -119,8 +119,8 @@ const VolunteerApp = () => {
           </button>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Partnership Volunteer Log Form
   const PartnershipForm = () => {
@@ -148,7 +148,73 @@ const VolunteerApp = () => {
       setEventRows(newRows);
     };
 
-    const handleSubmit = async () => {
+    const generatePDF = () => {
+      // Simple PDF generation using browser print
+      const currentFormData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        organization: formData.organization,
+        email: formData.email,
+        phone: formData.phone,
+        families_served: formData.families_served,
+        events: eventRows.filter(row => row.date || row.site)
+      };
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Partnership Volunteer Log</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+                .field { margin-bottom: 10px; }
+                .label { font-weight: bold; color: #374151; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+                th { background-color: #f9fafb; font-weight: bold; }
+                @media print { body { margin: 0; } }
+              </style>
+            </head>
+            <body>
+              <h1>Agency Partnership Volunteer Log</h1>
+              <div class="field"><span class="label">Name:</span> ${currentFormData.first_name} ${currentFormData.last_name}</div>
+              <div class="field"><span class="label">Organization:</span> ${currentFormData.organization}</div>
+              <div class="field"><span class="label">Email:</span> ${currentFormData.email}</div>
+              <div class="field"><span class="label">Phone:</span> ${currentFormData.phone}</div>
+              <div class="field"><span class="label">Families Served:</span> ${currentFormData.families_served}</div>
+              
+              <h2>Volunteer Hours</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Event Date</th>
+                    <th>Event Site</th>
+                    <th>Zip Code</th>
+                    <th>Hours Worked</th>
+                    <th>Volunteers</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${currentFormData.events.map(event => `
+                    <tr>
+                      <td>${event.date}</td>
+                      <td>${event.site}</td>
+                      <td>${event.zip}</td>
+                      <td>${event.hours}</td>
+                      <td>${event.volunteers}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    };
       try {
         const submitData = {
           ...formData,
@@ -166,11 +232,12 @@ const VolunteerApp = () => {
           alert('Partnership log submitted successfully!');
           setCurrentView('landing');
         } else {
-          alert('Error submitting form. Please try again.');
+          console.error('Server error:', result);
+          alert(`Error submitting form: ${result.error || 'Unknown error'}\n${result.details || ''}`);
         }
       } catch (error) {
         console.error('Submission error:', error);
-        alert('Error submitting form. Please try again.');
+        alert('Error submitting form. Please check your internet connection and try again.');
       }
     };
 
@@ -276,11 +343,11 @@ const VolunteerApp = () => {
                   <table className="w-full border-collapse border border-gray-300">
                     <thead>
                       <tr className="bg-gray-50">
-                        <th className="border border-gray-300 p-3 text-left">Event Date</th>
-                        <th className="border border-gray-300 p-3 text-left">Event Site</th>
-                        <th className="border border-gray-300 p-3 text-left">Zip</th>
-                        <th className="border border-gray-300 p-3 text-left">Total Hours Worked</th>
-                        <th className="border border-gray-300 p-3 text-left">Total Volunteers</th>
+                        <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Event Date</th>
+                        <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Event Site</th>
+                        <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Zip</th>
+                        <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Total Hours Worked</th>
+                        <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Total Volunteers</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -345,6 +412,7 @@ const VolunteerApp = () => {
               <div className="flex space-x-4 pt-6">
                 <button
                   type="button"
+                  onClick={generatePDF}
                   className="bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
                 >
                   Preview PDF
@@ -385,12 +453,100 @@ const VolunteerApp = () => {
       setActivities(newActivities);
     };
 
+    const generateActivityPDF = () => {
+      const currentFormData = {
+        volunteer_name: formData.volunteer_name,
+        email: formData.email,
+        phone: formData.phone,
+        student_id: formData.student_id,
+        activities: activities.filter(activity => activity.date || activity.activity || activity.organization)
+      };
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Volunteer Activity Log</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #1f2937; border-bottom: 2px solid #10b981; padding-bottom: 10px; }
+                .field { margin-bottom: 10px; }
+                .label { font-weight: bold; color: #374151; }
+                .activity { border: 1px solid #d1d5db; padding: 15px; margin: 10px 0; border-radius: 8px; }
+                .activity h3 { color: #065f46; margin-top: 0; }
+                @media print { body { margin: 0; } }
+              </style>
+            </head>
+            <body>
+              <h1>Volunteer Activity Log</h1>
+              <div class="field"><span class="label">Volunteer Name:</span> ${currentFormData.volunteer_name}</div>
+              <div class="field"><span class="label">Email:</span> ${currentFormData.email}</div>
+              <div class="field"><span class="label">Phone:</span> ${currentFormData.phone}</div>
+              <div class="field"><span class="label">Student ID:</span> ${currentFormData.student_id}</div>
+              
+              <h2>Activities</h2>
+              ${currentFormData.activities.map((activity, index) => `
+                <div class="activity">
+                  <h3>Activity ${index + 1}</h3>
+                  <div class="field"><span class="label">Date:</span> ${activity.date}</div>
+                  <div class="field"><span class="label">Hours:</span> ${activity.hours}</div>
+                  <div class="field"><span class="label">Organization:</span> ${activity.organization}</div>
+                  <div class="field"><span class="label">Activity Type:</span> ${activity.activity}</div>
+                  <div class="field"><span class="label">Location:</span> ${activity.location}</div>
+                  <div class="field"><span class="label">Description:</span> ${activity.description}</div>
+                </div>
+              `).join('')}
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    };
+
     const handleSubmit = async () => {
       try {
+        // Validate required fields
+        if (!formData.volunteer_name || !formData.email) {
+          alert('Please fill in all required fields (marked with *)');
+          return;
+        }
+
+        // Filter activities to only include valid ones
+        const validActivities = activities.filter(activity => 
+          activity.date && activity.activity && activity.organization && activity.description
+        );
+        
+        if (validActivities.length === 0) {
+          alert('Please add at least one complete activity with date, type, organization, and description');
+          return;
+        }
+
+        // Validate hours in activities
+        for (const activity of validActivities) {
+          if (!activity.hours || isNaN(parseFloat(activity.hours))) {
+            alert('Please enter valid hours for all activities');
+            return;
+          }
+        }
+
         const submitData = {
-          ...formData,
-          activities: activities.filter(activity => activity.date && activity.activity && activity.organization)
+          volunteer_name: formData.volunteer_name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone?.trim() || null,
+          student_id: formData.student_id?.trim() || null,
+          activities: validActivities.map(activity => ({
+            date: activity.date,
+            activity: activity.activity,
+            organization: activity.organization.trim(),
+            location: activity.location?.trim() || '',
+            hours: activity.hours,
+            description: activity.description.trim()
+          }))
         };
+
+        console.log('Submitting activity data:', submitData);
 
         const response = await fetch('/api/activity-logs', {
           method: 'POST',
@@ -398,10 +554,21 @@ const VolunteerApp = () => {
           body: JSON.stringify(submitData),
         });
 
+        const result = await response.json();
+        console.log('Server response:', result);
+
         if (response.ok) {
           alert('Activity log submitted successfully!');
           setCurrentView('landing');
         } else {
+          console.error('Server error:', result);
+          alert(`Error submitting form: ${result.error || 'Unknown error'}\n${result.details || ''}`);
+        }
+      } catch (error) {
+        console.error('Submission error:', error);
+        alert('Error submitting form. Please check your internet connection and try again.');
+      }
+    };
           alert('Error submitting form. Please try again.');
         }
       } catch (error) {
@@ -583,6 +750,7 @@ const VolunteerApp = () => {
               <div className="flex space-x-4 pt-6">
                 <button
                   type="button"
+                  onClick={generateActivityPDF}
                   className="bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
                 >
                   Preview PDF
@@ -602,7 +770,85 @@ const VolunteerApp = () => {
   };
 
   // Database Dashboard
-  const Dashboard = () => (
+  const Dashboard = () => {
+    const exportPDFReport = () => {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Virtu Volunteer Management Report</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                h1 { color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+                .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+                .stat { text-align: center; padding: 15px; border: 1px solid #d1d5db; border-radius: 8px; }
+                .stat-number { font-size: 24px; font-weight: bold; color: #1f2937; }
+                .stat-label { color: #6b7280; margin-top: 5px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+                th { background-color: #f9fafb; font-weight: bold; }
+                .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+                .badge-partnership { background-color: #dbeafe; color: #1e40af; }
+                .badge-activity { background-color: #d1fae5; color: #065f46; }
+                @media print { body { margin: 0; } .stats { display: block; } .stat { margin: 10px 0; } }
+              </style>
+            </head>
+            <body>
+              <h1>Virtu Volunteer Management Report</h1>
+              <p>Generated on: ${new Date().toLocaleDateString()}</p>
+              
+              <div class="stats">
+                <div class="stat">
+                  <div class="stat-number">${stats.total_volunteers}</div>
+                  <div class="stat-label">Total Volunteers</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-number">${Math.round(stats.total_hours)}</div>
+                  <div class="stat-label">Total Hours</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-number">${stats.total_organizations}</div>
+                  <div class="stat-label">Organizations</div>
+                </div>
+              </div>
+              
+              <h2>Volunteer Details</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Organization</th>
+                    <th>Total Hours</th>
+                    <th>Type</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${volunteers.map(volunteer => `
+                    <tr>
+                      <td>${volunteer.name}</td>
+                      <td>${volunteer.email}</td>
+                      <td>${volunteer.organization}</td>
+                      <td>${Math.round(volunteer.total_hours || 0)}</td>
+                      <td>
+                        <span class="badge ${volunteer.log_type === 'partnership' ? 'badge-partnership' : 'badge-activity'}">
+                          ${volunteer.log_type}
+                        </span>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    };
+
+    return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
@@ -649,7 +895,10 @@ const VolunteerApp = () => {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-800">Recent Volunteers</h2>
-              <button className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+              <button 
+                onClick={exportPDFReport}
+                className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
                 <Download className="w-4 h-4 inline mr-2" />
                 Export PDF Report
               </button>
@@ -659,11 +908,11 @@ const VolunteerApp = () => {
               <table className="w-full border-collapse border border-gray-300">
                 <thead>
                   <tr className="bg-gray-50">
-                    <th className="border border-gray-300 p-3 text-left">Name</th>
-                    <th className="border border-gray-300 p-3 text-left">Email</th>
-                    <th className="border border-gray-300 p-3 text-left">Organization</th>
-                    <th className="border border-gray-300 p-3 text-left">Total Hours</th>
-                    <th className="border border-gray-300 p-3 text-left">Type</th>
+                    <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Name</th>
+                    <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Email</th>
+                    <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Organization</th>
+                    <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Total Hours</th>
+                    <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Type</th>
                   </tr>
                 </thead>
                 <tbody>
