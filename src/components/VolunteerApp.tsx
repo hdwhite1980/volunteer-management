@@ -864,11 +864,11 @@ const VolunteerApp = () => {
       }
     };
 
-    const updateEventRow = (index: number, field: keyof typeof eventRows[0], value: string) => {
-      const newRows = [...eventRows];
-      newRows[index][field] = value;
-      setEventRows(newRows);
-    };
+   const updateEventRow = (index: number, field: keyof typeof eventRows[0], value: string) => {
+  	const newRows = [...eventRows];
+  	newRows[index][field] = value;  
+ 	 setEventRows(newRows);
+};
 
     const generatePDF = () => {
       const currentFormData = {
