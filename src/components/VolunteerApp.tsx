@@ -119,8 +119,8 @@ const VolunteerApp = () => {
           </button>
         </div>
       </div>
-    );
-  };
+    </div>
+  );
 
   // Partnership Volunteer Log Form
   const PartnershipForm = () => {
@@ -215,18 +215,48 @@ const VolunteerApp = () => {
         printWindow.print();
       }
     };
+
+    const handleSubmit = async () => {
       try {
+        // Validate required fields
+        if (!formData.first_name || !formData.last_name || !formData.email || !formData.organization || !formData.phone) {
+          alert('Please fill in all required fields (marked with *)');
+          return;
+        }
+
+        if (!formData.families_served || isNaN(parseInt(formData.families_served))) {
+          alert('Please enter a valid number for families served');
+          return;
+        }
+
+        // Filter events to only include those with at least date and site
+        const validEvents = eventRows.filter(row => row.date && row.site);
+        
+        if (validEvents.length === 0) {
+          alert('Please add at least one event with a date and site location');
+          return;
+        }
+
         const submitData = {
-          ...formData,
+          first_name: formData.first_name.trim(),
+          last_name: formData.last_name.trim(),
+          organization: formData.organization.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
           families_served: parseInt(formData.families_served),
-          events: eventRows.filter(row => row.date && row.site)
+          events: validEvents
         };
+
+        console.log('Submitting partnership data:', submitData);
 
         const response = await fetch('/api/partnership-logs', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(submitData),
         });
+
+        const result = await response.json();
+        console.log('Server response:', result);
 
         if (response.ok) {
           alert('Partnership log submitted successfully!');
@@ -569,13 +599,6 @@ const VolunteerApp = () => {
         alert('Error submitting form. Please check your internet connection and try again.');
       }
     };
-          alert('Error submitting form. Please try again.');
-        }
-      } catch (error) {
-        console.error('Submission error:', error);
-        alert('Error submitting form. Please try again.');
-      }
-    };
 
     return (
       <div className="min-h-screen bg-gray-50 py-8">
@@ -849,96 +872,97 @@ const VolunteerApp = () => {
     };
 
     return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Volunteer Database</h1>
-            <button
-              onClick={() => setCurrentView('landing')}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              ← Back to Home
-            </button>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex items-center">
-                <Users className="w-8 h-8 text-blue-600 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Total Volunteers</p>
-                  <p className="text-2xl font-bold text-gray-800">{stats.total_volunteers || 0}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex items-center">
-                <Clock className="w-8 h-8 text-green-600 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Total Hours</p>
-                  <p className="text-2xl font-bold text-gray-800">{Math.round(stats.total_hours || 0)}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex items-center">
-                <Building2 className="w-8 h-8 text-purple-600 mr-3" />
-                <div>
-                  <p className="text-sm text-gray-600">Organizations</p>
-                  <p className="text-2xl font-bold text-gray-800">{stats.total_organizations || 0}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">Recent Volunteers</h2>
-              <button 
-                onClick={exportPDFReport}
-                className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="container mx-auto px-4">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-between mb-8">
+              <h1 className="text-3xl font-bold text-gray-800">Volunteer Database</h1>
+              <button
+                onClick={() => setCurrentView('landing')}
+                className="text-blue-600 hover:text-blue-800"
               >
-                <Download className="w-4 h-4 inline mr-2" />
-                Export PDF Report
+                ← Back to Home
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-gray-300">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Name</th>
-                    <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Email</th>
-                    <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Organization</th>
-                    <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Total Hours</th>
-                    <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Type</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {volunteers.map((volunteer, index) => (
-                    <tr key={index}>
-                      <td className="border border-gray-300 p-3">{volunteer.name}</td>
-                      <td className="border border-gray-300 p-3">{volunteer.email}</td>
-                      <td className="border border-gray-300 p-3">{volunteer.organization}</td>
-                      <td className="border border-gray-300 p-3">{Math.round(volunteer.total_hours || 0)}</td>
-                      <td className="border border-gray-300 p-3">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          volunteer.log_type === 'partnership' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                        }`}>
-                          {volunteer.log_type}
-                        </span>
-                      </td>
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <Users className="w-8 h-8 text-blue-600 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Total Volunteers</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats.total_volunteers || 0}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <Clock className="w-8 h-8 text-green-600 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Total Hours</p>
+                    <p className="text-2xl font-bold text-gray-800">{Math.round(stats.total_hours || 0)}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <div className="flex items-center">
+                  <Building2 className="w-8 h-8 text-purple-600 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Organizations</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats.total_organizations || 0}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-lg p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-800">Recent Volunteers</h2>
+                <button 
+                  onClick={exportPDFReport}
+                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <Download className="w-4 h-4 inline mr-2" />
+                  Export PDF Report
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-300">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Name</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Email</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Organization</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Total Hours</th>
+                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Type</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {volunteers.map((volunteer, index) => (
+                      <tr key={index}>
+                        <td className="border border-gray-300 p-3">{volunteer.name}</td>
+                        <td className="border border-gray-300 p-3">{volunteer.email}</td>
+                        <td className="border border-gray-300 p-3">{volunteer.organization}</td>
+                        <td className="border border-gray-300 p-3">{Math.round(volunteer.total_hours || 0)}</td>
+                        <td className="border border-gray-300 p-3">
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            volunteer.log_type === 'partnership' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                          }`}>
+                            {volunteer.log_type}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Upload Component
   const UploadComponent = () => (
