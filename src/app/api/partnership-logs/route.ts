@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createPartnershipLog } from '@/lib/database';
 
+interface EventData {
+  date: string;
+  site: string;
+  zip: string;
+  hours: string;
+  volunteers: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
@@ -41,9 +49,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Clean and validate events
-    const cleanEvents = data.events.filter((event: any) => {
+    const cleanEvents = data.events.filter((event: EventData) => {
       return event.date && event.site; // Only keep events with at least date and site
-    }).map((event: any) => ({
+    }).map((event: EventData) => ({
       date: event.date || '',
       site: event.site || '',
       zip: event.zip || '',
