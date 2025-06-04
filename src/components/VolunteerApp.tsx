@@ -54,7 +54,7 @@ const VolunteerApp = () => {
       <div className="container mx-auto px-4 py-12">
         <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-gray-800 mb-4">
-            Virtu Volunteer Management System
+            VCEG Volunteer Management System
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Track volunteer hours, manage partnerships, and maintain comprehensive records 
@@ -309,7 +309,7 @@ const VolunteerApp = () => {
             </head>
             <body>
               <div class="header">
-                <h1>Virtu Community Enhancement Group</h1>
+                <h1>VCEG Community Enhancement Group</h1>
                 <h2>Agency Partnership Volunteer Log</h2>
               </div>
               
@@ -929,7 +929,7 @@ const VolunteerApp = () => {
                 </div>
                 <div class="field">
                   <span class="field-label">5. Home Agency (and Unit):</span>
-                  <div class="field-line">Virtu Community Enhancement Group</div>
+                  <div class="field-line">VCEG Community Enhancement Group</div>
                 </div>
               </div>
               
@@ -1336,7 +1336,7 @@ const VolunteerApp = () => {
         printWindow.document.write(`
           <html>
             <head>
-              <title>Virtu Volunteer Management Report</title>
+              <title>VCEG Volunteer Management Report</title>
               <style>
                 body { font-family: Arial, sans-serif; margin: 20px; }
                 h1 { color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
@@ -1355,7 +1355,7 @@ const VolunteerApp = () => {
               </style>
             </head>
             <body>
-              <h1>Virtu Volunteer Management Report</h1>
+              <h1>VCEG Volunteer Management Report</h1>
               <p>Generated on: ${new Date().toLocaleDateString()}</p>
               <p>Filter Applied: ${filterType === 'all' ? 'All Records' : filterType.charAt(0).toUpperCase() + filterType.slice(1)} ${searchTerm ? `| Search: "${searchTerm}"` : ''}</p>
               
