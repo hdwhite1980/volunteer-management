@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Upload, Download, Search, Clock, Users, Building2, User, Lock, Plus, Edit, Trash2, LogOut } from 'lucide-react';
+import { Upload, Download, Search, Clock, Users, Building2, User, Lock, Plus, Edit, Trash2, LogOut, CheckCircle, AlertCircle } from 'lucide-react';
 
 interface Volunteer {
   name: string;
@@ -31,7 +31,6 @@ const VolunteerApp = () => {
 
   // Check authentication on app load
   useEffect(() => {
-    // Only check auth status if we're not already authenticated
     if (!isAuthenticated) {
       console.log('Frontend: Component mounted, checking auth status...');
       checkAuthStatus();
@@ -59,7 +58,6 @@ const VolunteerApp = () => {
         const data = await response.json();
         console.log('Frontend: Auth check successful:', data);
         
-        // Our session API returns {authenticated: true, user: {...}}
         if (data.authenticated && data.user) {
           setIsAuthenticated(true);
           setCurrentUser(data.user);
@@ -96,7 +94,6 @@ const VolunteerApp = () => {
 
       if (response.ok && data.success) {
         console.log('Frontend: Login successful, setting user state...');
-        // Our login API returns {success: true, user: {...}}
         setIsAuthenticated(true);
         setCurrentUser(data.user);
         setCurrentView('dashboard');
@@ -124,7 +121,6 @@ const VolunteerApp = () => {
       setCurrentView('landing');
     } catch (error) {
       console.error('Frontend: Logout error:', error);
-      // Still clear local state even if logout request fails
       setIsAuthenticated(false);
       setCurrentUser(null);
       setCurrentView('landing');
@@ -144,7 +140,6 @@ const VolunteerApp = () => {
         const data = await response.json();
         setVolunteers(data);
         
-        // Calculate stats from data
         const totalHours = data.reduce((sum: number, vol: any) => sum + (vol.total_hours || 0), 0);
         const organizations = new Set(data.map((vol: any) => vol.organization).filter(Boolean));
         
@@ -193,8 +188,7 @@ const VolunteerApp = () => {
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleSubmit = async (e?: React.FormEvent) => {
-      if (e) e.preventDefault();
+    const handleSubmit = async () => {
       setError('');
       setIsSubmitting(true);
 
@@ -214,72 +208,81 @@ const VolunteerApp = () => {
     };
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center py-12">
-        <div className="max-w-md w-full mx-4">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center py-12 px-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white/90 backdrop-blur-lg rounded-3xl shadow-2xl p-8 border border-white/20">
             <div className="text-center mb-8">
-              <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4 mx-auto">
-                <Lock className="w-8 h-8 text-blue-600" />
+              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl mb-6 mx-auto shadow-lg">
+                <Lock className="w-10 h-10 text-white" />
               </div>
-              <h1 className="text-2xl font-bold text-gray-800 mb-2">Database Access</h1>
-              <p className="text-gray-600">Please sign in to view volunteer records</p>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
+              <p className="text-gray-600">Sign in to access the volunteer database</p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.username}
-                  onChange={(e) => setFormData({...formData, username: e.target.value})}
-                  onKeyPress={handleKeyPress}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  placeholder="Enter your username"
-                />
-              </div>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.username}
+                    onChange={(e) => setFormData({...formData, username: e.target.value})}
+                    onKeyPress={handleKeyPress}
+                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                    placeholder="Enter your username"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({...formData, password: e.target.value})}
-                  onKeyPress={handleKeyPress}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  placeholder="Enter your password"
-                />
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    onKeyPress={handleKeyPress}
+                    className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                    placeholder="Enter your password"
+                  />
+                </div>
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <p className="text-red-600 text-sm">{error}</p>
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center space-x-3">
+                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  <p className="text-red-700 text-sm">{error}</p>
                 </div>
               )}
 
               <button
-                type="submit"
+                onClick={handleSubmit}
                 disabled={isSubmitting}
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                {isSubmitting ? 'Signing In...' : 'Sign In'}
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <span>Signing In...</span>
+                  </div>
+                ) : 'Sign In'}
               </button>
-            </form>
+            </div>
 
-            <div className="mt-6 text-center">
+            <div className="mt-8 text-center space-y-4">
               <button
                 onClick={() => setCurrentView('landing')}
-                className="text-blue-600 hover:text-blue-800 text-sm"
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors"
               >
                 ← Back to Home
               </button>
-              <div className="mt-4 text-xs text-gray-500">
-                Default: admin / admin123
+              <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
+                <p className="font-medium">Default Credentials:</p>
+                <p>Username: admin | Password: admin123</p>
               </div>
             </div>
           </div>
@@ -425,37 +428,50 @@ const VolunteerApp = () => {
     };
 
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-bold text-gray-800">User Management</h1>
-              <div className="flex gap-4">
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-600 to-green-700 rounded-xl">
+                  <User className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
+                  <p className="text-sm text-gray-600">Manage system users and permissions</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
                 <button
                   onClick={() => setShowCreateForm(true)}
-                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                 >
-                  <Plus className="w-4 h-4 inline mr-2" />
-                  Create User
+                  <Plus className="w-4 h-4" />
+                  <span>Create User</span>
                 </button>
                 <button
                   onClick={() => setCurrentView('dashboard')}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-blue-600 hover:text-blue-800 font-medium"
                 >
-                  ← Back to Dashboard
+                  ← Dashboard
                 </button>
               </div>
             </div>
+          </div>
+        </div>
 
+        <div className="container mx-auto px-6 py-8">
+          <div className="max-w-6xl mx-auto space-y-8">
             {/* Create/Edit User Form */}
             {showCreateForm && (
-              <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4">
+              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-6">
                   {editingUser ? 'Edit User' : 'Create New User'}
                 </h2>
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Username *
                     </label>
                     <input
@@ -463,11 +479,11 @@ const VolunteerApp = () => {
                       required
                       value={formData.username}
                       onChange={(e) => setFormData({...formData, username: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Email *
                     </label>
                     <input
@@ -475,11 +491,11 @@ const VolunteerApp = () => {
                       required
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Password {editingUser ? '(leave blank to keep current)' : '*'}
                     </label>
                     <input
@@ -487,17 +503,17 @@ const VolunteerApp = () => {
                       required={!editingUser}
                       value={formData.password}
                       onChange={(e) => setFormData({...formData, password: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Role *
                     </label>
                     <select
                       value={formData.role}
                       onChange={(e) => setFormData({...formData, role: e.target.value})}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
                     >
                       <option value="admin">Admin</option>
                       <option value="user">User</option>
@@ -505,16 +521,14 @@ const VolunteerApp = () => {
                   </div>
                   <div className="md:col-span-2 flex gap-4">
                     <button
-                      type="button"
                       onClick={editingUser ? handleUpdateUser : handleCreateUser}
-                      className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+                      className="bg-green-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-green-700 transition-colors"
                     >
                       {editingUser ? 'Update User' : 'Create User'}
                     </button>
                     <button
-                      type="button"
                       onClick={cancelEdit}
-                      className="bg-gray-300 text-gray-700 py-2 px-6 rounded-lg hover:bg-gray-400 transition-colors"
+                      className="bg-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-400 transition-colors"
                     >
                       Cancel
                     </button>
@@ -524,39 +538,44 @@ const VolunteerApp = () => {
             )}
 
             {/* Users Table */}
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Existing Users</h2>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+              <div className="p-6 border-b border-gray-100">
+                <h2 className="text-xl font-semibold text-gray-900">Existing Users</h2>
+                <p className="text-sm text-gray-600 mt-1">Manage system users and their permissions</p>
+              </div>
               <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Username</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Email</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Role</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Created</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Actions</th>
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Username</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Created</th>
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-gray-200">
                     {users.map((user) => (
-                      <tr key={user.id}>
-                        <td className="border border-gray-300 p-3 text-gray-900">{user.username}</td>
-                        <td className="border border-gray-300 p-3 text-gray-900">{user.email}</td>
-                        <td className="border border-gray-300 p-3">
-                          <span className={`px-2 py-1 rounded text-xs ${
+                      <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="font-medium text-gray-900">{user.username}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">{user.email}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                             user.role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
                           }`}>
                             {user.role}
                           </span>
                         </td>
-                        <td className="border border-gray-300 p-3 text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
                           {new Date(user.created_at).toLocaleDateString()}
                         </td>
-                        <td className="border border-gray-300 p-3">
-                          <div className="flex gap-2">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center space-x-3">
                             <button
                               onClick={() => startEdit(user)}
-                              className="text-blue-600 hover:text-blue-800 p-1"
+                              className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Edit User"
                             >
                               <Edit className="w-4 h-4" />
@@ -564,7 +583,7 @@ const VolunteerApp = () => {
                             {user.id !== currentUser?.id && (
                               <button
                                 onClick={() => handleDeleteUser(user.id)}
-                                className="text-red-600 hover:text-red-800 p-1"
+                                className="text-red-600 hover:text-red-800 p-2 hover:bg-red-50 rounded-lg transition-colors"
                                 title="Delete User"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -584,86 +603,102 @@ const VolunteerApp = () => {
     );
   };
 
-  // Landing Page Component with Auth Button
+  // Landing Page Component
   const LandingPage = () => (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-800 mb-4">
-            Virtu Volunteer Management System
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Track volunteer hours, manage partnerships, and maintain comprehensive records 
-            of community service activities
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-100">
-            <div className="flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-6 mx-auto">
-              <Building2 className="w-8 h-8 text-blue-600" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
+      
+      <div className="relative z-10">
+        <div className="container mx-auto px-6 py-16">
+          {/* Header */}
+          <div className="text-center mb-20">
+            <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-8 shadow-2xl">
+              <Users className="w-12 h-12 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-              Partnership Volunteer Log
-            </h2>
-            <p className="text-gray-600 mb-6 text-center">
-              Record agency partnership volunteer activities, track families served, 
-              and manage organizational volunteer hours
+            <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
+              Virtu Volunteer
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+                Management System
+              </span>
+            </h1>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+              Track volunteer hours, manage partnerships, and maintain comprehensive records 
+              of community service activities with our advanced management platform
             </p>
+          </div>
+
+          {/* Main Action Cards */}
+          <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
+            <div className="group bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-white/20 hover:border-white/30 hover:-translate-y-2">
+              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Building2 className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-4 text-center">
+                Partnership Volunteer Log
+              </h2>
+              <p className="text-gray-300 mb-8 text-center leading-relaxed">
+                Record agency partnership volunteer activities, track families served, 
+                and manage organizational volunteer hours with comprehensive reporting
+              </p>
+              <button
+                onClick={() => setCurrentView('partnership')}
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Start Partnership Log
+              </button>
+            </div>
+
+            <div className="group bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-white/20 hover:border-white/30 hover:-translate-y-2">
+              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Clock className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-4 text-center">
+                Activity Log
+              </h2>
+              <p className="text-gray-300 mb-8 text-center leading-relaxed">
+                Log individual volunteer activities, track hours, and document 
+                specific community service contributions with detailed activity tracking
+              </p>
+              <button
+                onClick={() => setCurrentView('activity')}
+                className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Start Activity Log
+              </button>
+            </div>
+          </div>
+
+          {/* Secondary Actions */}
+          <div className="flex flex-wrap justify-center gap-6">
             <button
-              onClick={() => setCurrentView('partnership')}
-              className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
+              onClick={() => setCurrentView(isAuthenticated ? 'dashboard' : 'login')}
+              className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              Start Partnership Log
+              <Search className="w-5 h-5 inline mr-3" />
+              View Database
+            </button>
+            <button
+              onClick={() => setCurrentView('upload')}
+              className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <Upload className="w-5 h-5 inline mr-3" />
+              Upload Forms
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-100">
-            <div className="flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-6 mx-auto">
-              <Clock className="w-8 h-8 text-green-600" />
+          {/* Powered by AHTS */}
+          <div className="fixed bottom-6 right-6">
+            <div className="bg-black/20 backdrop-blur-sm rounded-lg px-3 py-2">
+              <p className="text-xs text-gray-400">Powered by AHTS</p>
             </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-              Activity Log
-            </h2>
-            <p className="text-gray-600 mb-6 text-center">
-              Log individual volunteer activities, track hours, and document 
-              specific community service contributions
-            </p>
-            <button
-              onClick={() => setCurrentView('activity')}
-              className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200"
-            >
-              Start Activity Log
-            </button>
           </div>
-        </div>
-
-        <div className="mt-12 text-center">
-          <button
-            onClick={() => setCurrentView(isAuthenticated ? 'dashboard' : 'login')}
-            className="bg-gray-600 text-white py-3 px-8 rounded-lg font-semibold hover:bg-gray-700 transition-colors duration-200 mr-4"
-          >
-            <Search className="w-5 h-5 inline mr-2" />
-            View Database
-          </button>
-          <button
-            onClick={() => setCurrentView('upload')}
-            className="bg-purple-600 text-white py-3 px-8 rounded-lg font-semibold hover:bg-purple-700 transition-colors duration-200"
-          >
-            <Upload className="w-5 h-5 inline mr-2" />
-            Upload Forms
-          </button>
-        </div>
-
-        {/* Powered by AHTS */}
-        <div className="fixed bottom-4 right-4">
-          <p className="text-xs text-gray-400">Powered by AHTS</p>
         </div>
       </div>
     </div>
   );
 
-  // Enhanced Dashboard with Logout
+  // Enhanced Dashboard
   const Dashboard = () => {
     const [filterType, setFilterType] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
@@ -685,26 +720,28 @@ const VolunteerApp = () => {
             <head>
               <title>Virtu Volunteer Management Report</title>
               <style>
-                body { font-family: Arial, sans-serif; margin: 20px; }
-                h1 { color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
-                .stats { display: flex; justify-content: space-around; margin: 20px 0; }
-                .stat { text-align: center; padding: 15px; border: 1px solid #d1d5db; border-radius: 8px; }
-                .stat-number { font-size: 24px; font-weight: bold; color: #1f2937; }
-                .stat-label { color: #6b7280; margin-top: 5px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
-                th { background-color: #f9fafb; font-weight: bold; }
-                .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
-                .badge-partnership { background-color: #dbeafe; color: #1e40af; }
-                .badge-activity { background-color: #d1fae5; color: #065f46; }
-                .powered-by { position: fixed; bottom: 10px; right: 10px; font-size: 8px; color: #999; }
-                @media print { body { margin: 0; } .stats { display: block; } .stat { margin: 10px 0; } .powered-by { position: absolute; } }
+                body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 20px; color: #374151; }
+                .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #3b82f6; }
+                .header h1 { color: #1f2937; font-size: 28px; margin-bottom: 10px; }
+                .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 30px 0; }
+                .stat { text-align: center; padding: 20px; border: 2px solid #e5e7eb; border-radius: 12px; background: #f9fafb; }
+                .stat-number { font-size: 32px; font-weight: bold; color: #1f2937; margin-bottom: 5px; }
+                .stat-label { color: #6b7280; font-weight: 600; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; border-radius: 8px; overflow: hidden; }
+                th { background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white; padding: 15px 10px; font-weight: 600; }
+                td { border: 1px solid #e5e7eb; padding: 12px 10px; }
+                tbody tr:nth-child(even) { background: #f9fafb; }
+                .badge { padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+                .badge-partnership { background: #dbeafe; color: #1e40af; }
+                .badge-activity { background: #d1fae5; color: #065f46; }
               </style>
             </head>
             <body>
-              <h1>Virtu Volunteer Management Report</h1>
-              <p>Generated on: ${new Date().toLocaleDateString()}</p>
-              <p>Filter Applied: ${filterType === 'all' ? 'All Records' : filterType.charAt(0).toUpperCase() + filterType.slice(1)} ${searchTerm ? `| Search: "${searchTerm}"` : ''}</p>
+              <div class="header">
+                <h1>🎯 Virtu Volunteer Management Report</h1>
+                <p style="color: #6b7280; margin: 0;">Generated on: ${new Date().toLocaleDateString()}</p>
+                <p style="color: #6b7280; margin: 5px 0 0 0;">Filter: ${filterType === 'all' ? 'All Records' : filterType.charAt(0).toUpperCase() + filterType.slice(1)} ${searchTerm ? `| Search: "${searchTerm}"` : ''}</p>
+              </div>
               
               <div class="stats">
                 <div class="stat">
@@ -721,7 +758,7 @@ const VolunteerApp = () => {
                 </div>
               </div>
               
-              <h2>Volunteer Details (${filteredVolunteers.length} records)</h2>
+              <h2 style="color: #1f2937; margin-top: 40px;">📊 Volunteer Details (${filteredVolunteers.length} records)</h2>
               <table>
                 <thead>
                   <tr>
@@ -735,11 +772,11 @@ const VolunteerApp = () => {
                 <tbody>
                   ${filteredVolunteers.map(volunteer => `
                     <tr>
-                      <td>${volunteer.name}</td>
+                      <td><strong>${volunteer.name}</strong></td>
                       <td>${volunteer.email}</td>
                       <td>${volunteer.organization}</td>
-                      <td>${Math.round(volunteer.total_hours || 0)}</td>
-                      <td>
+                      <td style="text-align: center; font-weight: 600;">${Math.round(volunteer.total_hours || 0)}</td>
+                      <td style="text-align: center;">
                         <span class="badge ${volunteer.log_type === 'partnership' ? 'badge-partnership' : 'badge-activity'}">
                           ${volunteer.log_type}
                         </span>
@@ -748,8 +785,6 @@ const VolunteerApp = () => {
                   `).join('')}
                 </tbody>
               </table>
-              
-              <div class="powered-by">Powered by AHTS</div>
             </body>
           </html>
         `);
@@ -759,90 +794,118 @@ const VolunteerApp = () => {
     };
 
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-bold text-gray-800">Volunteer Database</h1>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-gray-600">
-                  Welcome, {currentUser?.username}
-                </span>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">Volunteer Database</h1>
+                  <p className="text-sm text-gray-600">Welcome back, {currentUser?.username}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
                 {currentUser?.role === 'admin' && (
                   <button
                     onClick={() => setCurrentView('users')}
-                    className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+                    className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                   >
-                    <User className="w-4 h-4 inline mr-2" />
-                    Manage Users
+                    <User className="w-4 h-4" />
+                    <span>Manage Users</span>
                   </button>
                 )}
                 <button
                   onClick={handleLogout}
-                  className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors"
+                  className="bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors flex items-center space-x-2"
                 >
-                  <LogOut className="w-4 h-4 inline mr-2" />
-                  Logout
+                  <LogOut className="w-4 h-4" />
+                  <span>Logout</span>
                 </button>
                 <button
                   onClick={() => setCurrentView('landing')}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-blue-600 hover:text-blue-800 font-medium"
                 >
-                  ← Back to Home
+                  ← Home
                 </button>
               </div>
             </div>
+          </div>
+        </div>
 
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Users className="w-8 h-8 text-blue-600 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-600">Total Volunteers</p>
-                    <p className="text-2xl font-bold text-gray-800">{stats.total_volunteers || 0}</p>
-                  </div>
+        <div className="container mx-auto px-6 py-8">
+          {/* Stats Cards */}
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+              <div className="flex items-center">
+                <div className="flex items-center justify-center w-14 h-14 bg-blue-100 rounded-xl mr-4">
+                  <Users className="w-7 h-7 text-blue-600" />
                 </div>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Clock className="w-8 h-8 text-green-600 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-600">Total Hours</p>
-                    <p className="text-2xl font-bold text-gray-800">{Math.round(stats.total_hours || 0)}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Building2 className="w-8 h-8 text-purple-600 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-600">Organizations</p>
-                    <p className="text-2xl font-bold text-gray-800">{stats.total_organizations || 0}</p>
-                  </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Volunteers</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats.total_volunteers || 0}</p>
                 </div>
               </div>
             </div>
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+              <div className="flex items-center">
+                <div className="flex items-center justify-center w-14 h-14 bg-green-100 rounded-xl mr-4">
+                  <Clock className="w-7 h-7 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Hours</p>
+                  <p className="text-3xl font-bold text-gray-900">{Math.round(stats.total_hours || 0)}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+              <div className="flex items-center">
+                <div className="flex items-center justify-center w-14 h-14 bg-purple-100 rounded-xl mr-4">
+                  <Building2 className="w-7 h-7 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Organizations</p>
+                  <p className="text-3xl font-bold text-gray-900">{stats.total_organizations || 0}</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h2 className="text-xl font-semibold text-gray-800">Volunteer Records</h2>
+          {/* Volunteer Records Table */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900">Volunteer Records</h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Showing {filteredVolunteers.length} of {volunteers.length} records
+                    {filterType !== 'all' && (
+                      <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {filterType}
+                      </span>
+                    )}
+                  </p>
+                </div>
                 
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
-                  <div className="flex items-center gap-2">
-                    <Search className="w-4 h-4 text-gray-400" />
+                <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                  <div className="relative">
+                    <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                     <input
                       type="text"
                       placeholder="Search volunteers..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                      className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 w-full sm:w-64"
                     />
                   </div>
                   
                   <select
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                   >
                     <option value="all">All Types</option>
                     <option value="partnership">Partnership Only</option>
@@ -851,56 +914,61 @@ const VolunteerApp = () => {
                   
                   <button 
                     onClick={exportPDFReport}
-                    className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                    className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 whitespace-nowrap"
                   >
-                    <Download className="w-4 h-4 inline mr-2" />
-                    Export PDF
+                    <Download className="w-4 h-4" />
+                    <span>Export PDF</span>
                   </button>
                 </div>
               </div>
+            </div>
 
-              <div className="mb-4 text-sm text-gray-600">
-                Showing {filteredVolunteers.length} of {volunteers.length} records
-                {filterType !== 'all' && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded">{filterType}</span>}
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Name</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Email</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Organization</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Total Hours</th>
-                      <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Type</th>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Organization</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Hours</th>
+                    <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredVolunteers.map((volunteer, index) => (
+                    <tr key={index} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="font-medium text-gray-900">{volunteer.name}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">{volunteer.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-600">{volunteer.organization}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="font-semibold text-gray-900">{Math.round(volunteer.total_hours || 0)}</span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                          volunteer.log_type === 'partnership' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {volunteer.log_type}
+                        </span>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filteredVolunteers.map((volunteer, index) => (
-                      <tr key={index}>
-                        <td className="border border-gray-300 p-3 text-gray-900">{volunteer.name}</td>
-                        <td className="border border-gray-300 p-3 text-gray-900">{volunteer.email}</td>
-                        <td className="border border-gray-300 p-3 text-gray-900">{volunteer.organization}</td>
-                        <td className="border border-gray-300 p-3 text-gray-900">{Math.round(volunteer.total_hours || 0)}</td>
-                        <td className="border border-gray-300 p-3">
-                          <span className={`px-2 py-1 rounded text-xs ${
-                            volunteer.log_type === 'partnership' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                          }`}>
-                            {volunteer.log_type}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                    {filteredVolunteers.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="border border-gray-300 p-8 text-center text-gray-500">
-                          No volunteers found matching your criteria.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                  {filteredVolunteers.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                        <div className="flex flex-col items-center">
+                          <Search className="w-12 h-12 text-gray-300 mb-4" />
+                          <p className="text-lg font-medium">No volunteers found</p>
+                          <p className="text-sm">Try adjusting your search criteria</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -908,7 +976,7 @@ const VolunteerApp = () => {
     );
   };
 
-  // Partnership Form (Complete - keeping your excellent implementation)
+  // Partnership Form with improved UI
   const PartnershipForm = () => {
     const [formData, setFormData] = useState({
       first_name: '',
@@ -922,10 +990,18 @@ const VolunteerApp = () => {
     const [eventRows, setEventRows] = useState([
       { date: '', site: '', zip: '', hours: '', volunteers: '' }
     ]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const addEventRow = () => {
       if (eventRows.length < 11) {
         setEventRows([...eventRows, { date: '', site: '', zip: '', hours: '', volunteers: '' }]);
+      }
+    };
+
+    const removeEventRow = (index: number) => {
+      if (eventRows.length > 1) {
+        const newRows = eventRows.filter((_, i) => i !== index);
+        setEventRows(newRows);
       }
     };
 
@@ -935,253 +1011,17 @@ const VolunteerApp = () => {
       setEventRows(newRows);
     };
 
-    const generatePDF = () => {
-      const currentFormData = {
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        organization: formData.organization,
-        email: formData.email,
-        phone: formData.phone,
-        families_served: formData.families_served,
-        prepared_by: formData.prepared_by,
-        events: eventRows.filter(row => row.date || row.site)
-      };
-      
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Agency Partnership Volunteer Log</title>
-              <style>
-                @page { margin: 0.5in; }
-                body { 
-                  font-family: Arial, sans-serif; 
-                  margin: 0; 
-                  padding: 20px;
-                  font-size: 12px;
-                  line-height: 1.4;
-                  background: white;
-                }
-                
-                .header {
-                  text-align: center;
-                  margin-bottom: 30px;
-                  border-bottom: 2px solid #000;
-                  padding-bottom: 15px;
-                }
-                
-                .header h1 {
-                  font-size: 18px;
-                  font-weight: bold;
-                  margin: 0 0 5px 0;
-                  text-transform: uppercase;
-                  letter-spacing: 1px;
-                }
-                
-                .header h2 {
-                  font-size: 16px;
-                  font-weight: bold;
-                  margin: 5px 0;
-                  text-transform: uppercase;
-                }
-                
-                .date-section {
-                  text-align: right;
-                  margin-bottom: 20px;
-                  font-weight: bold;
-                }
-                
-                .form-section {
-                  margin-bottom: 20px;
-                }
-                
-                .field-row {
-                  display: flex;
-                  margin-bottom: 8px;
-                  align-items: center;
-                }
-                
-                .field-label {
-                  font-weight: bold;
-                  min-width: 120px;
-                  margin-right: 10px;
-                }
-                
-                .field-line {
-                  flex: 1;
-                  border-bottom: 1px solid #000;
-                  height: 20px;
-                  padding-left: 5px;
-                  padding-bottom: 2px;
-                }
-                
-                .volunteer-table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin-top: 20px;
-                  border: 2px solid #000;
-                }
-                
-                .volunteer-table th {
-                  border: 1px solid #000;
-                  padding: 8px 4px;
-                  text-align: center;
-                  font-weight: bold;
-                  background-color: #f0f0f0;
-                  font-size: 10px;
-                  vertical-align: middle;
-                }
-                
-                .volunteer-table td {
-                  border: 1px solid #000;
-                  padding: 8px 4px;
-                  text-align: center;
-                  height: 25px;
-                  vertical-align: middle;
-                }
-                
-                .table-title {
-                  text-align: center;
-                  font-weight: bold;
-                  font-size: 14px;
-                  margin: 20px 0 10px 0;
-                  text-transform: uppercase;
-                }
-                
-                .total-row {
-                  background-color: #f0f0f0;
-                  font-weight: bold;
-                }
-                
-                .signature-section {
-                  margin-top: 30px;
-                  display: flex;
-                  justify-content: space-between;
-                }
-                
-                .signature-box {
-                  width: 30%;
-                  text-align: center;
-                }
-                
-                .signature-line {
-                  border-bottom: 1px solid #000;
-                  height: 30px;
-                  margin-bottom: 5px;
-                }
-                
-                .powered-by {
-                  position: fixed;
-                  bottom: 10px;
-                  right: 10px;
-                  font-size: 8px;
-                  color: #999;
-                }
-                
-                @media print {
-                  .powered-by { position: absolute; }
-                }
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <h1>Virtu Community Enhancement Group</h1>
-                <h2>Agency Partnership Volunteer Log</h2>
-              </div>
-              
-              <div class="date-section">
-                Date: ${new Date().toLocaleDateString('en-US', { 
-                  month: '2-digit', 
-                  day: '2-digit', 
-                  year: 'numeric' 
-                }).replace(/\//g, '/')}
-              </div>
-              
-              <div class="form-section">
-                <div class="field-row">
-                  <span class="field-label">Name:</span>
-                  <div class="field-line">${currentFormData.first_name} ${currentFormData.last_name}</div>
-                </div>
-                <div class="field-row">
-                  <span class="field-label">Organization:</span>
-                  <div class="field-line">${currentFormData.organization}</div>
-                </div>
-                <div class="field-row">
-                  <span class="field-label">Email:</span>
-                  <div class="field-line">${currentFormData.email}</div>
-                </div>
-                <div class="field-row">
-                  <span class="field-label">Phone:</span>
-                  <div class="field-line">${currentFormData.phone}</div>
-                </div>
-              </div>
-              
-              <div class="table-title">Agency Partnership Volunteer Log</div>
-              
-              <table class="volunteer-table">
-                <thead>
-                  <tr>
-                    <th>Event Date</th>
-                    <th>Event Site Zip</th>
-                    <th>Total Number of<br>Hours Worked</th>
-                    <th>Total Number of<br>Volunteers</th>
-                    <th>Total Volunteer<br>Hours</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${Array.from({length: 10}, (_, i) => {
-                    const event = currentFormData.events[i];
-                    const totalHours = event ? (parseInt(event.hours || '0') * parseInt(event.volunteers || '1')) : '';
-                    return `
-                      <tr>
-                        <td>${event ? new Date(event.date).toLocaleDateString() : ''}</td>
-                        <td>${event ? event.zip : ''}</td>
-                        <td>${event ? event.hours : ''}</td>
-                        <td>${event ? event.volunteers : ''}</td>
-                        <td>${totalHours}</td>
-                      </tr>
-                    `;
-                  }).join('')}
-                  <tr class="total-row">
-                    <td colspan="4" style="text-align: center; font-weight: bold;">TOTAL VOLUNTEER HOURS</td>
-                    <td style="font-weight: bold;">
-                      ${currentFormData.events.reduce((total, event) => {
-                        if (event.hours && event.volunteers) {
-                          return total + (parseInt(event.hours) * parseInt(event.volunteers));
-                        }
-                        return total;
-                      }, 0)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              
-              <div class="signature-section">
-                <div class="signature-box">
-                  <div class="signature-line"></div>
-                  <div><strong>Prepared by:</strong><br>${currentFormData.prepared_by}</div>
-                </div>
-                <div class="signature-box">
-                  <div class="signature-line"></div>
-                  <div><strong>Position/Title:</strong></div>
-                </div>
-                <div class="signature-box">
-                  <div class="signature-line"></div>
-                  <div><strong>Date/Time:</strong><br>${new Date().toLocaleDateString()}</div>
-                </div>
-              </div>
-              
-              <div class="powered-by">Powered by AHTS</div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-      }
+    const calculateTotalHours = () => {
+      return eventRows.reduce((total, row) => {
+        if (row.hours && row.volunteers) {
+          return total + (parseInt(row.hours) * parseInt(row.volunteers));
+        }
+        return total;
+      }, 0);
     };
 
     const handleSubmit = async () => {
+      setIsSubmitting(true);
       try {
         if (!formData.first_name || !formData.last_name || !formData.email || !formData.organization || !formData.phone || !formData.prepared_by) {
           alert('Please fill in all required fields (marked with *)');
@@ -1228,205 +1068,273 @@ const VolunteerApp = () => {
       } catch (error) {
         console.error('Submission error:', error);
         alert('Error submitting form. Please check your internet connection and try again.');
+      } finally {
+        setIsSubmitting(false);
       }
     };
 
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-bold text-gray-800">Agency Partnership Volunteer Log</h1>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl">
+                  <Building2 className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">Partnership Volunteer Log</h1>
+                  <p className="text-sm text-gray-600">Record agency partnership activities</p>
+                </div>
+              </div>
               <button
                 onClick={() => setCurrentView('landing')}
-                className="text-blue-600 hover:text-blue-800"
+                className="text-blue-600 hover:text-blue-800 font-medium"
               >
                 ← Back to Home
               </button>
             </div>
+          </div>
+        </div>
 
-            <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    First Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({...formData, first_name: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
+        <div className="container mx-auto px-6 py-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+              <div className="p-8">
+                <div className="space-y-8">
+                  {/* Personal Information Section */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                      <User className="w-5 h-5 mr-2 text-blue-600" />
+                      Personal Information
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          First Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.first_name}
+                          onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter first name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Last Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.last_name}
+                          onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter last name"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Organization *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.organization}
+                          onChange={(e) => setFormData({...formData, organization: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter organization name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="your.email@example.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Phone Number *
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="(555) 123-4567"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Total Families Served *
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          min="0"
+                          value={formData.families_served}
+                          onChange={(e) => setFormData({...formData, families_served: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Prepared By *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.prepared_by}
+                          onChange={(e) => setFormData({...formData, prepared_by: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter your full name"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Volunteer Hours Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                        <Clock className="w-5 h-5 mr-2 text-blue-600" />
+                        Volunteer Hours & Events
+                      </h3>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600">Total Volunteer Hours</p>
+                        <p className="text-2xl font-bold text-blue-600">{calculateTotalHours()}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-xl p-6">
+                      <div className="space-y-4">
+                        {eventRows.map((row, index) => (
+                          <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="font-medium text-gray-900">Event #{index + 1}</h4>
+                              {eventRows.length > 1 && (
+                                <button
+                                  onClick={() => removeEventRow(index)}
+                                  className="text-red-500 hover:text-red-700 p-1"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                            <div className="grid md:grid-cols-5 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Event Date
+                                </label>
+                                <input
+                                  type="date"
+                                  value={row.date}
+                                  onChange={(e) => updateEventRow(index, 'date', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Event Site
+                                </label>
+                                <input
+                                  type="text"
+                                  value={row.site}
+                                  onChange={(e) => updateEventRow(index, 'site', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                  placeholder="Location"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Zip Code
+                                </label>
+                                <input
+                                  type="text"
+                                  value={row.zip}
+                                  onChange={(e) => updateEventRow(index, 'zip', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                  placeholder="12345"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Hours Worked
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  value={row.hours}
+                                  onChange={(e) => updateEventRow(index, 'hours', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  # Volunteers
+                                </label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={row.volunteers}
+                                  onChange={(e) => updateEventRow(index, 'volunteers', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                  placeholder="1"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {eventRows.length < 11 && (
+                        <button
+                          type="button"
+                          onClick={addEventRow}
+                          className="mt-4 flex items-center space-x-2 text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>Add Another Event</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Submit Section */}
+                  <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
+                    <button
+                      onClick={handleSubmit}
+                      disabled={isSubmitting}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-5 h-5" />
+                          <span>Submit Partnership Log</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Last Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({...formData, last_name: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Organization *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.organization}
-                  onChange={(e) => setFormData({...formData, organization: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    placeholder="example@example.com"
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-400"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Total Number of "Families" Served *
-                </label>
-                <input
-                  type="number"
-                  required
-                  value={formData.families_served}
-                  onChange={(e) => setFormData({...formData, families_served: e.target.value})}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Prepared By *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.prepared_by}
-                  onChange={(e) => setFormData({...formData, prepared_by: e.target.value})}
-                  placeholder="Enter your full name"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                />
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Volunteer Hours</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-gray-300">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Event Date</th>
-                        <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Event Site</th>
-                        <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Zip</th>
-                        <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Total Hours Worked</th>
-                        <th className="border border-gray-300 p-3 text-left text-gray-900 font-semibold">Total Volunteers</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {eventRows.map((row, index) => (
-                        <tr key={index}>
-                          <td className="border border-gray-300 p-2">
-                            <input
-                              type="date"
-                              value={row.date}
-                              onChange={(e) => updateEventRow(index, 'date', e.target.value)}
-                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500 text-gray-900"
-                            />
-                          </td>
-                          <td className="border border-gray-300 p-2">
-                            <input
-                              type="text"
-                              value={row.site}
-                              onChange={(e) => updateEventRow(index, 'site', e.target.value)}
-                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500 text-gray-900"
-                            />
-                          </td>
-                          <td className="border border-gray-300 p-2">
-                            <input
-                              type="text"
-                              value={row.zip}
-                              onChange={(e) => updateEventRow(index, 'zip', e.target.value)}
-                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500 text-gray-900"
-                            />
-                          </td>
-                          <td className="border border-gray-300 p-2">
-                            <input
-                              type="number"
-                              value={row.hours}
-                              onChange={(e) => updateEventRow(index, 'hours', e.target.value)}
-                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500 text-gray-900"
-                            />
-                          </td>
-                          <td className="border border-gray-300 p-2">
-                            <input
-                              type="number"
-                              value={row.volunteers}
-                              onChange={(e) => updateEventRow(index, 'volunteers', e.target.value)}
-                              className="w-full p-2 border-0 focus:ring-2 focus:ring-blue-500 text-gray-900"
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                {eventRows.length < 11 && (
-                  <button
-                    type="button"
-                    onClick={addEventRow}
-                    className="mt-3 text-blue-600 hover:text-blue-800 font-medium"
-                  >
-                    + Add Event Row
-                  </button>
-                )}
-              </div>
-
-              <div className="flex space-x-4 pt-6">
-                <button
-                  type="button"
-                  onClick={generatePDF}
-                  className="bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
-                >
-                  Preview PDF
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-                >
-                  Submit
-                </button>
               </div>
             </div>
           </div>
@@ -1435,7 +1343,7 @@ const VolunteerApp = () => {
     );
   };
 
-  // Activity Form (Complete - keeping your excellent implementation) 
+  // Activity Form with improved UI
   const ActivityForm = () => {
     const [formData, setFormData] = useState({
       volunteer_name: '',
@@ -1447,9 +1355,17 @@ const VolunteerApp = () => {
     const [activities, setActivities] = useState([
       { date: '', activity: '', organization: '', location: '', hours: '', description: '' }
     ]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const addActivity = () => {
       setActivities([...activities, { date: '', activity: '', organization: '', location: '', hours: '', description: '' }]);
+    };
+
+    const removeActivity = (index: number) => {
+      if (activities.length > 1) {
+        const newActivities = activities.filter((_, i) => i !== index);
+        setActivities(newActivities);
+      }
     };
 
     const updateActivity = (index: number, field: keyof typeof activities[0], value: string) => {
@@ -1458,296 +1374,14 @@ const VolunteerApp = () => {
       setActivities(newActivities);
     };
 
-    const generateActivityPDF = () => {
-      const currentFormData = {
-        volunteer_name: formData.volunteer_name,
-        email: formData.email,
-        phone: formData.phone,
-        student_id: formData.student_id,
-        prepared_by: formData.prepared_by,
-        activities: activities.filter(activity => activity.date || activity.activity || activity.organization)
-      };
-      
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Activity Log (ICS 214)</title>
-              <style>
-                @page { margin: 0.5in; }
-                body { 
-                  font-family: Arial, sans-serif; 
-                  margin: 0; 
-                  padding: 15px;
-                  font-size: 11px;
-                  line-height: 1.3;
-                  background: white;
-                }
-                
-                .header {
-                  text-align: center;
-                  margin-bottom: 15px;
-                  border: 2px solid #000;
-                  padding: 10px;
-                }
-                
-                .header h1 {
-                  font-size: 16px;
-                  font-weight: bold;
-                  margin: 0;
-                  text-transform: uppercase;
-                }
-                
-                .form-section {
-                  border: 1px solid #000;
-                  margin-bottom: 10px;
-                  padding: 8px;
-                }
-                
-                .section-header {
-                  font-weight: bold;
-                  margin-bottom: 8px;
-                  font-size: 12px;
-                }
-                
-                .field-grid {
-                  display: grid;
-                  grid-template-columns: 1fr 1fr 1fr;
-                  gap: 15px;
-                  margin-bottom: 8px;
-                }
-                
-                .field {
-                  display: flex;
-                  align-items: center;
-                }
-                
-                .field-label {
-                  font-weight: bold;
-                  margin-right: 5px;
-                  min-width: 80px;
-                  font-size: 10px;
-                }
-                
-                .field-line {
-                  flex: 1;
-                  border-bottom: 1px solid #000;
-                  height: 18px;
-                  padding-left: 3px;
-                  padding-bottom: 1px;
-                }
-                
-                .resources-table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin: 10px 0;
-                }
-                
-                .resources-table th {
-                  border: 1px solid #000;
-                  padding: 4px;
-                  text-align: center;
-                  font-weight: bold;
-                  background-color: #f0f0f0;
-                  font-size: 10px;
-                }
-                
-                .resources-table td {
-                  border: 1px solid #000;
-                  padding: 4px;
-                  height: 20px;
-                }
-                
-                .activity-table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin: 10px 0;
-                }
-                
-                .activity-table th {
-                  border: 1px solid #000;
-                  padding: 6px 4px;
-                  text-align: center;
-                  font-weight: bold;
-                  background-color: #f0f0f0;
-                  font-size: 10px;
-                }
-                
-                .activity-table td {
-                  border: 1px solid #000;
-                  padding: 4px;
-                  vertical-align: top;
-                  min-height: 25px;
-                  font-size: 10px;
-                }
-                
-                .signature-section {
-                  display: grid;
-                  grid-template-columns: 1fr 1fr 1fr;
-                  gap: 20px;
-                  margin-top: 20px;
-                  border: 1px solid #000;
-                  padding: 10px;
-                }
-                
-                .signature-box {
-                  text-align: center;
-                }
-                
-                .signature-line {
-                  border-bottom: 1px solid #000;
-                  height: 25px;
-                  margin-bottom: 3px;
-                }
-                
-                .powered-by {
-                  position: fixed;
-                  bottom: 10px;
-                  right: 10px;
-                  font-size: 8px;
-                  color: #999;
-                }
-                
-                @media print {
-                  .powered-by { position: absolute; }
-                }
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <h1>Activity Log (ICS 214)</h1>
-              </div>
-              
-              <div class="form-section">
-                <div class="field-grid">
-                  <div class="field">
-                    <span class="field-label">1. Incident Name:</span>
-                    <div class="field-line">Volunteer Service</div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label">2. Operational Period:</span>
-                    <div class="field-line"></div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label">Date From:</span>
-                    <div class="field-line"></div>
-                  </div>
-                </div>
-                <div class="field-grid">
-                  <div class="field">
-                    <span class="field-label">3. Name:</span>
-                    <div class="field-line">${currentFormData.volunteer_name}</div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label">4. ICS Position:</span>
-                    <div class="field-line">Volunteer</div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label">Date To:</span>
-                    <div class="field-line"></div>
-                  </div>
-                </div>
-                <div class="field-grid">
-                  <div class="field">
-                    <span class="field-label"></span>
-                    <div class="field-line"></div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label"></span>
-                    <div class="field-line"></div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label">Time To:</span>
-                    <div class="field-line"></div>
-                  </div>
-                </div>
-                <div class="field">
-                  <span class="field-label">5. Home Agency (and Unit):</span>
-                  <div class="field-line">Virtu Community Enhancement Group</div>
-                </div>
-              </div>
-              
-              <div class="form-section">
-                <div class="section-header">6. Resources Assigned:</div>
-                <table class="resources-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>ICS Position</th>
-                      <th>Home Agency (and Unit)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>${currentFormData.volunteer_name}</td>
-                      <td>Volunteer</td>
-                      <td>Individual Volunteer</td>
-                    </tr>
-                    ${Array.from({length: 4}, () => '<tr><td></td><td></td><td></td></tr>').join('')}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div class="form-section">
-                <div class="section-header">7. Activity Log:</div>
-                <table class="activity-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 20%;">Date/Time</th>
-                      <th style="width: 80%;">Notable Activities</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${currentFormData.activities.map(activity => `
-                      <tr>
-                        <td style="text-align: center;">
-                          ${activity.date ? new Date(activity.date).toLocaleDateString() : ''}<br>
-                          ${activity.hours ? activity.hours + ' hrs' : ''}
-                        </td>
-                        <td>
-                          <strong>${activity.activity || ''}</strong><br>
-                          Organization: ${activity.organization || ''}<br>
-                          Location: ${activity.location || ''}<br>
-                          ${activity.description || ''}
-                        </td>
-                      </tr>
-                    `).join('')}
-                    ${Array.from({length: Math.max(0, 8 - currentFormData.activities.length)}, () => 
-                      '<tr><td style="height: 30px;"></td><td></td></tr>'
-                    ).join('')}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div class="signature-section">
-                <div class="signature-box">
-                  <div class="section-header">8. Prepared by:</div>
-                  <div class="signature-line">${currentFormData.prepared_by}</div>
-                  <div style="font-size: 9px;">Signature</div>
-                </div>
-                <div class="signature-box">
-                  <div class="section-header">Position/Title:</div>
-                  <div class="signature-line"></div>
-                  <div style="font-size: 9px;">Position/Title</div>
-                </div>
-                <div class="signature-box">
-                  <div class="section-header">Date/Time:</div>
-                  <div class="signature-line">${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                  <div style="font-size: 9px;">Date/Time</div>
-                </div>
-              </div>
-              
-              <div class="powered-by">Powered by AHTS</div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-      }
+    const calculateTotalHours = () => {
+      return activities.reduce((total, activity) => {
+        return total + (parseFloat(activity.hours) || 0);
+      }, 0);
     };
 
     const handleSubmit = async () => {
+      setIsSubmitting(true);
       try {
         if (!formData.volunteer_name || !formData.email || !formData.prepared_by) {
           alert('Please fill in all required fields (marked with *)');
@@ -1803,207 +1437,273 @@ const VolunteerApp = () => {
       } catch (error) {
         console.error('Submission error:', error);
         alert('Error submitting form. Please check your internet connection and try again.');
+      } finally {
+        setIsSubmitting(false);
       }
     };
 
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-bold text-gray-800">Volunteer Activity Log</h1>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-green-600 to-green-700 rounded-xl">
+                  <Clock className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">Volunteer Activity Log</h1>
+                  <p className="text-sm text-gray-600">Track individual volunteer activities</p>
+                </div>
+              </div>
               <button
                 onClick={() => setCurrentView('landing')}
-                className="text-blue-600 hover:text-blue-800"
+                className="text-blue-600 hover:text-blue-800 font-medium"
               >
                 ← Back to Home
               </button>
             </div>
+          </div>
+        </div>
 
-            <div className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Volunteer Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.volunteer_name}
-                    onChange={(e) => setFormData({...formData, volunteer_name: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Student ID (if applicable)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.student_id}
-                    onChange={(e) => setFormData({...formData, student_id: e.target.value})}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Prepared By *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.prepared_by}
-                  onChange={(e) => setFormData({...formData, prepared_by: e.target.value})}
-                  placeholder="Enter your full name"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
-                />
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Activity Details</h3>
-                <div className="space-y-4">
-                  {activities.map((activity, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                      <div className="grid md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Date *
-                          </label>
-                          <input
-                            type="date"
-                            value={activity.date}
-                            onChange={(e) => updateActivity(index, 'date', e.target.value)}
-                            required
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Hours *
-                          </label>
-                          <input
-                            type="number"
-                            step="0.5"
-                            value={activity.hours}
-                            onChange={(e) => updateActivity(index, 'hours', e.target.value)}
-                            required
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Organization *
-                          </label>
-                          <input
-                            type="text"
-                            value={activity.organization}
-                            onChange={(e) => updateActivity(index, 'organization', e.target.value)}
-                            required
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Activity Type *
-                          </label>
-                          <select
-                            value={activity.activity}
-                            onChange={(e) => updateActivity(index, 'activity', e.target.value)}
-                            required
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900"
-                          >
-                            <option value="">Select Activity Type</option>
-                            <option value="Community Service">Community Service</option>
-                            <option value="Tutoring/Mentoring">Tutoring/Mentoring</option>
-                            <option value="Environmental">Environmental</option>
-                            <option value="Food Service">Food Service</option>
-                            <option value="Construction/Repair">Construction/Repair</option>
-                            <option value="Event Support">Event Support</option>
-                            <option value="Administrative">Administrative</option>
-                            <option value="Other">Other</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Location
-                          </label>
-                          <input
-                            type="text"
-                            value={activity.location}
-                            onChange={(e) => updateActivity(index, 'location', e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900"
-                          />
-                        </div>
+        <div className="container mx-auto px-6 py-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+              <div className="p-8">
+                <div className="space-y-8">
+                  {/* Personal Information Section */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                      <User className="w-5 h-5 mr-2 text-green-600" />
+                      Volunteer Information
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Volunteer Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.volunteer_name}
+                          onChange={(e) => setFormData({...formData, volunteer_name: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter full name"
+                        />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Activity Description *
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Email Address *
                         </label>
-                        <textarea
-                          value={activity.description}
-                          onChange={(e) => updateActivity(index, 'description', e.target.value)}
+                        <input
+                          type="email"
                           required
-                          rows={3}
-                          className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-green-500 text-gray-900 placeholder-gray-400"
-                          placeholder="Describe the volunteer activity performed..."
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="your.email@example.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="(555) 123-4567"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Student ID <span className="text-gray-500">(if applicable)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.student_id}
+                          onChange={(e) => setFormData({...formData, student_id: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter student ID"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Prepared By *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.prepared_by}
+                          onChange={(e) => setFormData({...formData, prepared_by: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter your full name"
                         />
                       </div>
                     </div>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={addActivity}
-                  className="mt-3 text-green-600 hover:text-green-800 font-medium"
-                >
-                  + Add Another Activity
-                </button>
-              </div>
+                  </div>
 
-              <div className="flex space-x-4 pt-6">
-                <button
-                  type="button"
-                  onClick={generateActivityPDF}
-                  className="bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
-                >
-                  Preview PDF
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  className="bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors"
-                >
-                  Submit
-                </button>
+                  {/* Activities Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                        <Clock className="w-5 h-5 mr-2 text-green-600" />
+                        Activity Details
+                      </h3>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600">Total Hours</p>
+                        <p className="text-2xl font-bold text-green-600">{calculateTotalHours().toFixed(1)}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-xl p-6">
+                      <div className="space-y-6">
+                        {activities.map((activity, index) => (
+                          <div key={index} className="bg-white rounded-lg p-6 border border-gray-200">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="font-medium text-gray-900">Activity #{index + 1}</h4>
+                              {activities.length > 1 && (
+                                <button
+                                  onClick={() => removeActivity(index)}
+                                  className="text-red-500 hover:text-red-700 p-1"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                            
+                            <div className="grid md:grid-cols-3 gap-4 mb-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Date *
+                                </label>
+                                <input
+                                  type="date"
+                                  value={activity.date}
+                                  onChange={(e) => updateActivity(index, 'date', e.target.value)}
+                                  required
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Hours *
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  value={activity.hours}
+                                  onChange={(e) => updateActivity(index, 'hours', e.target.value)}
+                                  required
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                                  placeholder="0.0"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Activity Type *
+                                </label>
+                                <select
+                                  value={activity.activity}
+                                  onChange={(e) => updateActivity(index, 'activity', e.target.value)}
+                                  required
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                                >
+                                  <option value="">Select Activity Type</option>
+                                  <option value="Community Service">Community Service</option>
+                                  <option value="Tutoring/Mentoring">Tutoring/Mentoring</option>
+                                  <option value="Environmental">Environmental</option>
+                                  <option value="Food Service">Food Service</option>
+                                  <option value="Construction/Repair">Construction/Repair</option>
+                                  <option value="Event Support">Event Support</option>
+                                  <option value="Administrative">Administrative</option>
+                                  <option value="Healthcare Support">Healthcare Support</option>
+                                  <option value="Education">Education</option>
+                                  <option value="Other">Other</option>
+                                </select>
+                              </div>
+                            </div>
+                            
+                            <div className="grid md:grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Organization *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={activity.organization}
+                                  onChange={(e) => updateActivity(index, 'organization', e.target.value)}
+                                  required
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                                  placeholder="Organization name"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Location
+                                </label>
+                                <input
+                                  type="text"
+                                  value={activity.location}
+                                  onChange={(e) => updateActivity(index, 'location', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                                  placeholder="City, State or Address"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Activity Description *
+                              </label>
+                              <textarea
+                                value={activity.description}
+                                onChange={(e) => updateActivity(index, 'description', e.target.value)}
+                                required
+                                rows={3}
+                                className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
+                                placeholder="Provide a detailed description of the volunteer activity performed, including specific tasks, outcomes, and impact..."
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <button
+                        type="button"
+                        onClick={addActivity}
+                        className="mt-6 flex items-center space-x-2 text-green-600 hover:text-green-800 font-medium transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Add Another Activity</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Submit Section */}
+                  <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
+                    <button
+                      onClick={handleSubmit}
+                      disabled={isSubmitting}
+                      className="flex-1 bg-gradient-to-r from-green-600 to-green-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-green-700 hover:to-green-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-5 h-5" />
+                          <span>Submit Activity Log</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2012,7 +1712,7 @@ const VolunteerApp = () => {
     );
   };
 
-  // Upload Component with working functionality
+  // Upload Component
   const UploadComponent = () => {
     const [uploading, setUploading] = useState(false);
     const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
@@ -2052,78 +1752,117 @@ const VolunteerApp = () => {
     };
 
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-8">
-            <div className="flex items-center justify-between mb-8">
-              <h1 className="text-3xl font-bold text-gray-800">Upload Completed Forms</h1>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl">
+                  <Upload className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">Upload Completed Forms</h1>
+                  <p className="text-sm text-gray-600">Submit scanned or digital volunteer forms</p>
+                </div>
+              </div>
               <button
                 onClick={() => setCurrentView('landing')}
-                className="text-blue-600 hover:text-blue-800"
+                className="text-blue-600 hover:text-blue-800 font-medium"
               >
                 ← Back to Home
               </button>
             </div>
+          </div>
+        </div>
 
-            <div className="space-y-6">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors">
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-700 mb-2">
-                  Upload Volunteer Forms
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  Drag and drop your completed forms here, or click to browse
-                </p>
-                
-                <input
-                  type="file"
-                  multiple
-                  accept=".pdf,.xlsx,.xls,.doc,.docx,.jpg,.png"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="fileInput"
-                />
-                <label
-                  htmlFor="fileInput"
-                  className="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer inline-block"
-                >
-                  {uploading ? 'Uploading...' : 'Choose Files'}
-                </label>
-                
-                <p className="text-sm text-gray-400 mt-2">
-                  Supported formats: PDF, Excel, Word, JPG, PNG
-                </p>
-              </div>
-
-              {uploadedFiles.length > 0 && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h4 className="font-medium text-green-800 mb-2">Successfully Uploaded:</h4>
-                  <ul className="text-sm text-green-700 space-y-1">
-                    {uploadedFiles.map((fileName, index) => (
-                      <li key={index}>• {fileName}</li>
-                    ))}
-                  </ul>
+        <div className="container mx-auto px-6 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+              <div className="space-y-8">
+                {/* Upload Area */}
+                <div className="border-2 border-dashed border-gray-300 rounded-2xl p-12 text-center hover:border-purple-400 transition-colors bg-gray-50/50">
+                  <div className="flex items-center justify-center w-20 h-20 bg-purple-100 rounded-2xl mx-auto mb-6">
+                    <Upload className="w-10 h-10 text-purple-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-3">
+                    Upload Volunteer Forms
+                  </h3>
+                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                    Drag and drop your completed forms here, or click to browse your files
+                  </p>
+                  
+                  <input
+                    type="file"
+                    multiple
+                    accept=".pdf,.xlsx,.xls,.doc,.docx,.jpg,.png"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                    id="fileInput"
+                  />
+                  <label
+                    htmlFor="fileInput"
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 px-8 rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all duration-200 cursor-pointer inline-block font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  >
+                    {uploading ? (
+                      <div className="flex items-center space-x-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                        <span>Uploading...</span>
+                      </div>
+                    ) : 'Choose Files'}
+                  </label>
+                  
+                  <p className="text-sm text-gray-500 mt-4">
+                    Supported formats: PDF, Excel, Word, JPG, PNG (max 10MB per file)
+                  </p>
                 </div>
-              )}
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-800 mb-2">Upload Instructions:</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Ensure all required fields are completed on scanned forms</li>
-                  <li>• Files will be automatically processed using OCR technology</li>
-                  <li>• Data will be extracted and added to the database automatically</li>
-                  <li>• You'll receive a confirmation email once processing is complete</li>
-                  <li>• Maximum file size: 10MB per file</li>
-                  <li>• Supported formats: PDF, JPG, PNG for scanned forms</li>
-                </ul>
-              </div>
+                {/* Uploaded Files */}
+                {uploadedFiles.length > 0 && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-6">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                      <h4 className="font-semibold text-green-800">Successfully Uploaded</h4>
+                    </div>
+                    <ul className="space-y-2">
+                      {uploadedFiles.map((fileName, index) => (
+                        <li key={index} className="flex items-center space-x-2 text-green-700">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-sm">{fileName}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h4 className="font-medium text-yellow-800 mb-2">OCR Processing:</h4>
-                <p className="text-sm text-yellow-700">
-                  Uploaded forms will be processed using Optical Character Recognition (OCR) to automatically extract 
-                  volunteer information, hours, and activities. This data will be verified and added to your database.
-                </p>
+                {/* Instructions */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                    <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                      <AlertCircle className="w-5 h-5 mr-2" />
+                      Upload Instructions
+                    </h4>
+                    <ul className="space-y-2 text-sm text-blue-700">
+                      <li>• Ensure all required fields are completed on forms</li>
+                      <li>• Files will be processed using OCR technology</li>
+                      <li>• Data will be automatically extracted and verified</li>
+                      <li>• You'll receive confirmation once processing is complete</li>
+                      <li>• Maximum file size: 10MB per file</li>
+                    </ul>
+                  </div>
+
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
+                    <h4 className="font-semibold text-amber-800 mb-3 flex items-center">
+                      <Clock className="w-5 h-5 mr-2" />
+                      OCR Processing
+                    </h4>
+                    <p className="text-sm text-amber-700">
+                      Uploaded forms will be processed using Optical Character Recognition (OCR) to automatically extract 
+                      volunteer information, hours, and activities. This data will be verified and added to your database 
+                      for easy management and reporting.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2135,14 +1874,16 @@ const VolunteerApp = () => {
   // Loading screen
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-lg rounded-2xl mb-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          </div>
+          <p className="text-white text-lg">Loading...</p>
         </div>
       </div>
     );
-  }
+  };
 
   // Render current view with authentication checks
   const renderCurrentView = () => {
@@ -2153,8 +1894,6 @@ const VolunteerApp = () => {
         return <ActivityForm />;
       case 'dashboard':
         return isAuthenticated ? <Dashboard /> : <LoginPage />;
-      case 'users':
-        return isAuthenticated ? <UserManagement /> : <LoginPage />;
       case 'login':
         return <LoginPage />;
       case 'upload':
