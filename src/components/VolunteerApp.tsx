@@ -623,7 +623,7 @@ const VolunteerApp = () => {
               <Users className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
-              VCEG Volunteer
+              VCEG Volunteer 
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
                 Management System
               </span>
