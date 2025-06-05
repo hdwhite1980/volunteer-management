@@ -623,7 +623,7 @@ const VolunteerApp = () => {
               <Users className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
-              Virtu Volunteer
+              VCEG Volunteer
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
                 Management System
               </span>
@@ -738,7 +738,7 @@ const VolunteerApp = () => {
         printWindow.document.write(`
           <html>
             <head>
-              <title>Virtu Volunteer Management Report</title>
+              <title>VCEG Volunteer Management Report</title>
               <style>
                 body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 20px; color: #374151; }
                 .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #3b82f6; }
@@ -758,7 +758,7 @@ const VolunteerApp = () => {
             </head>
             <body>
               <div class="header">
-                <h1>🎯 Virtu Volunteer Management Report</h1>
+                <h1>🎯 VCEG Volunteer Management Report</h1>
                 <p style="color: #6b7280; margin: 0;">Generated on: ${new Date().toLocaleDateString()}</p>
                 <p style="color: #6b7280; margin: 5px 0 0 0;">Filter: ${filterType === 'all' ? 'All Records' : filterType.charAt(0).toUpperCase() + filterType.slice(1)} ${searchTerm ? `| Search: "${searchTerm}"` : ''}</p>
               </div>
@@ -1189,7 +1189,7 @@ const VolunteerApp = () => {
             </head>
             <body>
               <div class="header">
-                <h1>Virtu Community Enhancement Group</h1>
+                <h1>VCEG Community Enhancement Group</h1>
                 <h2>Agency Partnership Volunteer Log</h2>
               </div>
               
@@ -1899,7 +1899,7 @@ const VolunteerApp = () => {
                 </div>
                 <div class="field">
                   <span class="field-label">5. Home Agency (and Unit):</span>
-                  <div class="field-line">Virtu Community Enhancement Group</div>
+                  <div class="field-line">VCEG Community Enhancement Group</div>
                 </div>
               </div>
               
