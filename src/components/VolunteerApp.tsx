@@ -287,8 +287,8 @@ const VolunteerApp = () => {
                 ← Back to Home
               </button>
               <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
-                <p className="font-medium">Credentials Help:</p>
-                <p>Username: Your Username| Password: Your Password</p>
+                <p className="font-medium">Default Credentials:</p>
+                <p>Username: admin | Password: admin123</p>
               </div>
             </div>
           </div>
@@ -623,8 +623,8 @@ const VolunteerApp = () => {
               <Users className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
-              VCEG Volunteer
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-white-400">
+              Virtu Volunteer
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
                 Management System
               </span>
             </h1>
@@ -692,7 +692,14 @@ const VolunteerApp = () => {
               View Database
             </button>
             <button
-              onClick={() => setCurrentView('upload')}
+              onClick={() => {
+                console.log('Upload Forms clicked, authenticated:', isAuthenticated);
+                if (isAuthenticated) {
+                  setCurrentView('upload');
+                } else {
+                  setCurrentView('login');
+                }
+              }}
               className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <Upload className="w-5 h-5 inline mr-3" />
@@ -731,7 +738,7 @@ const VolunteerApp = () => {
         printWindow.document.write(`
           <html>
             <head>
-              <title>VCEG Volunteer Management Report</title>
+              <title>Virtu Volunteer Management Report</title>
               <style>
                 body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 20px; color: #374151; }
                 .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #3b82f6; }
@@ -751,7 +758,7 @@ const VolunteerApp = () => {
             </head>
             <body>
               <div class="header">
-                <h1>🎯 VCEG Volunteer Management Report</h1>
+                <h1>🎯 Virtu Volunteer Management Report</h1>
                 <p style="color: #6b7280; margin: 0;">Generated on: ${new Date().toLocaleDateString()}</p>
                 <p style="color: #6b7280; margin: 5px 0 0 0;">Filter: ${filterType === 'all' ? 'All Records' : filterType.charAt(0).toUpperCase() + filterType.slice(1)} ${searchTerm ? `| Search: "${searchTerm}"` : ''}</p>
               </div>
@@ -1182,7 +1189,7 @@ const VolunteerApp = () => {
             </head>
             <body>
               <div class="header">
-                <h1>VCEG Community Enhancement Group</h1>
+                <h1>Virtu Community Enhancement Group</h1>
                 <h2>Agency Partnership Volunteer Log</h2>
               </div>
               
@@ -1892,7 +1899,7 @@ const VolunteerApp = () => {
                 </div>
                 <div class="field">
                   <span class="field-label">5. Home Agency (and Unit):</span>
-                  <div class="field-line">VCEG Community Enhancement Group</div>
+                  <div class="field-line">Virtu Community Enhancement Group</div>
                 </div>
               </div>
               
@@ -2397,12 +2404,23 @@ const VolunteerApp = () => {
                   <p className="text-sm text-gray-600">Submit scanned or digital volunteer forms</p>
                 </div>
               </div>
-              <button
-                onClick={() => setCurrentView('landing')}
-                className="text-blue-600 hover:text-blue-800 font-medium"
-              >
-                ← Back to Home
-              </button>
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-600">
+                  Logged in as: {currentUser?.username}
+                </span>
+                <button
+                  onClick={() => setCurrentView('dashboard')}
+                  className="text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  ← Dashboard
+                </button>
+                <button
+                  onClick={() => setCurrentView('landing')}
+                  className="text-gray-600 hover:text-gray-800 font-medium"
+                >
+                  Home
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -2540,10 +2558,13 @@ const VolunteerApp = () => {
           return <Dashboard />;
         }
         return <UserManagement />;
+      case 'upload':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        return <UploadComponent />;
       case 'login':
         return <LoginPage />;
-      case 'upload':
-        return <UploadComponent />;
       default:
         return <LandingPage />;
     }
