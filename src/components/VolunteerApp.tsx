@@ -37,6 +37,11 @@ const VolunteerApp = () => {
     }
   }, []);
 
+  // Debug effect to monitor auth state changes
+  useEffect(() => {
+    console.log('Auth state changed - Authenticated:', isAuthenticated, 'User:', currentUser?.username, 'View:', currentView);
+  }, [isAuthenticated, currentUser, currentView]);
+
   // Load data when viewing dashboard
   useEffect(() => {
     if (currentView === 'dashboard' && isAuthenticated) {
@@ -96,6 +101,7 @@ const VolunteerApp = () => {
         console.log('Frontend: Login successful, setting user state...');
         setIsAuthenticated(true);
         setCurrentUser(data.user);
+        // Always go to dashboard after successful login
         setCurrentView('dashboard');
         return { success: true };
       } else {
@@ -281,8 +287,8 @@ const VolunteerApp = () => {
                 ← Back to Home
               </button>
               <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
-                <p className="font-medium">Default Credentials:</p>
-                <p>Username: admin | Password: admin123</p>
+                <p className="font-medium">Credentials Help:</p>
+                <p>Username: Your Username| Password: Your Password</p>
               </div>
             </div>
           </div>
@@ -617,7 +623,7 @@ const VolunteerApp = () => {
               <Users className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
-              Virtu Volunteer
+              VCEG Volunteer
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
                 Management System
               </span>
@@ -672,7 +678,14 @@ const VolunteerApp = () => {
           {/* Secondary Actions */}
           <div className="flex flex-wrap justify-center gap-6">
             <button
-              onClick={() => setCurrentView(isAuthenticated ? 'dashboard' : 'login')}
+              onClick={() => {
+                console.log('View Database clicked, authenticated:', isAuthenticated);
+                if (isAuthenticated) {
+                  setCurrentView('dashboard');
+                } else {
+                  setCurrentView('login');
+                }
+              }}
               className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <Search className="w-5 h-5 inline mr-3" />
@@ -718,7 +731,7 @@ const VolunteerApp = () => {
         printWindow.document.write(`
           <html>
             <head>
-              <title>Virtu Volunteer Management Report</title>
+              <title>VCEG Volunteer Management Report</title>
               <style>
                 body { font-family: 'Segoe UI', system-ui, sans-serif; margin: 20px; color: #374151; }
                 .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #3b82f6; }
@@ -738,7 +751,7 @@ const VolunteerApp = () => {
             </head>
             <body>
               <div class="header">
-                <h1>🎯 Virtu Volunteer Management Report</h1>
+                <h1>🎯 VCEG Volunteer Management Report</h1>
                 <p style="color: #6b7280; margin: 0;">Generated on: ${new Date().toLocaleDateString()}</p>
                 <p style="color: #6b7280; margin: 5px 0 0 0;">Filter: ${filterType === 'all' ? 'All Records' : filterType.charAt(0).toUpperCase() + filterType.slice(1)} ${searchTerm ? `| Search: "${searchTerm}"` : ''}</p>
               </div>
@@ -811,7 +824,10 @@ const VolunteerApp = () => {
               <div className="flex items-center space-x-3">
                 {currentUser?.role === 'admin' && (
                   <button
-                    onClick={() => setCurrentView('users')}
+                    onClick={() => {
+                      console.log('Manage Users clicked, user role:', currentUser?.role);
+                      setCurrentView('users');
+                    }}
                     className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
                   >
                     <User className="w-4 h-4" />
@@ -1166,7 +1182,7 @@ const VolunteerApp = () => {
             </head>
             <body>
               <div class="header">
-                <h1>Virtu Community Enhancement Group</h1>
+                <h1>VCEG Community Enhancement Group</h1>
                 <h2>Agency Partnership Volunteer Log</h2>
               </div>
               
@@ -1876,7 +1892,7 @@ const VolunteerApp = () => {
                 </div>
                 <div class="field">
                   <span class="field-label">5. Home Agency (and Unit):</span>
-                  <div class="field-line">Virtu Community Enhancement Group</div>
+                  <div class="field-line">VCEG Community Enhancement Group</div>
                 </div>
               </div>
               
@@ -2502,13 +2518,28 @@ const VolunteerApp = () => {
 
   // Render current view with authentication checks
   const renderCurrentView = () => {
+    console.log('Current view:', currentView, 'Authenticated:', isAuthenticated);
+    
     switch (currentView) {
       case 'partnership':
         return <PartnershipForm />;
       case 'activity':
         return <ActivityForm />;
       case 'dashboard':
-        return isAuthenticated ? <Dashboard /> : <LoginPage />;
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        return <Dashboard />;
+      case 'users':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        if (currentUser?.role !== 'admin') {
+          alert('Access denied. Admin privileges required.');
+          setCurrentView('dashboard');
+          return <Dashboard />;
+        }
+        return <UserManagement />;
       case 'login':
         return <LoginPage />;
       case 'upload':
