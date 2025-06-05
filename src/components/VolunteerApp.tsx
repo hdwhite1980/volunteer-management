@@ -1189,7 +1189,7 @@ const VolunteerApp = () => {
             </head>
             <body>
               <div class="header">
-                <h1>VCEG Community Enhancement Group</h1>
+                <h1>Virtu Community Enhancement Group</h1>
                 <h2>Agency Partnership Volunteer Log</h2>
               </div>
               
@@ -1899,7 +1899,7 @@ const VolunteerApp = () => {
                 </div>
                 <div class="field">
                   <span class="field-label">5. Home Agency (and Unit):</span>
-                  <div class="field-line">VCEG Community Enhancement Group</div>
+                  <div class="field-line">Virtu Community Enhancement Group</div>
                 </div>
               </div>
               
