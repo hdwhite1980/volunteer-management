@@ -207,6 +207,7 @@ html, body {
   background: linear-gradient(to right, var(--gradient-from), var(--gradient-to));
 }
 .from-slate-900 { --gradient-from: #0f172a; }
+.from-blue-400 { --gradient-from: #60a5fa; }
 .from-blue-500 { --gradient-from: #3b82f6; }
 .from-blue-600 { --gradient-from: #2563eb; }
 .from-blue-700 { --gradient-from: #1d4ed8; }
@@ -217,6 +218,7 @@ html, body {
 .via-purple-900 { --gradient-via: #581c87; }
 .via-blue-900 { --gradient-via: #1e3a8a; }
 .to-slate-900 { --gradient-to: #0f172a; }
+.to-purple-400 { --gradient-to: #c084fc; }
 .to-blue-600 { --gradient-to: #2563eb; }
 .to-blue-700 { --gradient-to: #1d4ed8; }
 .to-blue-800 { --gradient-to: #1e40af; }
@@ -262,7 +264,18 @@ html, body {
 .text-amber-800 { color: #92400e; }
 
 /* Background Clip */
-.bg-clip-text { background-clip: text; }
+.bg-clip-text { 
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+/* Gradient Text Support */
+.text-transparent.bg-clip-text.bg-gradient-to-r {
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  display: inline-block;
+}
 
 /* Font Sizes */
 .text-xs { font-size: 0.75rem; line-height: 1rem; }
