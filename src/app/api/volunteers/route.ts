@@ -1,20 +1,18 @@
-// src/app/api/volunteers/route.ts (Updated with Authentication)
+// src/app/api/volunteers/route.ts (Fixed for actual database structure)
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// Helper function to check authentication (Fixed to match login system)
+// Helper function to check authentication
 async function checkAuth(request: NextRequest) {
   try {
-    // Use 'session' cookie (not 'session_token') to match login system
     const sessionId = request.cookies.get('session')?.value;
     
     if (!sessionId) {
       return null;
     }
 
-    // Query sessions table (not user_sessions) to match login system
     const sessions = await sql`
       SELECT 
         u.id, u.username, u.email, u.role
@@ -55,132 +53,168 @@ export async function GET(request: NextRequest) {
     if (statsOnly) {
       console.log('Volunteers API: Fetching stats only...');
       
-      // Try comprehensive view first, fallback to individual tables
-      let stats;
+      // Use volunteer_stats table for aggregated data
       try {
-        stats = await sql`
+        const stats = await sql`
           SELECT 
-            COUNT(DISTINCT volunteer_name) as total_volunteers,
+            COUNT(DISTINCT name) as total_volunteers,
             COUNT(DISTINCT organization) as total_organizations,
             COALESCE(SUM(total_hours), 0) as total_hours
-          FROM comprehensive_volunteer_view
-          WHERE volunteer_name IS NOT NULL
+          FROM volunteer_stats
+          WHERE name IS NOT NULL AND name != ''
         `;
-        console.log('Volunteers API: Stats from comprehensive view');
-      } catch (viewError) {
-        console.log('Volunteers API: Comprehensive view not available, calculating stats manually...');
         
-        // Fallback: calculate stats from individual tables
-        const partnershipStats = await sql`
-          SELECT COUNT(DISTINCT CONCAT(first_name, ' ', last_name)) as volunteers
-          FROM partnership_logs 
-          WHERE first_name IS NOT NULL AND last_name IS NOT NULL
-        `.catch(() => [{ volunteers: 0 }]);
-
-        const activityStats = await sql`
-          SELECT COUNT(DISTINCT volunteer_name) as volunteers
-          FROM activity_logs 
-          WHERE volunteer_name IS NOT NULL
-        `.catch(() => [{ volunteers: 0 }]);
-
-        const orgStats = await sql`
-          SELECT COUNT(DISTINCT organization) as orgs
-          FROM partnership_logs 
-          WHERE organization IS NOT NULL
-        `.catch(() => [{ orgs: 0 }]);
-
-        stats = [{
-          total_volunteers: (partnershipStats[0]?.volunteers || 0) + (activityStats[0]?.volunteers || 0),
-          total_organizations: orgStats[0]?.orgs || 0,
+        console.log('Volunteers API: Stats from volunteer_stats table');
+        return NextResponse.json(stats[0] || {
+          total_volunteers: 0,
+          total_organizations: 0,
           total_hours: 0
-        }];
+        });
+      } catch (error) {
+        console.log('Volunteers API: Error fetching stats from volunteer_stats:', error);
+        
+        // Fallback: calculate from individual tables
+        const partnershipCount = await sql`
+          SELECT COUNT(*) as count FROM partnership_logs 
+          WHERE first_name IS NOT NULL AND last_name IS NOT NULL
+        `.catch(() => [{ count: 0 }]);
+
+        const activityCount = await sql`
+          SELECT COUNT(*) as count FROM activity_logs 
+          WHERE volunteer_name IS NOT NULL
+        `.catch(() => [{ count: 0 }]);
+
+        return NextResponse.json({
+          total_volunteers: partnershipCount[0].count + activityCount[0].count,
+          total_organizations: 0,
+          total_hours: 0
+        });
       }
-      
-      return NextResponse.json(stats[0] || {
-        total_volunteers: 0,
-        total_organizations: 0,
-        total_hours: 0
-      });
     }
 
     console.log('Volunteers API: Fetching detailed volunteer data...');
     
-    // Try comprehensive view first, fallback to individual tables
-    let volunteers;
+    // First try to get data from volunteer_stats table (preferred)
     try {
-      volunteers = await sql`
+      const volunteers = await sql`
         SELECT 
-          volunteer_name as name,
+          name,
           email,
           organization,
-          COALESCE(total_hours, 0) as total_hours,
+          total_hours,
           log_type,
-          created_at,
-          prepared_by,
-          position_title
-        FROM comprehensive_volunteer_view
-        WHERE volunteer_name IS NOT NULL
+          created_at
+        FROM volunteer_stats
+        WHERE name IS NOT NULL AND name != ''
         ORDER BY created_at DESC
         LIMIT 1000
       `;
-      console.log(`Volunteers API: Found ${volunteers.length} volunteers from comprehensive view`);
-    } catch (viewError) {
-      console.log('Volunteers API: Comprehensive view failed, using fallback query...');
       
-      // Fallback: get data from individual tables
+      console.log(`Volunteers API: Found ${volunteers.length} volunteers from volunteer_stats table`);
+      
+      if (volunteers.length > 0) {
+        return NextResponse.json(volunteers);
+      }
+    } catch (error) {
+      console.log('Volunteers API: volunteer_stats table query failed:', error);
+    }
+
+    // Fallback: aggregate from individual tables
+    console.log('Volunteers API: Using fallback - aggregating from individual tables...');
+    
+    let allVolunteers: any[] = [];
+
+    // Get partnership logs
+    try {
       const partnershipData = await sql`
         SELECT 
           CONCAT(first_name, ' ', last_name) as name,
           email,
           organization,
-          0 as total_hours,
           'partnership' as log_type,
           created_at,
-          CASE 
-            WHEN prepared_by_first IS NOT NULL AND prepared_by_last IS NOT NULL 
-            THEN CONCAT(prepared_by_first, ' ', prepared_by_last)
-            ELSE 'System'
-          END as prepared_by,
-          COALESCE(position_title, 'N/A') as position_title
+          events
         FROM partnership_logs
         WHERE first_name IS NOT NULL 
           AND last_name IS NOT NULL
           AND TRIM(first_name) != ''
           AND TRIM(last_name) != ''
         ORDER BY created_at DESC
-        LIMIT 500
-      `.catch(() => []);
+      `;
+      
+      console.log(`Volunteers API: Found ${partnershipData.length} partnership logs`);
+      
+      // Calculate hours from events JSONB
+      for (const log of partnershipData) {
+        let totalHours = 0;
+        
+        if (log.events && Array.isArray(log.events)) {
+          totalHours = log.events.reduce((sum: number, event: any) => {
+            const hours = parseInt(event.hours) || 0;
+            const volunteers = parseInt(event.volunteers) || 1;
+            return sum + (hours * volunteers);
+          }, 0);
+        }
+        
+        allVolunteers.push({
+          name: log.name,
+          email: log.email,
+          organization: log.organization,
+          total_hours: totalHours,
+          log_type: log.log_type,
+          created_at: log.created_at
+        });
+      }
+    } catch (error) {
+      console.log('Volunteers API: Error fetching partnership logs:', error);
+    }
 
+    // Get activity logs
+    try {
       const activityData = await sql`
         SELECT 
           volunteer_name as name,
           email,
-          '' as organization,
-          0 as total_hours,
+          'Individual Volunteer' as organization,
           'activity' as log_type,
           created_at,
-          CASE 
-            WHEN prepared_by_first IS NOT NULL AND prepared_by_last IS NOT NULL 
-            THEN CONCAT(prepared_by_first, ' ', prepared_by_last)
-            ELSE 'System'
-          END as prepared_by,
-          COALESCE(position_title, 'N/A') as position_title
+          activities
         FROM activity_logs
         WHERE volunteer_name IS NOT NULL 
           AND TRIM(volunteer_name) != ''
         ORDER BY created_at DESC
-        LIMIT 500
-      `.catch(() => []);
-
-      volunteers = [...partnershipData, ...activityData]
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        .slice(0, 1000);
+      `;
       
-      console.log(`Volunteers API: Found ${volunteers.length} volunteers from individual tables`);
+      console.log(`Volunteers API: Found ${activityData.length} activity logs`);
+      
+      // Calculate hours from activities JSONB
+      for (const log of activityData) {
+        let totalHours = 0;
+        
+        if (log.activities && Array.isArray(log.activities)) {
+          totalHours = log.activities.reduce((sum: number, activity: any) => {
+            return sum + (parseFloat(activity.hours) || 0);
+          }, 0);
+        }
+        
+        allVolunteers.push({
+          name: log.name,
+          email: log.email,
+          organization: log.organization,
+          total_hours: totalHours,
+          log_type: log.log_type,
+          created_at: log.created_at
+        });
+      }
+    } catch (error) {
+      console.log('Volunteers API: Error fetching activity logs:', error);
     }
 
-    console.log('Volunteers API: Successfully returning data');
-    return NextResponse.json(volunteers);
+    // Sort by created_at descending
+    allVolunteers.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    
+    console.log(`Volunteers API: Successfully returning ${allVolunteers.length} volunteers`);
+    return NextResponse.json(allVolunteers);
 
   } catch (error) {
     console.error('Volunteers API: Database error:', error);
