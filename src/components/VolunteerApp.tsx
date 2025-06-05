@@ -287,8 +287,8 @@ const VolunteerApp = () => {
                 ← Back to Home
               </button>
               <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
-                <p className="font-medium">Default Credentials:</p>
-                <p>Username: admin | Password: admin123</p>
+                <p className="font-medium">Credentials Assistance</p>
+                <p>Contact Support</p>
               </div>
             </div>
           </div>
@@ -623,7 +623,7 @@ const VolunteerApp = () => {
               <Users className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
-              VCEG Volunteer 
+              VCEG Volunteer
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
                 Management System
               </span>
