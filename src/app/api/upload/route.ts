@@ -4,6 +4,27 @@ import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL!);
 
+// Type definitions
+interface ProcessedFile {
+  id: number;
+  name: string;
+  size: number;
+  type: string;
+  uploadDate: string;
+  status: string;
+}
+
+interface UploadedFileRecord {
+  id: number;
+  original_name: string;
+  file_type: string;
+  file_size: number;
+  upload_date: string;
+  processed_date?: string;
+  status: string;
+  uploaded_by_username?: string;
+}
+
 // Helper function to check authentication
 async function checkAuth(request: NextRequest) {
   try {
@@ -74,7 +95,7 @@ export async function POST(request: NextRequest) {
     ];
 
     const maxFileSize = 10 * 1024 * 1024; // 10MB
-    const processedFiles = [];
+    const processedFiles: ProcessedFile[] = [];
 
     for (const file of files) {
       console.log(`Upload API: Processing file: ${file.name}, type: ${file.type}, size: ${file.size}`);
@@ -190,7 +211,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch files uploaded by current user (or all if admin)
-    let files;
+    let files: UploadedFileRecord[];
     if (currentUser.role === 'admin') {
       files = await sql`
         SELECT 
