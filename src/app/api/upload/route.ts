@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch files uploaded by current user (or all if admin)
-    let files: UploadedFileRecord[];
+    let files: any[];
     if (currentUser.role === 'admin') {
       files = await sql`
         SELECT 
