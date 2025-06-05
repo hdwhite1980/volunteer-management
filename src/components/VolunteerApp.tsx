@@ -624,7 +624,7 @@ const VolunteerApp = () => {
             </div>
             <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
               VCEG Volunteer
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-white-400">
                 Management System
               </span>
             </h1>
