@@ -985,7 +985,8 @@ const VolunteerApp = () => {
       email: '',
       phone: '',
       families_served: '',
-      prepared_by: '',
+      prepared_by_first: '',
+      prepared_by_last: '',
       position_title: ''
     });
     const [eventRows, setEventRows] = useState([
@@ -1012,6 +1013,254 @@ const VolunteerApp = () => {
       setEventRows(newRows);
     };
 
+    const generatePDF = () => {
+      const currentFormData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        organization: formData.organization,
+        email: formData.email,
+        phone: formData.phone,
+        families_served: formData.families_served,
+        prepared_by_first: formData.prepared_by_first,
+        prepared_by_last: formData.prepared_by_last,
+        position_title: formData.position_title,
+        events: eventRows.filter(row => row.date || row.site)
+      };
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Agency Partnership Volunteer Log</title>
+              <style>
+                @page { margin: 0.5in; }
+                body { 
+                  font-family: Arial, sans-serif; 
+                  margin: 0; 
+                  padding: 20px;
+                  font-size: 12px;
+                  line-height: 1.4;
+                  background: white;
+                }
+                
+                .header {
+                  text-align: center;
+                  margin-bottom: 30px;
+                  border-bottom: 2px solid #000;
+                  padding-bottom: 15px;
+                }
+                
+                .header h1 {
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin: 0 0 5px 0;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                }
+                
+                .header h2 {
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin: 5px 0;
+                  text-transform: uppercase;
+                }
+                
+                .date-section {
+                  text-align: right;
+                  margin-bottom: 20px;
+                  font-weight: bold;
+                }
+                
+                .form-section {
+                  margin-bottom: 20px;
+                }
+                
+                .field-row {
+                  display: flex;
+                  margin-bottom: 8px;
+                  align-items: center;
+                }
+                
+                .field-label {
+                  font-weight: bold;
+                  min-width: 120px;
+                  margin-right: 10px;
+                }
+                
+                .field-line {
+                  flex: 1;
+                  border-bottom: 1px solid #000;
+                  height: 20px;
+                  padding-left: 5px;
+                  padding-bottom: 2px;
+                }
+                
+                .volunteer-table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-top: 20px;
+                  border: 2px solid #000;
+                }
+                
+                .volunteer-table th {
+                  border: 1px solid #000;
+                  padding: 8px 4px;
+                  text-align: center;
+                  font-weight: bold;
+                  background-color: #f0f0f0;
+                  font-size: 10px;
+                  vertical-align: middle;
+                }
+                
+                .volunteer-table td {
+                  border: 1px solid #000;
+                  padding: 8px 4px;
+                  text-align: center;
+                  height: 25px;
+                  vertical-align: middle;
+                }
+                
+                .table-title {
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 14px;
+                  margin: 20px 0 10px 0;
+                  text-transform: uppercase;
+                }
+                
+                .total-row {
+                  background-color: #f0f0f0;
+                  font-weight: bold;
+                }
+                
+                .signature-section {
+                  margin-top: 30px;
+                  display: flex;
+                  justify-content: space-between;
+                }
+                
+                .signature-box {
+                  width: 30%;
+                  text-align: center;
+                }
+                
+                .signature-line {
+                  border-bottom: 1px solid #000;
+                  height: 30px;
+                  margin-bottom: 5px;
+                }
+                
+                .powered-by {
+                  position: fixed;
+                  bottom: 10px;
+                  right: 10px;
+                  font-size: 8px;
+                  color: #999;
+                }
+                
+                @media print {
+                  .powered-by { position: absolute; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>Virtu Community Enhancement Group</h1>
+                <h2>Agency Partnership Volunteer Log</h2>
+              </div>
+              
+              <div class="date-section">
+                Date: ${new Date().toLocaleDateString('en-US', { 
+                  month: '2-digit', 
+                  day: '2-digit', 
+                  year: 'numeric' 
+                }).replace(/\//g, '/')}
+              </div>
+              
+              <div class="form-section">
+                <div class="field-row">
+                  <span class="field-label">Name:</span>
+                  <div class="field-line">${currentFormData.first_name} ${currentFormData.last_name}</div>
+                </div>
+                <div class="field-row">
+                  <span class="field-label">Organization:</span>
+                  <div class="field-line">${currentFormData.organization}</div>
+                </div>
+                <div class="field-row">
+                  <span class="field-label">Email:</span>
+                  <div class="field-line">${currentFormData.email}</div>
+                </div>
+                <div class="field-row">
+                  <span class="field-label">Phone:</span>
+                  <div class="field-line">${currentFormData.phone}</div>
+                </div>
+              </div>
+              
+              <div class="table-title">Agency Partnership Volunteer Log</div>
+              
+              <table class="volunteer-table">
+                <thead>
+                  <tr>
+                    <th>Event Date</th>
+                    <th>Event Site Zip</th>
+                    <th>Total Number of<br>Hours Worked</th>
+                    <th>Total Number of<br>Volunteers</th>
+                    <th>Total Volunteer<br>Hours</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${Array.from({length: 10}, (_, i) => {
+                    const event = currentFormData.events[i];
+                    const totalHours = event ? (parseInt(event.hours || '0') * parseInt(event.volunteers || '1')) : '';
+                    return `
+                      <tr>
+                        <td>${event ? new Date(event.date).toLocaleDateString() : ''}</td>
+                        <td>${event ? event.zip : ''}</td>
+                        <td>${event ? event.hours : ''}</td>
+                        <td>${event ? event.volunteers : ''}</td>
+                        <td>${totalHours}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                  <tr class="total-row">
+                    <td colspan="4" style="text-align: center; font-weight: bold;">TOTAL VOLUNTEER HOURS</td>
+                    <td style="font-weight: bold;">
+                      ${currentFormData.events.reduce((total, event) => {
+                        if (event.hours && event.volunteers) {
+                          return total + (parseInt(event.hours) * parseInt(event.volunteers));
+                        }
+                        return total;
+                      }, 0)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              
+              <div class="signature-section">
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div><strong>Prepared by:</strong><br>${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
+                </div>
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div><strong>Position/Title:</strong><br>${currentFormData.position_title}</div>
+                </div>
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div><strong>Date/Time:</strong><br>${new Date().toLocaleDateString()}</div>
+                </div>
+              </div>
+              
+              <div class="powered-by">Powered by AHTS</div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    };
+
     const calculateTotalHours = () => {
       return eventRows.reduce((total, row) => {
         if (row.hours && row.volunteers) {
@@ -1024,7 +1273,7 @@ const VolunteerApp = () => {
     const handleSubmit = async () => {
       setIsSubmitting(true);
       try {
-        if (!formData.first_name || !formData.last_name || !formData.email || !formData.organization || !formData.phone || !formData.prepared_by || !formData.position_title) {
+        if (!formData.first_name || !formData.last_name || !formData.email || !formData.organization || !formData.phone || !formData.prepared_by_first || !formData.prepared_by_last || !formData.position_title) {
           alert('Please fill in all required fields (marked with *)');
           return;
         }
@@ -1048,7 +1297,8 @@ const VolunteerApp = () => {
           email: formData.email.trim(),
           phone: formData.phone.trim(),
           families_served: parseInt(formData.families_served),
-          prepared_by: formData.prepared_by.trim(),
+          prepared_by_first: formData.prepared_by_first.trim(),
+          prepared_by_last: formData.prepared_by_last.trim(),
           position_title: formData.position_title.trim(),
           events: validEvents
         };
@@ -1193,18 +1443,31 @@ const VolunteerApp = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Prepared By *
+                          Prepared By - First Name *
                         </label>
                         <input
                           type="text"
                           required
-                          value={formData.prepared_by}
-                          onChange={(e) => setFormData({...formData, prepared_by: e.target.value})}
+                          value={formData.prepared_by_first}
+                          onChange={(e) => setFormData({...formData, prepared_by_first: e.target.value})}
                           className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
-                          placeholder="Enter your full name"
+                          placeholder="Enter first name"
                         />
                       </div>
                       <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Prepared By - Last Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.prepared_by_last}
+                          onChange={(e) => setFormData({...formData, prepared_by_last: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter last name"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                           Position/Title *
                         </label>
@@ -1332,6 +1595,14 @@ const VolunteerApp = () => {
                   {/* Submit Section */}
                   <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
                     <button
+                      type="button"
+                      onClick={generatePDF}
+                      className="flex-1 bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
+                    >
+                      <Download className="w-5 h-5" />
+                      <span>Preview PDF</span>
+                    </button>
+                    <button
                       onClick={handleSubmit}
                       disabled={isSubmitting}
                       className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
@@ -1365,7 +1636,8 @@ const VolunteerApp = () => {
       email: '',
       phone: '',
       student_id: '',
-      prepared_by: '',
+      prepared_by_first: '',
+      prepared_by_last: '',
       position_title: ''
     });
     const [activities, setActivities] = useState([
@@ -1396,10 +1668,301 @@ const VolunteerApp = () => {
       }, 0);
     };
 
+    const generateActivityPDF = () => {
+      const currentFormData = {
+        volunteer_name: formData.volunteer_name,
+        email: formData.email,
+        phone: formData.phone,
+        student_id: formData.student_id,
+        prepared_by_first: formData.prepared_by_first,
+        prepared_by_last: formData.prepared_by_last,
+        position_title: formData.position_title,
+        activities: activities.filter(activity => activity.date || activity.activity || activity.organization)
+      };
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Activity Log (ICS 214)</title>
+              <style>
+                @page { margin: 0.5in; }
+                body { 
+                  font-family: Arial, sans-serif; 
+                  margin: 0; 
+                  padding: 15px;
+                  font-size: 11px;
+                  line-height: 1.3;
+                  background: white;
+                }
+                
+                .header {
+                  text-align: center;
+                  margin-bottom: 15px;
+                  border: 2px solid #000;
+                  padding: 10px;
+                }
+                
+                .header h1 {
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin: 0;
+                  text-transform: uppercase;
+                }
+                
+                .form-section {
+                  border: 1px solid #000;
+                  margin-bottom: 10px;
+                  padding: 8px;
+                }
+                
+                .section-header {
+                  font-weight: bold;
+                  margin-bottom: 8px;
+                  font-size: 12px;
+                }
+                
+                .field-grid {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr 1fr;
+                  gap: 15px;
+                  margin-bottom: 8px;
+                }
+                
+                .field {
+                  display: flex;
+                  align-items: center;
+                }
+                
+                .field-label {
+                  font-weight: bold;
+                  margin-right: 5px;
+                  min-width: 80px;
+                  font-size: 10px;
+                }
+                
+                .field-line {
+                  flex: 1;
+                  border-bottom: 1px solid #000;
+                  height: 18px;
+                  padding-left: 3px;
+                  padding-bottom: 1px;
+                }
+                
+                .resources-table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin: 10px 0;
+                }
+                
+                .resources-table th {
+                  border: 1px solid #000;
+                  padding: 4px;
+                  text-align: center;
+                  font-weight: bold;
+                  background-color: #f0f0f0;
+                  font-size: 10px;
+                }
+                
+                .resources-table td {
+                  border: 1px solid #000;
+                  padding: 4px;
+                  height: 20px;
+                }
+                
+                .activity-table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin: 10px 0;
+                }
+                
+                .activity-table th {
+                  border: 1px solid #000;
+                  padding: 6px 4px;
+                  text-align: center;
+                  font-weight: bold;
+                  background-color: #f0f0f0;
+                  font-size: 10px;
+                }
+                
+                .activity-table td {
+                  border: 1px solid #000;
+                  padding: 4px;
+                  vertical-align: top;
+                  min-height: 25px;
+                  font-size: 10px;
+                }
+                
+                .signature-section {
+                  display: grid;
+                  grid-template-columns: 1fr 1fr 1fr;
+                  gap: 20px;
+                  margin-top: 20px;
+                  border: 1px solid #000;
+                  padding: 10px;
+                }
+                
+                .signature-box {
+                  text-align: center;
+                }
+                
+                .signature-line {
+                  border-bottom: 1px solid #000;
+                  height: 25px;
+                  margin-bottom: 3px;
+                }
+                
+                .powered-by {
+                  position: fixed;
+                  bottom: 10px;
+                  right: 10px;
+                  font-size: 8px;
+                  color: #999;
+                }
+                
+                @media print {
+                  .powered-by { position: absolute; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>Activity Log (ICS 214)</h1>
+              </div>
+              
+              <div class="form-section">
+                <div class="field-grid">
+                  <div class="field">
+                    <span class="field-label">1. Incident Name:</span>
+                    <div class="field-line">Volunteer Service</div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">2. Operational Period:</span>
+                    <div class="field-line"></div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">Date From:</span>
+                    <div class="field-line"></div>
+                  </div>
+                </div>
+                <div class="field-grid">
+                  <div class="field">
+                    <span class="field-label">3. Name:</span>
+                    <div class="field-line">${currentFormData.volunteer_name}</div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">4. ICS Position:</span>
+                    <div class="field-line">Volunteer</div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">Date To:</span>
+                    <div class="field-line"></div>
+                  </div>
+                </div>
+                <div class="field-grid">
+                  <div class="field">
+                    <span class="field-label"></span>
+                    <div class="field-line"></div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label"></span>
+                    <div class="field-line"></div>
+                  </div>
+                  <div class="field">
+                    <span class="field-label">Time To:</span>
+                    <div class="field-line"></div>
+                  </div>
+                </div>
+                <div class="field">
+                  <span class="field-label">5. Home Agency (and Unit):</span>
+                  <div class="field-line">Virtu Community Enhancement Group</div>
+                </div>
+              </div>
+              
+              <div class="form-section">
+                <div class="section-header">6. Resources Assigned:</div>
+                <table class="resources-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>ICS Position</th>
+                      <th>Home Agency (and Unit)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>${currentFormData.volunteer_name}</td>
+                      <td>Volunteer</td>
+                      <td>Individual Volunteer</td>
+                    </tr>
+                    ${Array.from({length: 4}, () => '<tr><td></td><td></td><td></td></tr>').join('')}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="form-section">
+                <div class="section-header">7. Activity Log:</div>
+                <table class="activity-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 20%;">Date/Time</th>
+                      <th style="width: 80%;">Notable Activities</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${currentFormData.activities.map(activity => `
+                      <tr>
+                        <td style="text-align: center;">
+                          ${activity.date ? new Date(activity.date).toLocaleDateString() : ''}<br>
+                          ${activity.hours ? activity.hours + ' hrs' : ''}
+                        </td>
+                        <td>
+                          <strong>${activity.activity || ''}</strong><br>
+                          Organization: ${activity.organization || ''}<br>
+                          Location: ${activity.location || ''}<br>
+                          ${activity.description || ''}
+                        </td>
+                      </tr>
+                    `).join('')}
+                    ${Array.from({length: Math.max(0, 8 - currentFormData.activities.length)}, () => 
+                      '<tr><td style="height: 30px;"></td><td></td></tr>'
+                    ).join('')}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="signature-section">
+                <div class="signature-box">
+                  <div class="section-header">8. Prepared by:</div>
+                  <div class="signature-line">${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
+                  <div style="font-size: 9px;">Signature</div>
+                </div>
+                <div class="signature-box">
+                  <div class="section-header">Position/Title:</div>
+                  <div class="signature-line">${currentFormData.position_title}</div>
+                  <div style="font-size: 9px;">Position/Title</div>
+                </div>
+                <div class="signature-box">
+                  <div class="section-header">Date/Time:</div>
+                  <div class="signature-line">${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                  <div style="font-size: 9px;">Date/Time</div>
+                </div>
+              </div>
+              
+              <div class="powered-by">Powered by AHTS</div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    };
+
     const handleSubmit = async () => {
       setIsSubmitting(true);
       try {
-        if (!formData.volunteer_name || !formData.email || !formData.prepared_by || !formData.position_title) {
+        if (!formData.volunteer_name || !formData.email || !formData.prepared_by_first || !formData.prepared_by_last || !formData.position_title) {
           alert('Please fill in all required fields (marked with *)');
           return;
         }
@@ -1425,7 +1988,8 @@ const VolunteerApp = () => {
           email: formData.email.trim(),
           phone: formData.phone?.trim() || null,
           student_id: formData.student_id?.trim() || null,
-          prepared_by: formData.prepared_by.trim(),
+          prepared_by_first: formData.prepared_by_first.trim(),
+          prepared_by_last: formData.prepared_by_last.trim(),
           position_title: formData.position_title.trim(),
           activities: validActivities.map(activity => ({
             date: activity.date,
@@ -1546,17 +2110,30 @@ const VolunteerApp = () => {
                           placeholder="Enter student ID"
                         />
                       </div>
-                      <div className="md:col-span-2">
+                      <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Prepared By *
+                          Prepared By - First Name *
                         </label>
                         <input
                           type="text"
                           required
-                          value={formData.prepared_by}
-                          onChange={(e) => setFormData({...formData, prepared_by: e.target.value})}
+                          value={formData.prepared_by_first}
+                          onChange={(e) => setFormData({...formData, prepared_by_first: e.target.value})}
                           className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
-                          placeholder="Enter your full name"
+                          placeholder="Enter first name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Prepared By - Last Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.prepared_by_last}
+                          onChange={(e) => setFormData({...formData, prepared_by_last: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter last name"
                         />
                       </div>
                       <div className="md:col-span-2">
@@ -1715,6 +2292,14 @@ const VolunteerApp = () => {
 
                   {/* Submit Section */}
                   <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
+                    <button
+                      type="button"
+                      onClick={generateActivityPDF}
+                      className="flex-1 bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
+                    >
+                      <Download className="w-5 h-5" />
+                      <span>Preview PDF</span>
+                    </button>
                     <button
                       onClick={handleSubmit}
                       disabled={isSubmitting}
