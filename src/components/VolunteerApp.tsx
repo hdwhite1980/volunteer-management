@@ -985,7 +985,8 @@ const VolunteerApp = () => {
       email: '',
       phone: '',
       families_served: '',
-      prepared_by: ''
+      prepared_by: '',
+      position_title: ''
     });
     const [eventRows, setEventRows] = useState([
       { date: '', site: '', zip: '', hours: '', volunteers: '' }
@@ -1023,7 +1024,7 @@ const VolunteerApp = () => {
     const handleSubmit = async () => {
       setIsSubmitting(true);
       try {
-        if (!formData.first_name || !formData.last_name || !formData.email || !formData.organization || !formData.phone || !formData.prepared_by) {
+        if (!formData.first_name || !formData.last_name || !formData.email || !formData.organization || !formData.phone || !formData.prepared_by || !formData.position_title) {
           alert('Please fill in all required fields (marked with *)');
           return;
         }
@@ -1048,6 +1049,7 @@ const VolunteerApp = () => {
           phone: formData.phone.trim(),
           families_served: parseInt(formData.families_served),
           prepared_by: formData.prepared_by.trim(),
+          position_title: formData.position_title.trim(),
           events: validEvents
         };
 
@@ -1202,6 +1204,19 @@ const VolunteerApp = () => {
                           placeholder="Enter your full name"
                         />
                       </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Position/Title *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.position_title}
+                          onChange={(e) => setFormData({...formData, position_title: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter your position or title"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -1350,7 +1365,8 @@ const VolunteerApp = () => {
       email: '',
       phone: '',
       student_id: '',
-      prepared_by: ''
+      prepared_by: '',
+      position_title: ''
     });
     const [activities, setActivities] = useState([
       { date: '', activity: '', organization: '', location: '', hours: '', description: '' }
@@ -1383,7 +1399,7 @@ const VolunteerApp = () => {
     const handleSubmit = async () => {
       setIsSubmitting(true);
       try {
-        if (!formData.volunteer_name || !formData.email || !formData.prepared_by) {
+        if (!formData.volunteer_name || !formData.email || !formData.prepared_by || !formData.position_title) {
           alert('Please fill in all required fields (marked with *)');
           return;
         }
@@ -1410,6 +1426,7 @@ const VolunteerApp = () => {
           phone: formData.phone?.trim() || null,
           student_id: formData.student_id?.trim() || null,
           prepared_by: formData.prepared_by.trim(),
+          position_title: formData.position_title.trim(),
           activities: validActivities.map(activity => ({
             date: activity.date,
             activity: activity.activity,
@@ -1540,6 +1557,19 @@ const VolunteerApp = () => {
                           onChange={(e) => setFormData({...formData, prepared_by: e.target.value})}
                           className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
                           placeholder="Enter your full name"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Position/Title *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.position_title}
+                          onChange={(e) => setFormData({...formData, position_title: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter your position or title"
                         />
                       </div>
                     </div>
