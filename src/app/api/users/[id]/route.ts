@@ -33,7 +33,7 @@ async function checkAuth(request: NextRequest) {
         CURRENT_TIMESTAMP as current_time
       FROM user_sessions s
       JOIN users u ON s.user_id = u.id
-      WHERE s.id = ${sessionToken}
+      WHERE s.session_token = ${sessionToken}
         AND s.expires_at > CURRENT_TIMESTAMP
         AND u.is_active = true
     `;
@@ -58,7 +58,7 @@ async function checkAuth(request: NextRequest) {
           u.is_active
         FROM user_sessions s
         JOIN users u ON s.user_id = u.id
-        WHERE s.id = ${sessionToken}
+        WHERE s.session_token = ${sessionToken}
       `;
       
       if (expiredSessions.length > 0) {
