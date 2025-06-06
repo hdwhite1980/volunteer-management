@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Users, Calendar, Star, Mail, Phone, AlertCircle, CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send } from 'lucide-react';
 
-const JobDetails = ({ jobId }) => {
+const JobDetails = ({ jobId }: { jobId: any }) => {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
