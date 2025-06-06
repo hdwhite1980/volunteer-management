@@ -287,8 +287,8 @@ const VolunteerApp = () => {
                 ← Back to Home
               </button>
               <div className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
-                <p className="font-medium">Credentials Assistance</p>
-                <p>Contact Support</p>
+                <p className="font-medium">Default Credentials:</p>
+                <p>Username: admin | Password: admin123</p>
               </div>
             </div>
           </div>
@@ -609,7 +609,7 @@ const VolunteerApp = () => {
     );
   };
 
-  // Landing Page Component
+  // Landing Page Component with NEW JOB BOARD NAVIGATION
   const LandingPage = () => (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
       {/* Background Pattern */}
@@ -623,7 +623,7 @@ const VolunteerApp = () => {
               <Users className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-6xl font-bold text-white mb-6 leading-tight">
-              VCEG Volunteer
+              VCEG Volunteer 
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">
                 Management System
               </span>
@@ -634,8 +634,9 @@ const VolunteerApp = () => {
             </p>
           </div>
 
-          {/* Main Action Cards */}
-          <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
+          {/* UPDATED: Main Action Cards - Now 2x2 Grid */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-16">
+            {/* Existing Partnership Card */}
             <div className="group bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-white/20 hover:border-white/30 hover:-translate-y-2">
               <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <Building2 className="w-10 h-10 text-white" />
@@ -655,6 +656,7 @@ const VolunteerApp = () => {
               </button>
             </div>
 
+            {/* Existing Activity Card */}
             <div className="group bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-white/20 hover:border-white/30 hover:-translate-y-2">
               <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <Clock className="w-10 h-10 text-white" />
@@ -673,9 +675,49 @@ const VolunteerApp = () => {
                 Start Activity Log
               </button>
             </div>
+
+            {/* NEW: Job Board Card */}
+            <div className="group bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-white/20 hover:border-white/30 hover:-translate-y-2">
+              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Search className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-4 text-center">
+                Job Board
+              </h2>
+              <p className="text-gray-300 mb-8 text-center leading-relaxed">
+                Browse volunteer opportunities in your community and apply 
+                for positions that match your skills and interests
+              </p>
+              <button
+                onClick={() => window.location.href = '/job-board'}
+                className="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Browse Opportunities
+              </button>
+            </div>
+
+            {/* NEW: Volunteer Signup Card */}
+            <div className="group bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-white/20 hover:border-white/30 hover:-translate-y-2">
+              <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <Users className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-4 text-center">
+                Volunteer Signup
+              </h2>
+              <p className="text-gray-300 mb-8 text-center leading-relaxed">
+                Register as a volunteer to receive notifications about 
+                opportunities that match your location and interests
+              </p>
+              <button
+                onClick={() => window.location.href = '/volunteer-signup'}
+                className="w-full bg-gradient-to-r from-orange-600 to-orange-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-orange-700 hover:to-orange-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                Register Now
+              </button>
+            </div>
           </div>
 
-          {/* Secondary Actions */}
+          {/* Secondary Actions - Add Post Job for Admins */}
           <div className="flex flex-wrap justify-center gap-6">
             <button
               onClick={() => {
@@ -705,6 +747,16 @@ const VolunteerApp = () => {
               <Upload className="w-5 h-5 inline mr-3" />
               Upload Forms
             </button>
+            {/* NEW: Post Job for authenticated users */}
+            {isAuthenticated && (
+              <button
+                onClick={() => window.location.href = '/post-job'}
+                className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <Plus className="w-5 h-5 inline mr-3" />
+                Post Opportunity
+              </button>
+            )}
           </div>
 
           {/* Powered by AHTS */}
