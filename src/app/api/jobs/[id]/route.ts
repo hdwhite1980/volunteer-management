@@ -4,6 +4,18 @@ import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL!);
 
+// Type for application data
+interface JobApplication {
+  id: number;
+  status: string;
+  applied_at: string;
+  message?: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+}
+
 // Helper function to check authentication
 async function checkAuth(request: NextRequest) {
   try {
@@ -98,8 +110,8 @@ export async function GET(
       );
     }
 
-    // Get recent applications if user is owner or admin
-    let applications = [];
+    // Get recent applications if user is owner or admin - FIXED TYPING
+    let applications: JobApplication[] = [];
     if (isOwner || isAdmin) {
       applications = await sql`
         SELECT 
