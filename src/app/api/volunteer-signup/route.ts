@@ -200,7 +200,7 @@ export async function POST(request: NextRequest) {
     console.log(`Volunteer Signup API: Successfully registered volunteer with ID: ${result[0].id}`);
 
     // Find nearby opportunities
-    let nearbyJobs = [];
+    let nearbyJobs: any[] = [];
     try {
       const maxDist = max_distance || 25;
       nearbyJobs = await sql`
