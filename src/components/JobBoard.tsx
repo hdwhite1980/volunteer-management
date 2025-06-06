@@ -79,7 +79,7 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
     }
   };
 
-  const getUrgencyColor = (urgency) => {
+  const getUrgencyColor = (urgency: 'urgent' | 'high' | 'medium' | 'low') => {
     switch (urgency) {
       case 'urgent': return 'text-red-600 bg-red-100 border-red-200';
       case 'high': return 'text-orange-600 bg-orange-100 border-orange-200';
