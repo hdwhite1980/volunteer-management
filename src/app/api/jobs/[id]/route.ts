@@ -113,7 +113,7 @@ export async function GET(
     // Get recent applications if user is owner or admin - FIXED TYPING
     let applications: JobApplication[] = [];
     if (isOwner || isAdmin) {
-      applications = await sql`
+      const result = await sql`
         SELECT 
           ja.id,
           ja.status,
@@ -129,6 +129,7 @@ export async function GET(
         ORDER BY ja.applied_at DESC
         LIMIT 10
       `;
+      applications = result as JobApplication[];
     }
 
     console.log(`Job Details API: Returning job details with ${applications.length} applications`);
