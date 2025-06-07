@@ -21,6 +21,60 @@ interface AuthUser {
   updated_at?: string;
 }
 
+// Job Board Categories
+export const VOLUNTEER_CATEGORIES = [
+  'Debris Removal & Cleanup',
+  'Structural Assessment & Repair',
+  'Home Stabilization (e.g., tarping, boarding)',
+  'Utility Restoration Support',
+  'Supply Distribution',
+  'Warehouse Management',
+  'Transportation Assistance',
+  'Administrative & Office Support',
+  'First Aid & Medical Support',
+  'Mental Health & Emotional Support',
+  'Spiritual Care',
+  'Pet Care Services',
+  'Childcare & Youth Programs',
+  'Senior Assistance',
+  'Multilingual & Translation Support',
+  'Legal Aid Assistance',
+  'Volunteer Coordination',
+  'IT & Communication Support',
+  'Damage Assessment & Reporting',
+  'Fundraising & Community Outreach'
+];
+
+export const HELP_REQUEST_CATEGORIES = [
+  'Need Debris Cleanup',
+  'Need Roof Tarping / Emergency Repairs',
+  'Need Structural Assessment',
+  'Need Minor Home Repairs',
+  'Need Food Assistance',
+  'Need Water or Hydration Supplies',
+  'Need Clothing or Shoes',
+  'Need Hygiene or Sanitation Items',
+  'Need Pet Food / Pet Supplies',
+  'Need Transportation / Ride to Shelter',
+  'Need Delivery of Supplies',
+  'Need Vehicle Help (e.g., jumpstart)',
+  'Need First Aid / Medical Check-In',
+  'Need Mental Health Support',
+  'Need Medication Refill or Replacement',
+  'Need Childcare Support',
+  'Need Elderly Assistance',
+  'Need Disability Support',
+  'Need Translation / Interpretation Help',
+  'Need Help Applying for FEMA or Other Aid',
+  'Need Help Filing Insurance Claims',
+  'Need Help Replacing Lost Documents',
+  'Need Emergency Shelter',
+  'Need Generator or Charging Station',
+  'Need Heating or Cooling Relief',
+  'Need Internet or Hotspot Access',
+  'Need Help Filling Online Forms'
+];
+
 const VolunteerApp = () => {
   const [currentView, setCurrentView] = useState('landing');
   const [stats, setStats] = useState({ total_volunteers: 0, total_hours: 0, total_organizations: 0 });
@@ -2286,7 +2340,7 @@ const VolunteerApp = () => {
                               </div>
                               <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                                  Activity Type *
+                                  Volunteer Category *
                                 </label>
                                 <select
                                   value={activity.activity}
@@ -2294,17 +2348,12 @@ const VolunteerApp = () => {
                                   required
                                   className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-gray-900"
                                 >
-                                  <option value="">Select Activity Type</option>
-                                  <option value="Community Service">Community Service</option>
-                                  <option value="Tutoring/Mentoring">Tutoring/Mentoring</option>
-                                  <option value="Environmental">Environmental</option>
-                                  <option value="Food Service">Food Service</option>
-                                  <option value="Construction/Repair">Construction/Repair</option>
-                                  <option value="Event Support">Event Support</option>
-                                  <option value="Administrative">Administrative</option>
-                                  <option value="Healthcare Support">Healthcare Support</option>
-                                  <option value="Education">Education</option>
-                                  <option value="Other">Other</option>
+                                  <option value="">Select Volunteer Category</option>
+                                  {VOLUNTEER_CATEGORIES.map((category) => (
+                                    <option key={category} value={category}>
+                                      {category}
+                                    </option>
+                                  ))}
                                 </select>
                               </div>
                             </div>

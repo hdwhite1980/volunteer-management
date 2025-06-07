@@ -348,6 +348,30 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
   });
   const [selectedJob, setSelectedJob] = useState<any>(null);
 
+  // Updated categories to match the new volunteer categories
+  const categoryOptions = [
+    'Debris Removal & Cleanup',
+    'Structural Assessment & Repair',
+    'Home Stabilization (e.g., tarping, boarding)',
+    'Utility Restoration Support',
+    'Supply Distribution',
+    'Warehouse Management',
+    'Transportation Assistance',
+    'Administrative & Office Support',
+    'First Aid & Medical Support',
+    'Mental Health & Emotional Support',
+    'Spiritual Care',
+    'Pet Care Services',
+    'Childcare & Youth Programs',
+    'Senior Assistance',
+    'Multilingual & Translation Support',
+    'Legal Aid Assistance',
+    'Volunteer Coordination',
+    'IT & Communication Support',
+    'Damage Assessment & Reporting',
+    'Fundraising & Community Outreach'
+  ];
+
   useEffect(() => {
     fetchJobs();
   }, [filters]);
@@ -415,11 +439,9 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Categories</option>
-                <option value="Environment">Environment</option>
-                <option value="Education">Education</option>
-                <option value="Human Services">Human Services</option>
-                <option value="Health">Health</option>
-                <option value="Community">Community</option>
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
               </select>
             </div>
 
