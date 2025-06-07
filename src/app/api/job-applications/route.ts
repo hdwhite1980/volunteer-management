@@ -4,220 +4,170 @@ import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// Helper function to check authentication
-async function checkAuth(request: NextRequest) {
-  try {
-    const sessionId = request.cookies.get('session')?.value;
-    
-    if (!sessionId) {
-      return null;
-    }
-
-    const sessions = await sql`
-      SELECT 
-        u.id, u.username, u.email, u.role
-      FROM sessions s
-      JOIN users u ON s.user_id = u.id
-      WHERE s.id = ${sessionId}
-        AND s.expires_at > CURRENT_TIMESTAMP
-        AND u.is_active = true
-    `;
-    
-    return sessions.length > 0 ? sessions[0] : null;
-  } catch (error) {
-    console.error('Authentication check error:', error);
-    return null;
-  }
+interface ApplicationData {
+  job_id: number;
+  volunteer_name: string;
+  email: string;
+  phone?: string;
+  cover_letter?: string;
+  availability?: any;
+  experience?: string;
+  volunteer_id?: number;
 }
 
-// POST - Submit job application
+interface JobApplication {
+  id: number;
+  job_id: number;
+  volunteer_name: string;
+  email: string;
+  phone?: string;
+  cover_letter?: string;
+  status: string;
+  applied_at: string;
+  [key: string]: any;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    console.log('Job Applications API: Starting application submission...');
+    console.log('Job Applications API: Processing application...');
     
-    const body = await request.json();
-    const {
-      job_id,
-      volunteer_id,
-      volunteer_email, // Alternative to volunteer_id
-      message,
-      preferred_start_date,
-      availability_notes
-    } = body;
-
-    console.log('Job Applications API: Processing application for job:', job_id);
-
+    const body = await request.json() as ApplicationData;
+    
     // Validate required fields
-    if (!job_id || (!volunteer_id && !volunteer_email)) {
+    const requiredFields = ['job_id', 'volunteer_name', 'email'];
+    const missingFields: string[] = [];
+    
+    for (const field of requiredFields) {
+      if (!body[field as keyof ApplicationData]) {
+        missingFields.push(field);
+      }
+    }
+    
+    if (missingFields.length > 0) {
       return NextResponse.json(
-        { error: 'Missing required fields: job_id and (volunteer_id or volunteer_email)' },
+        { error: `Missing required fields: ${missingFields.join(', ')}` },
         { status: 400 }
       );
     }
 
-    // Get volunteer ID if email was provided
-    let resolvedVolunteerId = volunteer_id;
-    
-    if (!volunteer_id && volunteer_email) {
-      const volunteers = await sql`
-        SELECT id FROM volunteer_registrations 
-        WHERE email = ${volunteer_email.toLowerCase()}
-      `;
-      
-      if (volunteers.length === 0) {
-        return NextResponse.json(
-          { error: 'Volunteer not found. Please register first.' },
-          { status: 404 }
-        );
-      }
-      
-      resolvedVolunteerId = volunteers[0].id;
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(body.email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
     }
 
-    // Verify job exists and is active
+    // Check if job exists and is active
+    console.log('Job Applications API: Checking job status...');
     const jobs = await sql`
       SELECT 
-        id, title, organization, volunteers_needed, status,
-        (
-          SELECT COUNT(*) 
-          FROM job_applications ja 
-          WHERE ja.job_id = jobs.id AND ja.status = 'accepted'
-        ) as filled_positions
+        id, title, status, volunteers_needed, expires_at,
+        (SELECT COUNT(*) FROM job_applications WHERE job_id = jobs.id AND status = 'accepted') as filled_positions
       FROM jobs 
-      WHERE id = ${job_id} AND status = 'active'
-    `;
+      WHERE id = ${body.job_id}
+    ` as any[];
 
     if (jobs.length === 0) {
       return NextResponse.json(
-        { error: 'Job not found or no longer available' },
+        { error: 'Job not found' },
         { status: 404 }
       );
     }
 
     const job = jobs[0];
-    const positionsRemaining = job.volunteers_needed - (job.filled_positions || 0);
 
-    if (positionsRemaining <= 0) {
+    if (job.status !== 'active') {
       return NextResponse.json(
-        { error: 'This position is now full. No more volunteers needed.' },
+        { error: 'This job is no longer accepting applications' },
         { status: 400 }
       );
     }
 
-    // Check if volunteer already applied
+    if (new Date(job.expires_at) < new Date()) {
+      return NextResponse.json(
+        { error: 'This job opportunity has expired' },
+        { status: 400 }
+      );
+    }
+
+    const positionsRemaining = job.volunteers_needed - job.filled_positions;
+    if (positionsRemaining <= 0) {
+      return NextResponse.json(
+        { error: 'This job is already filled' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already applied
+    console.log('Job Applications API: Checking for duplicate application...');
     const existingApplications = await sql`
-      SELECT id, status FROM job_applications 
-      WHERE job_id = ${job_id} AND volunteer_id = ${resolvedVolunteerId}
-    `;
+      SELECT id FROM job_applications 
+      WHERE job_id = ${body.job_id} AND email = ${body.email}
+    ` as any[];
 
     if (existingApplications.length > 0) {
-      const existing = existingApplications[0];
       return NextResponse.json(
-        { 
-          error: `You have already applied for this position. Application status: ${existing.status}`,
-          existing_application_id: existing.id,
-          status: existing.status
-        },
+        { error: 'You have already applied for this position' },
         { status: 409 }
       );
     }
 
-    // Verify volunteer exists
-    const volunteers = await sql`
-      SELECT id, first_name, last_name, email FROM volunteer_registrations 
-      WHERE id = ${resolvedVolunteerId}
-    `;
+    // Try to link with existing volunteer registration
+    let volunteerId = body.volunteer_id;
+    if (!volunteerId) {
+      console.log('Job Applications API: Looking for existing volunteer registration...');
+      const volunteers = await sql`
+        SELECT id FROM volunteer_registrations WHERE email = ${body.email}
+      ` as any[];
+      
+      if (volunteers.length > 0) {
+        volunteerId = volunteers[0].id;
+      }
+    }
 
-    if (volunteers.length === 0) {
+    // Create application
+    console.log('Job Applications API: Creating application...');
+    const result = await sql`
+      INSERT INTO job_applications (
+        job_id, volunteer_id, volunteer_name, email, phone, cover_letter,
+        availability, experience, status
+      ) VALUES (
+        ${body.job_id}, ${volunteerId || null}, ${body.volunteer_name}, ${body.email},
+        ${body.phone || null}, ${body.cover_letter || ''}, 
+        ${JSON.stringify(body.availability || {})}, ${body.experience || ''},
+        'pending'
+      )
+      RETURNING id, volunteer_name, email, applied_at
+    ` as any[];
+
+    if (result.length === 0) {
       return NextResponse.json(
-        { error: 'Volunteer registration not found' },
-        { status: 404 }
+        { error: 'Failed to submit application' },
+        { status: 500 }
       );
     }
 
-    const volunteer = volunteers[0];
-
-    // Create the application
-    const result = await sql`
-      INSERT INTO job_applications (
-        job_id,
-        volunteer_id,
-        message,
-        preferred_start_date,
-        availability_notes
-      ) VALUES (
-        ${job_id},
-        ${resolvedVolunteerId},
-        ${message || null},
-        ${preferred_start_date || null},
-        ${availability_notes || null}
-      )
-      RETURNING id, applied_at
-    `;
-
-    console.log(`Job Applications API: Successfully created application with ID: ${result[0].id}`);
-
-    // Get full application details for response
-    const fullApplication = await sql`
-      SELECT 
-        ja.*,
-        j.title as job_title,
-        j.organization,
-        j.contact_email,
-        vr.first_name,
-        vr.last_name,
-        vr.email as volunteer_email
-      FROM job_applications ja
-      JOIN jobs j ON ja.job_id = j.id
-      JOIN volunteer_registrations vr ON ja.volunteer_id = vr.id
-      WHERE ja.id = ${result[0].id}
-    `;
-
-    const application = fullApplication[0];
+    const application = result[0];
+    console.log(`Job Applications API: Successfully created application ${application.id}`);
 
     return NextResponse.json({
       success: true,
       application: {
         id: application.id,
-        job_id: application.job_id,
-        job_title: application.job_title,
-        organization: application.organization,
-        volunteer_name: `${application.first_name} ${application.last_name}`,
-        status: application.status,
-        applied_at: application.applied_at,
-        message: application.message
+        job_title: job.title,
+        applicant_name: application.volunteer_name,
+        applied_at: application.applied_at
       },
-      message: 'Application submitted successfully! The organization will review your application and contact you soon.',
-      next_steps: [
-        'You will receive an email confirmation shortly',
-        'The organization will review your application',
-        'You may be contacted for additional information or to schedule an interview',
-        'Check your email regularly for updates'
-      ]
+      message: 'Application submitted successfully! You will be contacted if selected.'
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Job Applications API: Error creating application:', error);
-    
-    if (error instanceof Error) {
-      if (error.message.includes('unique constraint')) {
-        return NextResponse.json(
-          { error: 'You have already applied for this position' },
-          { status: 409 }
-        );
-      }
-      
-      if (error.message.includes('foreign key')) {
-        return NextResponse.json(
-          { error: 'Invalid job or volunteer reference' },
-          { status: 400 }
-        );
-      }
-    }
-
+    console.error('Job Applications API: Error processing application:', error);
     return NextResponse.json(
       { 
-        error: 'Failed to submit application',
+        error: 'Failed to process application',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
@@ -225,123 +175,104 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET - List applications (for admin or volunteer)
+// GET - Retrieve applications (with optional filtering)
 export async function GET(request: NextRequest) {
   try {
-    console.log('Job Applications API: Fetching applications...');
-    
     const url = new URL(request.url);
     const jobId = url.searchParams.get('job_id');
-    const volunteerId = url.searchParams.get('volunteer_id');
-    const volunteerEmail = url.searchParams.get('volunteer_email');
     const status = url.searchParams.get('status');
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    const offset = parseInt(url.searchParams.get('offset') || '0');
+    const email = url.searchParams.get('email');
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const offset = (page - 1) * limit;
 
-    // Check if this is an admin request
-    const currentUser = await checkAuth(request);
-    const isAdmin = currentUser?.role === 'admin';
+    console.log('Job Applications API: Fetching applications with filters:', { jobId, status, email });
 
-    let baseQuery = `
+    let query = `
       SELECT 
         ja.*,
         j.title as job_title,
-        j.organization,
-        j.category,
-        j.contact_name,
-        j.contact_email,
-        j.start_date,
-        j.end_date,
-        vr.first_name,
-        vr.last_name,
-        vr.email as volunteer_email,
-        vr.phone as volunteer_phone
+        j.category as job_category,
+        j.city as job_city,
+        j.state as job_state
       FROM job_applications ja
       JOIN jobs j ON ja.job_id = j.id
-      JOIN volunteer_registrations vr ON ja.volunteer_id = vr.id
       WHERE 1=1
     `;
 
-    const queryParams: any[] = [];
+    const params: any[] = [];
     let paramCount = 0;
 
-    // Add filters
     if (jobId) {
       paramCount++;
-      baseQuery += ` AND ja.job_id = $${paramCount}`;
-      queryParams.push(parseInt(jobId));
-    }
-
-    if (volunteerId) {
-      paramCount++;
-      baseQuery += ` AND ja.volunteer_id = $${paramCount}`;
-      queryParams.push(parseInt(volunteerId));
-    }
-
-    if (volunteerEmail) {
-      paramCount++;
-      baseQuery += ` AND vr.email = $${paramCount}`;
-      queryParams.push(volunteerEmail.toLowerCase());
+      query += ` AND ja.job_id = $${paramCount}`;
+      params.push(parseInt(jobId));
     }
 
     if (status) {
       paramCount++;
-      baseQuery += ` AND ja.status = $${paramCount}`;
-      queryParams.push(status);
+      query += ` AND ja.status = $${paramCount}`;
+      params.push(status);
     }
 
-    // If not admin and no specific filters, return empty result
-    if (!isAdmin && !jobId && !volunteerId && !volunteerEmail) {
-      return NextResponse.json({
-        applications: [],
-        pagination: { total: 0, limit, offset, hasMore: false },
-        message: 'Please specify job_id, volunteer_id, or volunteer_email to view applications'
-      });
+    if (email) {
+      paramCount++;
+      query += ` AND ja.email = $${paramCount}`;
+      params.push(email);
     }
 
-    // Add ordering and pagination
-    baseQuery += ` ORDER BY ja.applied_at DESC`;
-    
-    paramCount += 2;
-    baseQuery += ` LIMIT $${paramCount - 1} OFFSET $${paramCount}`;
-    queryParams.push(limit, offset);
+    query += ` ORDER BY ja.applied_at DESC LIMIT ${limit} OFFSET ${offset}`;
 
-    console.log('Job Applications API: Executing query...');
-    const applications = await sql(baseQuery, queryParams);
+    const applications = await sql(query, params) as JobApplication[];
 
     // Get total count
-    let countQuery = baseQuery.split('ORDER BY')[0].replace('SELECT ja.*,', 'SELECT COUNT(*) as total FROM (SELECT 1 FROM');
-    countQuery = countQuery.split('LIMIT')[0] + ') as count_query';
-    
-    const totalResult = await sql(countQuery, queryParams.slice(0, -2)); // Remove LIMIT and OFFSET params
-    const total = parseInt(totalResult[0]?.total || '0');
+    let countQuery = `
+      SELECT COUNT(*) as total
+      FROM job_applications ja
+      JOIN jobs j ON ja.job_id = j.id
+      WHERE 1=1
+    `;
 
-    console.log(`Job Applications API: Found ${applications.length} applications (${total} total)`);
+    let countParams: any[] = [];
+    let countParamCount = 0;
+
+    if (jobId) {
+      countParamCount++;
+      countQuery += ` AND ja.job_id = $${countParamCount}`;
+      countParams.push(parseInt(jobId));
+    }
+
+    if (status) {
+      countParamCount++;
+      countQuery += ` AND ja.status = $${countParamCount}`;
+      countParams.push(status);
+    }
+
+    if (email) {
+      countParamCount++;
+      countQuery += ` AND ja.email = $${countParamCount}`;
+      countParams.push(email);
+    }
+
+    const countResult = await sql(countQuery, countParams) as any[];
+    const total = parseInt(countResult[0]?.total || '0');
+
+    console.log(`Job Applications API: Returning ${applications.length} applications out of ${total} total`);
 
     return NextResponse.json({
       applications: applications.map(app => ({
-        id: app.id,
-        job_id: app.job_id,
-        job_title: app.job_title,
-        organization: app.organization,
-        category: app.category,
-        volunteer_id: app.volunteer_id,
-        volunteer_name: `${app.first_name} ${app.last_name}`,
-        volunteer_email: app.volunteer_email,
-        volunteer_phone: isAdmin ? app.volunteer_phone : null, // Only show phone to admins
-        status: app.status,
-        message: app.message,
-        preferred_start_date: app.preferred_start_date,
-        availability_notes: app.availability_notes,
-        applied_at: app.applied_at,
-        responded_at: app.responded_at,
-        admin_notes: isAdmin ? app.admin_notes : null // Only show admin notes to admins
+        ...app,
+        availability: typeof app.availability === 'string' 
+          ? JSON.parse(app.availability) 
+          : app.availability
       })),
       pagination: {
-        total,
+        page,
         limit,
-        offset,
-        hasMore: offset + limit < total
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1
       }
     });
 
@@ -357,51 +288,40 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// PUT - Update application status (admin only)
+// PUT - Update application status (admin/job poster only)
 export async function PUT(request: NextRequest) {
   try {
-    console.log('Job Applications API: Starting application update...');
+    const url = new URL(request.url);
+    const applicationId = url.searchParams.get('id');
     
-    const currentUser = await checkAuth(request);
-    
-    if (!currentUser || currentUser.role !== 'admin') {
+    if (!applicationId) {
       return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
+        { error: 'Application ID is required' },
+        { status: 400 }
       );
     }
 
     const body = await request.json();
-    const {
-      application_id,
-      status,
-      admin_notes
-    } = body;
+    const { status: newStatus, feedback } = body;
 
-    if (!application_id || !status) {
+    if (!newStatus || !['pending', 'accepted', 'rejected', 'withdrawn'].includes(newStatus)) {
       return NextResponse.json(
-        { error: 'Missing required fields: application_id, status' },
+        { error: 'Valid status is required (pending, accepted, rejected, withdrawn)' },
         { status: 400 }
       );
     }
 
-    if (!['pending', 'accepted', 'rejected', 'withdrawn'].includes(status)) {
-      return NextResponse.json(
-        { error: 'Invalid status. Must be: pending, accepted, rejected, or withdrawn' },
-        { status: 400 }
-      );
-    }
+    console.log(`Job Applications API: Updating application ${applicationId} to status: ${newStatus}`);
 
-    // Update the application
+    // Update application status
     const result = await sql`
       UPDATE job_applications 
-      SET 
-        status = ${status},
-        admin_notes = ${admin_notes || null},
-        responded_at = CURRENT_TIMESTAMP
-      WHERE id = ${application_id}
-      RETURNING id, status, responded_at
-    `;
+      SET status = ${newStatus}, 
+          feedback = ${feedback || null},
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${parseInt(applicationId)}
+      RETURNING id, job_id, volunteer_name, status
+    ` as any[];
 
     if (result.length === 0) {
       return NextResponse.json(
@@ -410,12 +330,12 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    console.log(`Job Applications API: Updated application ${application_id} to status: ${status}`);
+    console.log(`Job Applications API: Successfully updated application ${applicationId}`);
 
     return NextResponse.json({
       success: true,
       application: result[0],
-      message: `Application status updated to: ${status}`
+      message: `Application status updated to ${newStatus}`
     });
 
   } catch (error) {

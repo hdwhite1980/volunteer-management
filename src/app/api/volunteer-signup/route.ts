@@ -4,278 +4,218 @@ import { neon } from '@neondatabase/serverless';
 
 const sql = neon(process.env.DATABASE_URL!);
 
-// Helper function to get coordinates for zipcode
-async function getZipcodeCoordinates(zipcode: string) {
-  try {
-    const result = await sql`
-      SELECT latitude, longitude, city, state 
-      FROM zipcode_coordinates 
-      WHERE zipcode = ${zipcode}
-    `;
-    return result[0] || null;
-  } catch (error) {
-    console.error('Error fetching zipcode coordinates:', error);
-    return null;
-  }
+interface VolunteerData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  birth_date?: string;
+  address: string;
+  city: string;
+  state: string;
+  zipcode: string;
+  latitude?: number;
+  longitude?: number;
+  skills: string[];
+  interests: string[];
+  categories_interested: string[];
+  experience_level: string;
+  availability: any;
+  max_distance?: number;
+  transportation: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  emergency_contact_relationship: string;
+  background_check_consent: boolean;
+  email_notifications: boolean;
+  sms_notifications: boolean;
+  notes?: string;
 }
 
-// Helper function to validate email format
-function isValidEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+interface NearbyJob {
+  id: number;
+  title: string;
+  category: string;
+  city: string;
+  state: string;
+  distance_miles: number;
+  volunteers_needed: number;
+  [key: string]: any;
 }
 
-// Helper function to validate phone format
-function isValidPhone(phone: string): boolean {
-  const phoneRegex = /^[\+]?[1-9]?[\d\s\-\(\)]{10,15}$/;
-  return phoneRegex.test(phone.replace(/\s/g, ''));
-}
-
-// POST - Register new volunteer
 export async function POST(request: NextRequest) {
   try {
-    console.log('Volunteer Signup API: Starting registration...');
+    console.log('Volunteer Signup API: Processing registration...');
     
-    const body = await request.json();
-    const {
-      first_name,
-      last_name,
-      email,
-      phone,
-      date_of_birth,
-      address,
-      city,
-      state,
-      zipcode,
-      availability,
-      skills,
-      interests,
-      max_distance,
-      transportation_available,
-      background_check_completed,
-      background_check_date,
-      emergency_contact_name,
-      emergency_contact_phone,
-      emergency_contact_relationship,
-      newsletter_opt_in,
-      sms_opt_in
-    } = body;
-
-    console.log('Volunteer Signup API: Processing registration for:', first_name, last_name, email);
-
+    const body = await request.json() as VolunteerData;
+    
     // Validate required fields
-    if (!first_name || !last_name || !email || !zipcode) {
+    const requiredFields = [
+      'first_name', 'last_name', 'email', 'address', 'city', 'state', 'zipcode',
+      'emergency_contact_name', 'emergency_contact_phone', 'emergency_contact_relationship'
+    ];
+    
+    const missingFields: string[] = [];
+    for (const field of requiredFields) {
+      if (!body[field as keyof VolunteerData]) {
+        missingFields.push(field);
+      }
+    }
+    
+    if (missingFields.length > 0) {
       return NextResponse.json(
-        { error: 'Missing required fields: first_name, last_name, email, zipcode' },
+        { error: `Missing required fields: ${missingFields.join(', ')}` },
         { status: 400 }
       );
     }
 
     // Validate email format
-    if (!isValidEmail(email)) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(body.email)) {
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
       );
     }
 
-    // Validate phone if provided
-    if (phone && !isValidPhone(phone)) {
+    // Validate zipcode
+    if (!/^\d{5}(-\d{4})?$/.test(body.zipcode)) {
       return NextResponse.json(
-        { error: 'Invalid phone number format' },
+        { error: 'Invalid zipcode format' },
         { status: 400 }
       );
-    }
-
-    // Validate zipcode and get coordinates
-    const coords = await getZipcodeCoordinates(zipcode);
-    
-    if (!coords) {
-      return NextResponse.json(
-        { error: 'Invalid zipcode. Please enter a valid US zipcode.' },
-        { status: 400 }
-      );
-    }
-
-    // Validate age if date_of_birth is provided
-    if (date_of_birth) {
-      const birthDate = new Date(date_of_birth);
-      const today = new Date();
-      const age = today.getFullYear() - birthDate.getFullYear();
-      
-      if (age < 13) {
-        return NextResponse.json(
-          { error: 'Volunteers must be at least 13 years old' },
-          { status: 400 }
-        );
-      }
     }
 
     // Check if email already exists
+    console.log('Volunteer Signup API: Checking for existing email...');
     const existingVolunteer = await sql`
-      SELECT id, email FROM volunteer_registrations 
-      WHERE email = ${email.toLowerCase()}
-    `;
+      SELECT id FROM volunteer_registrations WHERE email = ${body.email}
+    ` as any[];
 
     if (existingVolunteer.length > 0) {
       return NextResponse.json(
-        { error: 'A volunteer with this email address is already registered' },
+        { error: 'Email address already registered' },
         { status: 409 }
       );
     }
 
-    // Validate and process arrays
-    const processedSkills = Array.isArray(skills) ? skills : (skills ? [skills] : []);
-    const processedInterests = Array.isArray(interests) ? interests : (interests ? [interests] : []);
+    // Get coordinates for zipcode if not provided
+    let latitude = body.latitude;
+    let longitude = body.longitude;
     
-    // Validate availability JSON if provided
-    let processedAvailability = null;
-    if (availability) {
-      try {
-        processedAvailability = typeof availability === 'string' 
-          ? JSON.parse(availability) 
-          : availability;
-      } catch (error) {
-        return NextResponse.json(
-          { error: 'Invalid availability format' },
-          { status: 400 }
-        );
+    if (!latitude || !longitude) {
+      console.log('Volunteer Signup API: Looking up zipcode coordinates...');
+      const zipcodeData = await sql`
+        SELECT latitude, longitude FROM zipcode_coordinates WHERE zipcode = ${body.zipcode}
+      ` as any[];
+      
+      if (zipcodeData.length > 0) {
+        latitude = parseFloat(zipcodeData[0].latitude);
+        longitude = parseFloat(zipcodeData[0].longitude);
       }
     }
 
-    // Insert the volunteer registration
+    // Create volunteer registration
+    console.log('Volunteer Signup API: Creating registration...');
     const result = await sql`
       INSERT INTO volunteer_registrations (
-        first_name,
-        last_name,
-        email,
-        phone,
-        date_of_birth,
-        address,
-        city,
-        state,
-        zipcode,
-        latitude,
-        longitude,
-        availability,
-        skills,
-        interests,
-        max_distance,
-        transportation_available,
-        background_check_completed,
-        background_check_date,
-        emergency_contact_name,
-        emergency_contact_phone,
-        emergency_contact_relationship,
-        newsletter_opt_in,
-        sms_opt_in
+        first_name, last_name, email, phone, birth_date, address, city, state, zipcode,
+        latitude, longitude, skills, interests, categories_interested, experience_level,
+        availability, max_distance, transportation, emergency_contact_name,
+        emergency_contact_phone, emergency_contact_relationship, background_check_consent,
+        email_notifications, sms_notifications, notes, status
       ) VALUES (
-        ${first_name.trim()},
-        ${last_name.trim()},
-        ${email.toLowerCase().trim()},
-        ${phone ? phone.trim() : null},
-        ${date_of_birth || null},
-        ${address ? address.trim() : null},
-        ${city ? city.trim() : coords.city},
-        ${state ? state.trim() : coords.state},
-        ${zipcode.trim()},
-        ${coords.latitude},
-        ${coords.longitude},
-        ${processedAvailability ? JSON.stringify(processedAvailability) : null},
-        ${processedSkills},
-        ${processedInterests},
-        ${max_distance || 25},
-        ${transportation_available !== false},
-        ${background_check_completed || false},
-        ${background_check_date || null},
-        ${emergency_contact_name ? emergency_contact_name.trim() : null},
-        ${emergency_contact_phone ? emergency_contact_phone.trim() : null},
-        ${emergency_contact_relationship ? emergency_contact_relationship.trim() : null},
-        ${newsletter_opt_in !== false},
-        ${sms_opt_in || false}
+        ${body.first_name}, ${body.last_name}, ${body.email}, ${body.phone || null},
+        ${body.birth_date || null}, ${body.address}, ${body.city}, ${body.state}, ${body.zipcode},
+        ${latitude || null}, ${longitude || null}, ${JSON.stringify(body.skills || [])},
+        ${JSON.stringify(body.interests || [])}, ${JSON.stringify(body.categories_interested || [])},
+        ${body.experience_level || 'beginner'}, ${JSON.stringify(body.availability || {})},
+        ${body.max_distance || 25}, ${body.transportation || 'own'},
+        ${body.emergency_contact_name}, ${body.emergency_contact_phone},
+        ${body.emergency_contact_relationship}, ${body.background_check_consent || false},
+        ${body.email_notifications !== false}, ${body.sms_notifications || false},
+        ${body.notes || ''}, 'active'
       )
-      RETURNING id, created_at
-    `;
+      RETURNING id, first_name, last_name, email
+    ` as any[];
 
-    console.log(`Volunteer Signup API: Successfully registered volunteer with ID: ${result[0].id}`);
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: 'Failed to create volunteer registration' },
+        { status: 500 }
+      );
+    }
+
+    const volunteer = result[0];
+    console.log(`Volunteer Signup API: Successfully registered volunteer ${volunteer.id}`);
 
     // Find nearby opportunities
-    let nearbyJobs: any[] = [];
+    let nearbyJobs: NearbyJob[] = [];
     try {
-      const maxDist = max_distance || 25;
-      nearbyJobs = await sql`
+      const maxDist = body.max_distance || 25;
+      const jobResults = await sql`
         SELECT 
           j.id,
           j.title,
-          j.organization,
           j.category,
-          j.urgency,
+          j.city,
+          j.state,
           j.volunteers_needed,
+          j.description,
+          j.start_date,
+          j.end_date,
           calculate_distance_miles(
-            ${coords.latitude}, ${coords.longitude}, 
-            COALESCE(j.latitude, zc.latitude), 
-            COALESCE(j.longitude, zc.longitude)
+            COALESCE(j.latitude, zc.latitude),
+            COALESCE(j.longitude, zc.longitude),
+            ${latitude || 0},
+            ${longitude || 0}
           ) as distance_miles
         FROM jobs j
         LEFT JOIN zipcode_coordinates zc ON j.zipcode = zc.zipcode
         WHERE j.status = 'active' 
-          AND (j.expires_at IS NULL OR j.expires_at > CURRENT_TIMESTAMP)
-          AND (
-            j.remote_possible = true OR
-            calculate_distance_miles(
-              ${coords.latitude}, ${coords.longitude}, 
-              COALESCE(j.latitude, zc.latitude), 
-              COALESCE(j.longitude, zc.longitude)
-            ) <= ${maxDist}
-          )
-        ORDER BY j.urgency DESC, distance_miles ASC
-        LIMIT 5
-      `;
+          AND j.expires_at > CURRENT_TIMESTAMP
+          AND calculate_distance_miles(
+            COALESCE(j.latitude, zc.latitude),
+            COALESCE(j.longitude, zc.longitude),
+            ${latitude || 0},
+            ${longitude || 0}
+          ) <= ${maxDist}
+        ORDER BY distance_miles ASC
+        LIMIT 10
+      ` as any[];
+      
+      nearbyJobs = jobResults as NearbyJob[];
     } catch (error) {
-      console.log('Volunteer Signup API: Error fetching nearby jobs:', error);
+      console.warn('Volunteer Signup API: Error finding nearby jobs:', error);
+      // Continue without nearby jobs if there's an error
     }
 
+    // Return success response
     return NextResponse.json({
       success: true,
-      id: result[0].id,
-      created_at: result[0].created_at,
-      message: 'Volunteer registration completed successfully!',
-      location: {
-        city: coords.city,
-        state: coords.state,
-        coordinates: {
-          latitude: coords.latitude,
-          longitude: coords.longitude
-        }
+      volunteer: {
+        id: volunteer.id,
+        name: `${volunteer.first_name} ${volunteer.last_name}`,
+        email: volunteer.email
       },
       nearby_opportunities: nearbyJobs.map(job => ({
-        ...job,
-        distance_miles: job.distance_miles ? parseFloat(job.distance_miles) : null
-      }))
+        id: job.id,
+        title: job.title,
+        category: job.category,
+        location: `${job.city}, ${job.state}`,
+        distance: job.distance_miles ? Math.round(job.distance_miles * 10) / 10 : null,
+        volunteers_needed: job.volunteers_needed,
+        start_date: job.start_date,
+        end_date: job.end_date
+      })),
+      message: 'Registration successful! Thank you for volunteering.'
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Volunteer Signup API: Registration error:', error);
-    
-    if (error instanceof Error) {
-      if (error.message.includes('unique constraint')) {
-        return NextResponse.json(
-          { error: 'A volunteer with this information already exists' },
-          { status: 409 }
-        );
-      }
-      
-      if (error.message.includes('invalid input syntax')) {
-        return NextResponse.json(
-          { error: 'Invalid data format provided' },
-          { status: 400 }
-        );
-      }
-    }
-
+    console.error('Volunteer Signup API: Error processing registration:', error);
     return NextResponse.json(
       { 
-        error: 'Failed to complete volunteer registration',
+        error: 'Failed to process registration',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
@@ -283,85 +223,66 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET - Get volunteer registration by email (for profile lookup)
+// GET - Retrieve volunteer registrations (admin only)
 export async function GET(request: NextRequest) {
   try {
+    // Note: This would need authentication check for admin access
+    // For now, returning basic volunteer stats
+    
     const url = new URL(request.url);
-    const email = url.searchParams.get('email');
-    const id = url.searchParams.get('id');
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const offset = (page - 1) * limit;
 
-    if (!email && !id) {
-      return NextResponse.json(
-        { error: 'Email or ID parameter required' },
-        { status: 400 }
-      );
-    }
+    console.log('Volunteer Signup API: Fetching volunteer registrations...');
 
-    console.log('Volunteer Signup API: Looking up volunteer by:', email || `ID: ${id}`);
-
-    let volunteer;
-    if (id) {
-      const volunteers = await sql`
-        SELECT 
-          vr.*,
-          zc.city as zip_city,
-          zc.state as zip_state
-        FROM volunteer_registrations vr
-        LEFT JOIN zipcode_coordinates zc ON vr.zipcode = zc.zipcode
-        WHERE vr.id = ${parseInt(id)}
-      `;
-      volunteer = volunteers[0];
-    } else {
-      const volunteers = await sql`
-        SELECT 
-          vr.*,
-          zc.city as zip_city,
-          zc.state as zip_state
-        FROM volunteer_registrations vr
-        LEFT JOIN zipcode_coordinates zc ON vr.zipcode = zc.zipcode
-        WHERE vr.email = ${email!.toLowerCase()}
-      `;
-      volunteer = volunteers[0];
-    }
-
-    if (!volunteer) {
-      return NextResponse.json(
-        { error: 'Volunteer not found' },
-        { status: 404 }
-      );
-    }
-
-    // Get their applications
-    const applications = await sql`
+    const volunteers = await sql`
       SELECT 
-        ja.*,
-        j.title as job_title,
-        j.organization,
-        j.category,
-        j.start_date,
-        j.end_date
-      FROM job_applications ja
-      JOIN jobs j ON ja.job_id = j.id
-      WHERE ja.volunteer_id = ${volunteer.id}
-      ORDER BY ja.applied_at DESC
-    `;
+        id,
+        first_name,
+        last_name,
+        email,
+        city,
+        state,
+        zipcode,
+        categories_interested,
+        experience_level,
+        status,
+        created_at
+      FROM volunteer_registrations
+      WHERE status = 'active'
+      ORDER BY created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    ` as any[];
 
-    console.log(`Volunteer Signup API: Found volunteer with ${applications.length} applications`);
+    const countResult = await sql`
+      SELECT COUNT(*) as total FROM volunteer_registrations WHERE status = 'active'
+    ` as any[];
+    
+    const total = parseInt(countResult[0]?.total || '0');
 
     return NextResponse.json({
-      ...volunteer,
-      applications: applications.map(app => ({
-        ...app,
-        applied_at: app.applied_at,
-        responded_at: app.responded_at
-      }))
+      volunteers: volunteers.map(vol => ({
+        ...vol,
+        categories_interested: typeof vol.categories_interested === 'string' 
+          ? JSON.parse(vol.categories_interested) 
+          : vol.categories_interested
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1
+      }
     });
 
   } catch (error) {
-    console.error('Volunteer Signup API: Error fetching volunteer:', error);
+    console.error('Volunteer Signup API: Error fetching registrations:', error);
     return NextResponse.json(
       { 
-        error: 'Failed to fetch volunteer information',
+        error: 'Failed to fetch volunteer registrations',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
