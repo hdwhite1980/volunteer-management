@@ -4,7 +4,7 @@
 -------------------------------------------------------------------------- */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { sql } from '@/lib/database';        // <- ONE shared Neon client – no per‑request connections
+import { sql } from '@/lib/database';        // singleton Neon client
 
 /* ──────────────────────────────── Types ──────────────────────────────── */
 
@@ -26,7 +26,7 @@ interface Job {
   latitude: string | null;
   longitude: string | null;
   volunteers_needed: number;
-  /* dynamic columns added in SELECT */
+  /* dynamic columns */
   computed_latitude?: string | null;
   computed_longitude?: string | null;
   distance_miles?: string | null;
@@ -41,14 +41,15 @@ async function checkAuth(request: NextRequest): Promise<SessionUser | null> {
   const sessionId = request.cookies.get('session')?.value;
   if (!sessionId) return null;
 
-  const rows = await sql<SessionUser[]>`
+  // *** CHANGE 1: removed generic here ***
+  const rows = await sql/* sql */`
     SELECT u.id, u.username, u.email, u.role
     FROM sessions  s
     JOIN users     u ON u.id = s.user_id
     WHERE s.id          = ${sessionId}
       AND s.expires_at  > CURRENT_TIMESTAMP
       AND u.is_active   = true
-  `;
+  ` as SessionUser[];                      // *** CHANGE 2: cast result ***
 
   return rows.length ? rows[0] : null;
 }
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
-    const category  = searchParams.get('category');      // string | null
+    const category  = searchParams.get('category');
     const zipcode   = searchParams.get('zipcode');
     const distance  = Number(searchParams.get('distance') ?? '25');
     const skills    = searchParams.get('skills');
@@ -69,10 +70,10 @@ export async function GET(request: NextRequest) {
     const limit     = Number(searchParams.get('limit')  ?? '20');
     const offset    = (page - 1) * limit;
 
-    /* ----- Build dynamic SQL (safe placeholders) ----- */
+    /* ----- Build dynamic SQL ----- */
 
     const params: any[] = [];
-    let   param = 0;                    // 1‑based index for $ placeholders
+    let   param = 0;
     const where: string[] = [`j.status = 'active'`, `j.expires_at > CURRENT_TIMESTAMP`];
 
     if (category && category !== 'all') {
@@ -84,19 +85,17 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      params.push(`%${search}%`);           // $n
+      params.push(`%${search}%`);
       where.push(`(j.title ILIKE $${++param} OR j.description ILIKE $${param})`);
-      /* same placeholder used twice – only push once */
     }
 
-    /* Distance filtering requires user zipcode; we’ll JOIN once and filter later */
     const joinUserZip = zipcode
       ? `LEFT JOIN zipcode_coordinates user_zc ON user_zc.zipcode = $1`
       : '';
 
     if (zipcode) {
-      params.unshift(zipcode);             // ensure $1 = zipcode
-      ++param;                             // shift index if we inserted at front
+      params.unshift(zipcode);
+      ++param;
     }
 
     const distanceSelect = zipcode
@@ -149,7 +148,7 @@ export async function GET(request: NextRequest) {
 
     const jobs = await sql<Job[]>(baseQuery, params);
 
-    /* ----- total‑count query (same WHERE, no LIMIT/OFFSET) ----- */
+    /* ----- total-count query ----- */
 
     const countQuery = `
       SELECT COUNT(*) AS total
@@ -161,9 +160,7 @@ export async function GET(request: NextRequest) {
     `;
 
     const [{ total }] = await sql<{ total: string }[]>(countQuery, params);
-    const totalInt    = Number(total);
-
-    /* ----- response payload ----- */
+    const totalInt = Number(total);
 
     return NextResponse.json({
       jobs: jobs.map(j => ({
@@ -177,7 +174,7 @@ export async function GET(request: NextRequest) {
       pagination: {
         page,
         limit,
-        total   : totalInt,
+        total : totalInt,
         totalPages: Math.ceil(totalInt / limit),
         hasNext : page * limit < totalInt,
         hasPrev : page > 1
@@ -209,7 +206,6 @@ export async function POST(request: NextRequest) {
         { error: `Missing required fields: ${missing.join(', ')}` }, { status: 400 }
       );
 
-    /* INSERT – using tagged template keeps placeholders safe */
     const [{ id, title, created_at }] = await sql<{ id: number; title: string; created_at: Date }[]>`
       INSERT INTO jobs (
         title, description, category, contact_name, contact_email, contact_phone,
