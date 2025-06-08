@@ -62,3 +62,83 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+// POST - Create new category (admin only)
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    
+    const { category_name, category_type, description, display_order } = body;
+    
+    if (!category_name || !category_type) {
+      return NextResponse.json(
+        { error: 'Category name and type are required' },
+        { status: 400 }
+      );
+    }
+
+    const result = await sql`
+      INSERT INTO job_categories (category_name, category_type, description, display_order)
+      VALUES (${category_name}, ${category_type}, ${description || null}, ${display_order || 999})
+      RETURNING *
+    `;
+
+    return NextResponse.json(result[0], { status: 201 });
+
+  } catch (error) {
+    console.error('Categories API: Error creating category:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to create category',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT - Update category
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { id, category_name, description, display_order, is_active } = body;
+    
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Category ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const result = await sql`
+      UPDATE job_categories
+      SET 
+        category_name = COALESCE(${category_name}, category_name),
+        description = COALESCE(${description}, description),
+        display_order = COALESCE(${display_order}, display_order),
+        is_active = COALESCE(${is_active}, is_active),
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ${id}
+      RETURNING *
+    `;
+
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: 'Category not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(result[0]);
+
+  } catch (error) {
+    console.error('Categories API: Error updating category:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to update category',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
