@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Plus, MapPin, Users, Clock, AlertCircle, CheckCircle, ArrowRight, ArrowLeft, Calendar, Shield } from 'lucide-react';
 // Import the custom hook (adjust path as needed)
-// import { useCategories } from '@/hooks/useCategories';
+   import { useCategories } from '@/hooks/useCategories';
 
 // Since we can't import in this environment, I'll include the hook inline
 const useCategories = (type?: 'volunteer' | 'requester', active: boolean = true) => {
