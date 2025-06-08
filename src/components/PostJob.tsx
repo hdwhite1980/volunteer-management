@@ -1,6 +1,77 @@
 // src/components/PostJob.tsx
 import React, { useState } from 'react';
 import { Plus, MapPin, Users, Clock, AlertCircle, CheckCircle, ArrowRight, ArrowLeft, Calendar, Shield } from 'lucide-react';
+// Import the custom hook (adjust path as needed)
+// import { useCategories } from '@/hooks/useCategories';
+
+// Since we can't import in this environment, I'll include the hook inline
+const useCategories = (type?: 'volunteer' | 'requester', active: boolean = true) => {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const params = new URLSearchParams();
+        if (type) params.append('type', type);
+        params.append('active', active.toString());
+
+        const response = await fetch(`/api/categories?${params}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories');
+        }
+
+        const data = await response.json();
+        
+        if (type) {
+          setCategories(data);
+        } else {
+          setCategories([...data.volunteer, ...data.requester]);
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load categories');
+        
+        // Fallback to hardcoded categories
+        if (type === 'volunteer') {
+          setCategories([
+            { id: 1, category_name: 'Debris Removal & Cleanup', description: 'Help remove storm debris, fallen trees, and damaged materials' },
+            { id: 2, category_name: 'Structural Assessment & Repair', description: 'Assist with evaluating and repairing structural damage' },
+            { id: 3, category_name: 'Home Stabilization (e.g., tarping, boarding)', description: 'Install temporary protective measures' },
+            { id: 4, category_name: 'Utility Restoration Support', description: 'Support efforts to restore essential utilities' },
+            { id: 5, category_name: 'Supply Distribution', description: 'Help distribute food, water, and essential supplies' },
+            { id: 6, category_name: 'Warehouse Management', description: 'Organize and manage donated goods' },
+            { id: 7, category_name: 'Transportation Assistance', description: 'Provide transportation for people or supplies' },
+            { id: 8, category_name: 'Administrative & Office Support', description: 'Assist with data entry and administrative tasks' },
+            { id: 9, category_name: 'First Aid & Medical Support', description: 'Provide basic medical care and first aid' },
+            { id: 10, category_name: 'Mental Health & Emotional Support', description: 'Offer counseling and emotional support' },
+            { id: 11, category_name: 'Spiritual Care', description: 'Provide spiritual comfort and support' },
+            { id: 12, category_name: 'Pet Care Services', description: 'Care for displaced or injured pets' },
+            { id: 13, category_name: 'Childcare & Youth Programs', description: 'Provide childcare and youth activities' },
+            { id: 14, category_name: 'Senior Assistance', description: 'Help elderly residents with specific needs' },
+            { id: 15, category_name: 'Multilingual & Translation Support', description: 'Provide translation services' },
+            { id: 16, category_name: 'Legal Aid Assistance', description: 'Help with legal documentation and claims' },
+            { id: 17, category_name: 'Volunteer Coordination', description: 'Organize and manage volunteer teams' },
+            { id: 18, category_name: 'IT & Communication Support', description: 'Set up and maintain communication systems' },
+            { id: 19, category_name: 'Damage Assessment & Reporting', description: 'Document and assess property damage' },
+            { id: 20, category_name: 'Fundraising & Community Outreach', description: 'Organize fundraising and awareness campaigns' }
+          ]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, [type, active]);
+
+  return { categories, loading, error };
+};
 
 interface JobFormData {
   title: string;
@@ -40,6 +111,9 @@ const PostJob = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [jobId, setJobId] = useState<number | null>(null);
   
+  // Fetch categories from database
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories('volunteer');
+  
   const [formData, setFormData] = useState<JobFormData>({
     title: '',
     description: '',
@@ -69,23 +143,21 @@ const PostJob = () => {
     expires_at: ''
   });
 
-  const categoryOptions = [
-    'Environment', 'Education', 'Human Services', 'Health', 'Community',
-    'Arts & Culture', 'Sports & Recreation', 'Faith-based', 'Emergency Services',
-    'Technology', 'Administrative', 'Construction', 'Events'
-  ];
-
   const skillsOptions = [
     'Teaching', 'Tutoring', 'Administrative', 'Computer Skills', 'Social Media',
     'Marketing', 'Writing', 'Photography', 'Event Planning', 'Fundraising',
     'Construction', 'Gardening', 'Cooking', 'Cleaning', 'Driving',
     'Public Speaking', 'Translation', 'Medical Knowledge', 'Legal Knowledge',
-    'Accounting', 'Music', 'Art', 'Sports Coaching', 'Childcare'
+    'Accounting', 'Music', 'Art', 'Sports Coaching', 'Childcare',
+    'Heavy Lifting', 'Electrical Work', 'Plumbing', 'HVAC', 'Roofing',
+    'IT Support', 'Data Entry', 'Mental Health Support', 'Pet Care',
+    'Elder Care', 'Disability Support', 'Crisis Response', 'First Aid',
+    'Supply Chain Management', 'Logistics', 'Documentation', 'Assessment'
   ];
 
   const timeCommitmentOptions = [
     'One-time event', 'Weekly', 'Bi-weekly', 'Monthly', 'Quarterly',
-    'Seasonal', 'Ongoing', 'Flexible'
+    'Seasonal', 'Ongoing', 'Flexible', 'Emergency Response', 'As Needed'
   ];
 
   const urgencyOptions = [
@@ -279,7 +351,7 @@ const PostJob = () => {
                       value={formData.title}
                       onChange={(e) => updateFormData('title', e.target.value)}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="e.g., Community Garden Volunteer"
+                      placeholder="e.g., Storm Debris Cleanup Volunteer"
                     />
                   </div>
 
@@ -287,17 +359,51 @@ const PostJob = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Category *
                     </label>
-                    <select
-                      required
-                      value={formData.category}
-                      onChange={(e) => updateFormData('category', e.target.value)}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      <option value="">Select a category</option>
-                      {categoryOptions.map((category) => (
-                        <option key={category} value={category}>{category}</option>
-                      ))}
-                    </select>
+                    {categoriesLoading ? (
+                      <div className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                        Loading categories...
+                      </div>
+                    ) : categoriesError ? (
+                      <div className="space-y-2">
+                        <div className="text-sm text-red-600 mb-2">
+                          <AlertCircle className="w-4 h-4 inline mr-1" />
+                          Unable to load categories from database
+                        </div>
+                        <select
+                          required
+                          value={formData.category}
+                          onChange={(e) => updateFormData('category', e.target.value)}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="">Select a category</option>
+                          {categories.map((category) => (
+                            <option key={category.id} value={category.category_name}>
+                              {category.category_name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <select
+                        required
+                        value={formData.category}
+                        onChange={(e) => updateFormData('category', e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Select a category</option>
+                        {categories.map((category) => (
+                          <option key={category.id} value={category.category_name}>
+                            {category.category_name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    {/* Show category description if one is selected */}
+                    {formData.category && categories.find(c => c.category_name === formData.category)?.description && (
+                      <p className="mt-2 text-sm text-gray-600">
+                        {categories.find(c => c.category_name === formData.category)?.description}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -318,7 +424,7 @@ const PostJob = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Skills Needed
                     </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
                       {skillsOptions.map((skill) => (
                         <label key={skill} className="flex items-center space-x-2 cursor-pointer">
                           <input

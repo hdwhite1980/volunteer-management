@@ -2,6 +2,75 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Users, Calendar, Star, Mail, Phone, AlertCircle, CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send } from 'lucide-react';
 
+// Custom hook for categories (include this at the top or import from separate file)
+const useCategories = (type?: 'volunteer' | 'requester', active: boolean = true) => {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const params = new URLSearchParams();
+        if (type) params.append('type', type);
+        params.append('active', active.toString());
+
+        const response = await fetch(`/api/categories?${params}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch categories');
+        }
+
+        const data = await response.json();
+        
+        if (type) {
+          setCategories(data);
+        } else {
+          setCategories([...data.volunteer, ...data.requester]);
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load categories');
+        
+        // Fallback to hardcoded categories
+        if (type === 'volunteer') {
+          setCategories([
+            { id: 1, category_name: 'Debris Removal & Cleanup', description: 'Help remove storm debris' },
+            { id: 2, category_name: 'Structural Assessment & Repair', description: 'Assess and repair structures' },
+            { id: 3, category_name: 'Home Stabilization (e.g., tarping, boarding)', description: 'Emergency home protection' },
+            { id: 4, category_name: 'Utility Restoration Support', description: 'Help restore utilities' },
+            { id: 5, category_name: 'Supply Distribution', description: 'Distribute essential supplies' },
+            { id: 6, category_name: 'Warehouse Management', description: 'Manage supply warehouses' },
+            { id: 7, category_name: 'Transportation Assistance', description: 'Provide transportation' },
+            { id: 8, category_name: 'Administrative & Office Support', description: 'Office and admin help' },
+            { id: 9, category_name: 'First Aid & Medical Support', description: 'Medical assistance' },
+            { id: 10, category_name: 'Mental Health & Emotional Support', description: 'Counseling support' },
+            { id: 11, category_name: 'Spiritual Care', description: 'Spiritual support' },
+            { id: 12, category_name: 'Pet Care Services', description: 'Care for animals' },
+            { id: 13, category_name: 'Childcare & Youth Programs', description: 'Youth services' },
+            { id: 14, category_name: 'Senior Assistance', description: 'Help elderly residents' },
+            { id: 15, category_name: 'Multilingual & Translation Support', description: 'Translation services' },
+            { id: 16, category_name: 'Legal Aid Assistance', description: 'Legal help' },
+            { id: 17, category_name: 'Volunteer Coordination', description: 'Coordinate volunteers' },
+            { id: 18, category_name: 'IT & Communication Support', description: 'Tech support' },
+            { id: 19, category_name: 'Damage Assessment & Reporting', description: 'Assess damage' },
+            { id: 20, category_name: 'Fundraising & Community Outreach', description: 'Fundraising efforts' }
+          ]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, [type, active]);
+
+  return { categories, loading, error };
+};
+
 interface JobBoardProps {
   jobId?: any;
 }
@@ -348,29 +417,8 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
   });
   const [selectedJob, setSelectedJob] = useState<any>(null);
 
-  // Updated categories to match the new volunteer categories
-  const categoryOptions = [
-    'Debris Removal & Cleanup',
-    'Structural Assessment & Repair',
-    'Home Stabilization (e.g., tarping, boarding)',
-    'Utility Restoration Support',
-    'Supply Distribution',
-    'Warehouse Management',
-    'Transportation Assistance',
-    'Administrative & Office Support',
-    'First Aid & Medical Support',
-    'Mental Health & Emotional Support',
-    'Spiritual Care',
-    'Pet Care Services',
-    'Childcare & Youth Programs',
-    'Senior Assistance',
-    'Multilingual & Translation Support',
-    'Legal Aid Assistance',
-    'Volunteer Coordination',
-    'IT & Communication Support',
-    'Damage Assessment & Reporting',
-    'Fundraising & Community Outreach'
-  ];
+  // Fetch categories from database
+  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories('volunteer');
 
   useEffect(() => {
     fetchJobs();
@@ -437,11 +485,51 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
                 value={filters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                disabled={categoriesLoading}
               >
                 <option value="all">All Categories</option>
-                {categoryOptions.map((category) => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
+                {categoriesLoading ? (
+                  <option disabled>Loading categories...</option>
+                ) : categoriesError ? (
+                  <>
+                    <option disabled>-- Database categories unavailable --</option>
+                    {/* Fallback categories */}
+                    {[
+                      'Debris Removal & Cleanup',
+                      'Structural Assessment & Repair',
+                      'Home Stabilization (e.g., tarping, boarding)',
+                      'Utility Restoration Support',
+                      'Supply Distribution',
+                      'Warehouse Management',
+                      'Transportation Assistance',
+                      'Administrative & Office Support',
+                      'First Aid & Medical Support',
+                      'Mental Health & Emotional Support',
+                      'Spiritual Care',
+                      'Pet Care Services',
+                      'Childcare & Youth Programs',
+                      'Senior Assistance',
+                      'Multilingual & Translation Support',
+                      'Legal Aid Assistance',
+                      'Volunteer Coordination',
+                      'IT & Communication Support',
+                      'Damage Assessment & Reporting',
+                      'Fundraising & Community Outreach'
+                    ].map((category) => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
+                  </>
+                ) : (
+                  categories.map((category) => (
+                    <option 
+                      key={category.id || category.category_name} 
+                      value={category.category_name}
+                      title={category.description || ''}
+                    >
+                      {category.category_name}
+                    </option>
+                  ))
+                )}
               </select>
             </div>
 
