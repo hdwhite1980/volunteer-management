@@ -1,6 +1,10 @@
 /* --------------------------------------------------------------------------
-   src/components/JobDetails.tsx – FULL LENGTH with skills normalisation
-   (Restores original structure & comments, adds robust skills handling.)
+   src/components/JobDetails.tsx – Updated for new job application flow
+   
+   Changes:
+   1. First handles volunteer signup when needed
+   2. Then submits job application with volunteer_id
+   3. Simplified application data structure
 -------------------------------------------------------------------------- */
 import React, { useState, useEffect } from 'react';
 import {
@@ -37,7 +41,7 @@ interface Job {
   city: string;
   state: string;
   zipcode: string;
-  skills_needed?: string[] | string | null; // ← may arrive as array *or* string
+  skills_needed?: string[] | string | null;
   time_commitment?: string;
   duration_hours?: number;
   volunteers_needed: number;
@@ -55,6 +59,29 @@ interface ApplicationData {
   phone: string;
   cover_letter: string;
   experience: string;
+}
+
+interface VolunteerSignupData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  address: string;
+  city: string;
+  state: string;
+  zipcode: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  emergency_contact_relationship: string;
+  skills: string[];
+  interests: string[];
+  categories_interested: string[];
+  experience_level: string;
+  availability: any;
+  transportation: string;
+  background_check_consent: boolean;
+  email_notifications: boolean;
+  sms_notifications: boolean;
 }
 
 /* ─────────────────── helpers ─────────────────── */
@@ -80,12 +107,36 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
   const [error, setError] = useState('');
   const [applying, setApplying] = useState(false);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [showVolunteerSignup, setShowVolunteerSignup] = useState(false);
+  const [volunteerId, setVolunteerId] = useState<number | null>(null);
   const [applicationData, setApplicationData] = useState<ApplicationData>({
     volunteer_name: '',
     email: '',
     phone: '',
     cover_letter: '',
     experience: ''
+  });
+  const [volunteerSignupData, setVolunteerSignupData] = useState<VolunteerSignupData>({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipcode: '',
+    emergency_contact_name: '',
+    emergency_contact_phone: '',
+    emergency_contact_relationship: '',
+    skills: [],
+    interests: [],
+    categories_interested: [],
+    experience_level: 'beginner',
+    availability: {},
+    transportation: 'own',
+    background_check_consent: false,
+    email_notifications: true,
+    sms_notifications: false
   });
 
   /* ---------------- effects ---------------- */
@@ -109,24 +160,86 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     }
   };
 
+  /* ---------------- volunteer signup ---------------- */
+  const handleVolunteerSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setApplying(true);
+    try {
+      const response = await fetch('/api/volunteer-signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(volunteerSignupData)
+      });
+      
+      if (!response.ok) {
+        const { error } = await response.json();
+        throw new Error(error);
+      }
+      
+      const result = await response.json();
+      setVolunteerId(result.volunteer.id);
+      
+      // Pre-fill application data from signup
+      setApplicationData(prev => ({
+        ...prev,
+        volunteer_name: `${volunteerSignupData.first_name} ${volunteerSignupData.last_name}`,
+        email: volunteerSignupData.email,
+        phone: volunteerSignupData.phone || ''
+      }));
+      
+      setShowVolunteerSignup(false);
+      setShowApplicationForm(true);
+      
+    } catch (err: any) {
+      alert(err.message || 'Error creating volunteer profile');
+    } finally {
+      setApplying(false);
+    }
+  };
+
   /* ---------------- application submit ---------------- */
   const handleApplicationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setApplying(true);
     try {
+      // Prepare application payload
+      const payload: any = {
+        job_id: parseInt(jobId),
+        cover_letter: applicationData.cover_letter
+      };
+
+      // If we have a volunteer_id, use it; otherwise include signup data
+      if (volunteerId) {
+        payload.volunteer_id = volunteerId;
+      } else {
+        payload.volunteer_name = applicationData.volunteer_name;
+        payload.email = applicationData.email;
+        payload.phone = applicationData.phone;
+      }
+
       const response = await fetch('/api/job-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ job_id: parseInt(jobId), ...applicationData })
+        body: JSON.stringify(payload)
       });
+      
       if (!response.ok) {
         const { error } = await response.json();
         throw new Error(error);
       }
+      
+      const result = await response.json();
+      
+      // Store volunteer_id for future applications
+      if (result.application.volunteer_id) {
+        setVolunteerId(result.application.volunteer_id);
+      }
+      
       alert('Application submitted successfully!');
       setShowApplicationForm(false);
       setApplicationData({ volunteer_name: '', email: '', phone: '', cover_letter: '', experience: '' });
       fetchJobDetails();
+      
     } catch (err: any) {
       alert(err.message || 'Error submitting application');
     } finally {
@@ -137,6 +250,26 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
   /* ---------------- handlers ---------------- */
   const handleInputChange = (field: keyof ApplicationData, value: string) =>
     setApplicationData((prev) => ({ ...prev, [field]: value }));
+
+  const handleVolunteerInputChange = (field: keyof VolunteerSignupData, value: any) =>
+    setVolunteerSignupData((prev) => ({ ...prev, [field]: value }));
+
+  const handleApplyClick = () => {
+    // Check if user might be a returning volunteer
+    if (!volunteerId) {
+      const hasEmail = applicationData.email.trim();
+      if (hasEmail) {
+        // Try applying directly - the API will handle lookup/creation
+        setShowApplicationForm(true);
+      } else {
+        // Show volunteer signup first
+        setShowVolunteerSignup(true);
+      }
+    } else {
+      // We have a volunteer_id, go straight to application
+      setShowApplicationForm(true);
+    }
+  };
 
   const getUrgencyColor = (u: string) => {
     switch (u) {
@@ -283,7 +416,7 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                   {/* Action buttons */}
                   <div className="space-y-3">
                     {job.positions_remaining > 0 ? (
-                      <button onClick={() => setShowApplicationForm(true)} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl">Apply Now</button>
+                      <button onClick={handleApplyClick} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl">Apply Now</button>
                     ) : (
                       <div className="w-full bg-gray-200 text-gray-600 py-3 px-6 rounded-lg font-semibold text-center">Position Filled</div>
                     )}
@@ -307,6 +440,195 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
       </div>
 
       {/* ------------------------------------------------------------------
+         Volunteer Signup Modal
+      ------------------------------------------------------------------ */}
+      {showVolunteerSignup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold mb-6">Create Volunteer Profile</h2>
+              <p className="text-gray-600 mb-6">Please complete your volunteer profile to apply for opportunities.</p>
+              
+              <form onSubmit={handleVolunteerSignup} className="space-y-4">
+                {/* Name */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={volunteerSignupData.first_name} 
+                      onChange={(e) => handleVolunteerInputChange('first_name', e.target.value)} 
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={volunteerSignupData.last_name} 
+                      onChange={(e) => handleVolunteerInputChange('last_name', e.target.value)} 
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                    />
+                  </div>
+                </div>
+
+                {/* Contact */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                  <input 
+                    type="email" 
+                    required 
+                    value={volunteerSignupData.email} 
+                    onChange={(e) => handleVolunteerInputChange('email', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    value={volunteerSignupData.phone} 
+                    onChange={(e) => handleVolunteerInputChange('phone', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
+                  <input 
+                    type="text" 
+                    required 
+                    value={volunteerSignupData.address} 
+                    onChange={(e) => handleVolunteerInputChange('address', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">City *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={volunteerSignupData.city} 
+                      onChange={(e) => handleVolunteerInputChange('city', e.target.value)} 
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">State *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={volunteerSignupData.state} 
+                      onChange={(e) => handleVolunteerInputChange('state', e.target.value)} 
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">ZIP Code *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={volunteerSignupData.zipcode} 
+                      onChange={(e) => handleVolunteerInputChange('zipcode', e.target.value)} 
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                    />
+                  </div>
+                </div>
+
+                {/* Emergency Contact */}
+                <div className="border-t pt-4">
+                  <h3 className="font-semibold mb-3">Emergency Contact</h3>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Contact Name *</label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={volunteerSignupData.emergency_contact_name} 
+                      onChange={(e) => handleVolunteerInputChange('emergency_contact_name', e.target.value)} 
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Contact Phone *</label>
+                      <input 
+                        type="tel" 
+                        required 
+                        value={volunteerSignupData.emergency_contact_phone} 
+                        onChange={(e) => handleVolunteerInputChange('emergency_contact_phone', e.target.value)} 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Relationship *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={volunteerSignupData.emergency_contact_relationship} 
+                        onChange={(e) => handleVolunteerInputChange('emergency_contact_relationship', e.target.value)} 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                        placeholder="e.g., Parent, Spouse, Friend"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Consent */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center space-x-2">
+                    <input 
+                      type="checkbox" 
+                      id="background_check_consent"
+                      checked={volunteerSignupData.background_check_consent} 
+                      onChange={(e) => handleVolunteerInputChange('background_check_consent', e.target.checked)} 
+                      className="rounded"
+                    />
+                    <label htmlFor="background_check_consent" className="text-sm text-gray-700">
+                      I consent to background check if required for volunteer opportunities
+                    </label>
+                  </div>
+                </div>
+
+                {/* Buttons */}
+                <div className="flex space-x-4 pt-4">
+                  <button 
+                    type="submit" 
+                    disabled={applying} 
+                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    {applying ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Creating Profile...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4" />
+                        <span>Create Profile & Continue</span>
+                      </>
+                    )}
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowVolunteerSignup(false)} 
+                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ------------------------------------------------------------------
          Application Modal
       ------------------------------------------------------------------ */}
       {showApplicationForm && (
@@ -315,42 +637,85 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
             <div className="p-6">
               <h2 className="text-2xl font-bold mb-6">Apply for {job.title}</h2>
               <form onSubmit={handleApplicationSubmit} className="space-y-4">
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                  <input type="text" required value={applicationData.volunteer_name} onChange={(e) => handleInputChange('volunteer_name', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
-                </div>
+                
+                {/* Only show name/email fields if we don't have volunteer_id */}
+                {!volunteerId && (
+                  <>
+                    {/* Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={applicationData.volunteer_name} 
+                        onChange={(e) => handleInputChange('volunteer_name', e.target.value)} 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                      />
+                    </div>
 
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
-                  <input type="email" required value={applicationData.email} onChange={(e) => handleInputChange('email', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
-                </div>
+                    {/* Email */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                      <input 
+                        type="email" 
+                        required 
+                        value={applicationData.email} 
+                        onChange={(e) => handleInputChange('email', e.target.value)} 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                      />
+                    </div>
 
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
-                  <input type="tel" value={applicationData.phone} onChange={(e) => handleInputChange('phone', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" />
-                </div>
-
-                {/* Experience */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Relevant Experience</label>
-                  <textarea rows={3} value={applicationData.experience} onChange={(e) => handleInputChange('experience', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Describe any relevant experience or skills..." />
-                </div>
+                    {/* Phone */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                      <input 
+                        type="tel" 
+                        value={applicationData.phone} 
+                        onChange={(e) => handleInputChange('phone', e.target.value)} 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                      />
+                    </div>
+                  </>
+                )}
 
                 {/* Cover Letter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Cover Letter</label>
-                  <textarea rows={4} value={applicationData.cover_letter} onChange={(e) => handleInputChange('cover_letter', e.target.value)} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Why are you interested in this opportunity?" />
+                  <textarea 
+                    rows={6} 
+                    value={applicationData.cover_letter} 
+                    onChange={(e) => handleInputChange('cover_letter', e.target.value)} 
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
+                    placeholder="Why are you interested in this opportunity? What relevant experience do you have?"
+                  />
                 </div>
 
                 {/* Buttons */}
                 <div className="flex space-x-4 pt-4">
-                  <button type="submit" disabled={applying} className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2">
-                    {applying ? (<><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div><span>Submitting...</span></>) : (<><Send className="w-4 h-4" /><span>Submit Application</span></>)}
+                  <button 
+                    type="submit" 
+                    disabled={applying} 
+                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    {applying ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Submitting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>Submit Application</span>
+                      </>
+                    )}
                   </button>
-                  <button type="button" onClick={() => setShowApplicationForm(false)} className="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-400">Cancel</button>
+                  <button 
+                    type="button" 
+                    onClick={() => setShowApplicationForm(false)} 
+                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
                 </div>
               </form>
             </div>

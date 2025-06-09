@@ -6,23 +6,20 @@ const sql = neon(process.env.DATABASE_URL!);
 
 interface ApplicationData {
   job_id: number;
-  volunteer_name: string;
-  email: string;
+  volunteer_id?: number;
+  volunteer_name?: string;
+  email?: string;
   phone?: string;
   cover_letter?: string;
-  availability?: any;
   experience?: string;
-  volunteer_id?: number;
 }
 
 interface JobApplication {
   id: number;
   job_id: number;
-  volunteer_name: string;
-  email: string;
-  phone?: string;
-  cover_letter?: string;
+  volunteer_id: number;
   status: string;
+  message: string;
   applied_at: string;
   [key: string]: any;
 }
@@ -33,28 +30,98 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json() as ApplicationData;
     
-    // Validate required fields
-    const requiredFields = ['job_id', 'volunteer_name', 'email'];
-    const missingFields: string[] = [];
+    let volunteer_id = body.volunteer_id;
     
-    for (const field of requiredFields) {
-      if (!body[field as keyof ApplicationData]) {
-        missingFields.push(field);
+    // If volunteer_id is not provided, we need email to lookup/create volunteer
+    if (!volunteer_id) {
+      if (!body.email) {
+        return NextResponse.json(
+          { error: 'Either volunteer_id or email is required' },
+          { status: 400 }
+        );
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(body.email)) {
+        return NextResponse.json(
+          { error: 'Invalid email format' },
+          { status: 400 }
+        );
+      }
+
+      // Lookup existing volunteer by email
+      console.log('Job Applications API: Looking up volunteer by email...');
+      const existingVolunteers = await sql`
+        SELECT id FROM volunteer_registrations WHERE email = ${body.email}
+      ` as any[];
+
+      if (existingVolunteers.length > 0) {
+        volunteer_id = existingVolunteers[0].id;
+        console.log(`Job Applications API: Found existing volunteer ${volunteer_id}`);
+      } else {
+        // Create new volunteer registration with minimal data
+        if (!body.volunteer_name) {
+          return NextResponse.json(
+            { error: 'volunteer_name is required for new volunteers' },
+            { status: 400 }
+          );
+        }
+
+        console.log('Job Applications API: Creating new volunteer registration...');
+        
+        // Split name into first/last (simple approach)
+        const nameParts = body.volunteer_name.trim().split(' ');
+        const first_name = nameParts[0] || '';
+        const last_name = nameParts.slice(1).join(' ') || '';
+
+        const newVolunteerResult = await sql`
+          INSERT INTO volunteer_registrations (
+            first_name, 
+            last_name, 
+            email, 
+            phone,
+            address,
+            city,
+            state,
+            zipcode,
+            emergency_contact_name,
+            emergency_contact_phone,
+            emergency_contact_relationship,
+            status
+          ) VALUES (
+            ${first_name},
+            ${last_name},
+            ${body.email},
+            ${body.phone || null},
+            'TBD',
+            'TBD',
+            'TBD',
+            '00000',
+            'TBD',
+            'TBD',
+            'TBD',
+            'incomplete'
+          )
+          RETURNING id
+        ` as any[];
+
+        if (newVolunteerResult.length === 0) {
+          return NextResponse.json(
+            { error: 'Failed to create volunteer registration' },
+            { status: 500 }
+          );
+        }
+
+        volunteer_id = newVolunteerResult[0].id;
+        console.log(`Job Applications API: Created new volunteer ${volunteer_id}`);
       }
     }
-    
-    if (missingFields.length > 0) {
-      return NextResponse.json(
-        { error: `Missing required fields: ${missingFields.join(', ')}` },
-        { status: 400 }
-      );
-    }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(body.email)) {
+    // Validate required fields
+    if (!body.job_id || !volunteer_id) {
       return NextResponse.json(
-        { error: 'Invalid email format' },
+        { error: 'job_id and volunteer_id are required' },
         { status: 400 }
       );
     }
@@ -100,11 +167,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already applied
+    // Check if volunteer already applied
     console.log('Job Applications API: Checking for duplicate application...');
     const existingApplications = await sql`
       SELECT id FROM job_applications 
-      WHERE job_id = ${body.job_id} AND email = ${body.email}
+      WHERE job_id = ${body.job_id} AND volunteer_id = ${volunteer_id}
     ` as any[];
 
     if (existingApplications.length > 0) {
@@ -114,32 +181,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Try to link with existing volunteer registration
-    let volunteerId = body.volunteer_id;
-    if (!volunteerId) {
-      console.log('Job Applications API: Looking for existing volunteer registration...');
-      const volunteers = await sql`
-        SELECT id FROM volunteer_registrations WHERE email = ${body.email}
-      ` as any[];
-      
-      if (volunteers.length > 0) {
-        volunteerId = volunteers[0].id;
-      }
-    }
-
-    // Create application
+    // Create application with only the required fields
     console.log('Job Applications API: Creating application...');
     const result = await sql`
       INSERT INTO job_applications (
-        job_id, volunteer_id, volunteer_name, email, phone, cover_letter,
-        availability, experience, status
+        job_id, 
+        volunteer_id, 
+        status, 
+        message
       ) VALUES (
-        ${body.job_id}, ${volunteerId || null}, ${body.volunteer_name}, ${body.email},
-        ${body.phone || null}, ${body.cover_letter || ''}, 
-        ${JSON.stringify(body.availability || {})}, ${body.experience || ''},
-        'pending'
+        ${body.job_id}, 
+        ${volunteer_id}, 
+        'pending',
+        ${body.cover_letter || ''}
       )
-      RETURNING id, volunteer_name, email, applied_at
+      RETURNING id, applied_at
     ` as any[];
 
     if (result.length === 0) {
@@ -156,8 +212,9 @@ export async function POST(request: NextRequest) {
       success: true,
       application: {
         id: application.id,
+        job_id: body.job_id,
+        volunteer_id: volunteer_id,
         job_title: job.title,
-        applicant_name: application.volunteer_name,
         applied_at: application.applied_at
       },
       message: 'Application submitted successfully! You will be contacted if selected.'
@@ -181,12 +238,12 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const jobId = url.searchParams.get('job_id');
     const status = url.searchParams.get('status');
-    const email = url.searchParams.get('email');
+    const volunteerId = url.searchParams.get('volunteer_id');
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '20');
     const offset = (page - 1) * limit;
 
-    console.log('Job Applications API: Fetching applications with filters:', { jobId, status, email });
+    console.log('Job Applications API: Fetching applications with filters:', { jobId, status, volunteerId });
 
     let query = `
       SELECT 
@@ -194,9 +251,14 @@ export async function GET(request: NextRequest) {
         j.title as job_title,
         j.category as job_category,
         j.city as job_city,
-        j.state as job_state
+        j.state as job_state,
+        vr.first_name,
+        vr.last_name,
+        vr.email,
+        vr.phone
       FROM job_applications ja
       JOIN jobs j ON ja.job_id = j.id
+      JOIN volunteer_registrations vr ON ja.volunteer_id = vr.id
       WHERE 1=1
     `;
 
@@ -215,10 +277,10 @@ export async function GET(request: NextRequest) {
       params.push(status);
     }
 
-    if (email) {
+    if (volunteerId) {
       paramCount++;
-      query += ` AND ja.email = $${paramCount}`;
-      params.push(email);
+      query += ` AND ja.volunteer_id = $${paramCount}`;
+      params.push(parseInt(volunteerId));
     }
 
     query += ` ORDER BY ja.applied_at DESC LIMIT ${limit} OFFSET ${offset}`;
@@ -230,6 +292,7 @@ export async function GET(request: NextRequest) {
       SELECT COUNT(*) as total
       FROM job_applications ja
       JOIN jobs j ON ja.job_id = j.id
+      JOIN volunteer_registrations vr ON ja.volunteer_id = vr.id
       WHERE 1=1
     `;
 
@@ -248,10 +311,10 @@ export async function GET(request: NextRequest) {
       countParams.push(status);
     }
 
-    if (email) {
+    if (volunteerId) {
       countParamCount++;
-      countQuery += ` AND ja.email = $${countParamCount}`;
-      countParams.push(email);
+      countQuery += ` AND ja.volunteer_id = $${countParamCount}`;
+      countParams.push(parseInt(volunteerId));
     }
 
     const countResult = await sql(countQuery, countParams) as any[];
@@ -262,9 +325,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       applications: applications.map(app => ({
         ...app,
-        availability: typeof app.availability === 'string' 
-          ? JSON.parse(app.availability) 
-          : app.availability
+        volunteer_name: `${app.first_name} ${app.last_name}`
       })),
       pagination: {
         page,
@@ -320,7 +381,7 @@ export async function PUT(request: NextRequest) {
           feedback = ${feedback || null},
           updated_at = CURRENT_TIMESTAMP
       WHERE id = ${parseInt(applicationId)}
-      RETURNING id, job_id, volunteer_name, status
+      RETURNING id, job_id, volunteer_id, status
     ` as any[];
 
     if (result.length === 0) {
