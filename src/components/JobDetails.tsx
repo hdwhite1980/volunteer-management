@@ -5,6 +5,7 @@
    1. First handles volunteer signup when needed
    2. Then submits job application with volunteer_id
    3. Simplified application data structure
+   4. Background check consent as text input
 -------------------------------------------------------------------------- */
 import React, { useState, useEffect } from 'react';
 import {
@@ -447,178 +448,180 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
 
       {/* Volunteer Signup Modal */}
       {showVolunteerSignup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm max-h-[80vh] flex flex-col mx-2 overflow-hidden">
-            <div className="p-3 overflow-y-auto flex-1">
-              <h2 className="text-lg font-bold mb-2">Create Volunteer Profile</h2>
-              <p className="text-gray-600 mb-3 text-xs">Complete your profile to apply for opportunities.</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden">
+            <div className="p-4 overflow-y-auto flex-1">
+              <h2 className="text-lg font-bold mb-3">Create Volunteer Profile</h2>
+              <p className="text-gray-600 mb-4 text-sm">Complete your profile to apply for opportunities.</p>
               
-              <form id="volunteer-signup-form" onSubmit={handleVolunteerSignup} className="space-y-2">
+              <form id="volunteer-signup-form" onSubmit={handleVolunteerSignup} className="space-y-3">
                 {/* Name */}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">First Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
                     <input 
                       type="text" 
                       required 
                       value={volunteerSignupData.first_name} 
                       onChange={(e) => handleVolunteerInputChange('first_name', e.target.value)} 
-                      className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                      className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Last Name *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
                     <input 
                       type="text" 
                       required 
                       value={volunteerSignupData.last_name} 
                       onChange={(e) => handleVolunteerInputChange('last_name', e.target.value)} 
-                      className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                      className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
                 </div>
 
                 {/* Contact */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Email *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
                   <input 
                     type="email" 
                     required 
                     value={volunteerSignupData.email} 
                     onChange={(e) => handleVolunteerInputChange('email', e.target.value)} 
-                    className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                    className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
                   <input 
                     type="tel" 
                     value={volunteerSignupData.phone} 
                     onChange={(e) => handleVolunteerInputChange('phone', e.target.value)} 
-                    className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                    className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
                   />
                 </div>
 
                 {/* Address */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Address *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Address *</label>
                   <input 
                     type="text" 
                     required 
                     value={volunteerSignupData.address} 
                     onChange={(e) => handleVolunteerInputChange('address', e.target.value)} 
-                    className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                    className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
                   />
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">City *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
                     <input 
                       type="text" 
                       required 
                       value={volunteerSignupData.city} 
                       onChange={(e) => handleVolunteerInputChange('city', e.target.value)} 
-                      className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                      className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">State *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
                     <input 
                       type="text" 
                       required 
                       value={volunteerSignupData.state} 
                       onChange={(e) => handleVolunteerInputChange('state', e.target.value)} 
-                      className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                      className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">ZIP *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ZIP *</label>
                     <input 
                       type="text" 
                       required 
                       value={volunteerSignupData.zipcode} 
                       onChange={(e) => handleVolunteerInputChange('zipcode', e.target.value)} 
-                      className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                      className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
                 </div>
 
                 {/* Emergency Contact */}
-                <div className="border-t pt-2 mt-2">
-                  <h3 className="font-semibold mb-1 text-xs">Emergency Contact</h3>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Name *</label>
-                    <input 
-                      type="text" 
-                      required 
-                      value={volunteerSignupData.emergency_contact_name} 
-                      onChange={(e) => handleVolunteerInputChange('emergency_contact_name', e.target.value)} 
-                      className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mt-1">
+                <div className="border-t pt-3 mt-3">
+                  <h3 className="font-semibold mb-2 text-sm">Emergency Contact</h3>
+                  <div className="space-y-2">
                     <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Phone *</label>
-                      <input 
-                        type="tel" 
-                        required 
-                        value={volunteerSignupData.emergency_contact_phone} 
-                        onChange={(e) => handleVolunteerInputChange('emergency_contact_phone', e.target.value)} 
-                        className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">Relationship *</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
                       <input 
                         type="text" 
                         required 
-                        value={volunteerSignupData.emergency_contact_relationship} 
-                        onChange={(e) => handleVolunteerInputChange('emergency_contact_relationship', e.target.value)} 
-                        className="w-full p-1.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
-                        placeholder="Parent, Spouse"
+                        value={volunteerSignupData.emergency_contact_name} 
+                        onChange={(e) => handleVolunteerInputChange('emergency_contact_name', e.target.value)} 
+                        className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
                       />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                        <input 
+                          type="tel" 
+                          required 
+                          value={volunteerSignupData.emergency_contact_phone} 
+                          onChange={(e) => handleVolunteerInputChange('emergency_contact_phone', e.target.value)} 
+                          className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Relationship *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={volunteerSignupData.emergency_contact_relationship} 
+                          onChange={(e) => handleVolunteerInputChange('emergency_contact_relationship', e.target.value)} 
+                          className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                          placeholder="Parent, Spouse"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Consent */}
-                <div className="border-t pt-2 mt-2">
-                  <div className="bg-gray-50 p-2 rounded border">
-                    <div className="flex items-start space-x-2">
-                      <input 
-                        type="checkbox" 
-                        checked={volunteerSignupData.background_check_consent} 
-                        onChange={(e) => handleVolunteerInputChange('background_check_consent', e.target.checked)} 
-                        className="mt-0.5 rounded flex-shrink-0 w-3 h-3"
-                      />
-                      <div className="text-xs text-gray-700 leading-tight">
-                        I consent to background check if required
-                      </div>
-                    </div>
+                {/* Consent - TEXT INPUT ONLY */}
+                <div className="border-t pt-3 mt-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      I consent to background check if required. Type "yes" in the box. *
+                    </label>
+                    <input 
+                      type="text" 
+                      required 
+                      value={volunteerSignupData.background_check_consent} 
+                      onChange={(e) => handleVolunteerInputChange('background_check_consent', e.target.value)} 
+                      className="w-full p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500" 
+                      placeholder="Type 'yes' to consent"
+                    />
                   </div>
                 </div>
               </form>
             </div>
             
             {/* Fixed bottom buttons */}
-            <div className="border-t bg-gray-50 p-3 rounded-b-xl">
-              <div className="flex space-x-2">
+            <div className="border-t bg-gray-50 p-4 rounded-b-xl">
+              <div className="flex space-x-3">
                 <button 
                   type="submit" 
                   form="volunteer-signup-form"
                   disabled={applying} 
-                  className="flex-1 bg-blue-600 text-white py-2 px-3 rounded text-xs font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-1"
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded text-sm font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
                 >
                   {applying ? (
                     <>
-                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       <span>Creating...</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="w-3 h-3" />
+                      <CheckCircle className="w-4 h-4" />
                       <span>Create Profile</span>
                     </>
                   )}
@@ -626,7 +629,7 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                 <button 
                   type="button" 
                   onClick={() => setShowVolunteerSignup(false)} 
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-3 rounded text-xs font-semibold hover:bg-gray-400"
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded text-sm font-semibold hover:bg-gray-400"
                 >
                   Cancel
                 </button>
@@ -692,8 +695,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                     value={applicationData.cover_letter} 
                     onChange={(e) => handleInputChange('cover_letter', e.target.value)} 
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" 
-                    placeholder="Why are you interested in this opportunity? What relevant experience do you have?"
-                  />
                 </div>
 
                 {/* Buttons */}
