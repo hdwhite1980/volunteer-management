@@ -7,6 +7,7 @@ import {
 import { useCategories } from '@/hooks/useCategories';
 
 /* ───────────────────────── Types ───────────────────────── */
+
 interface JobFormData {
   title: string;
   description: string;
@@ -40,6 +41,7 @@ interface JobFormData {
 }
 
 /* ───────────────────── Component ───────────────────── */
+
 const PostJob = () => {
   /* wizard state */
   const [currentStep, setCurrentStep] = useState(1);
@@ -47,7 +49,7 @@ const PostJob = () => {
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [jobId, setJobId] = useState<number | null>(null);
 
-  /* DB categories */
+  /* fetch categories */
   const { categories, loading: categoriesLoading, error: categoriesError } =
     useCategories('volunteer');
 
@@ -81,7 +83,7 @@ const PostJob = () => {
     expires_at: ''
   });
 
-  /* skill groups */
+  /* static skill groups */
   const skillGroups: Record<string, string[]> = {
     'Administration & Documentation': [
       'Administrative',
@@ -154,17 +156,19 @@ const PostJob = () => {
     { value: 'urgent', label: 'Urgent - Immediate need' }
   ];
 
-  /* helpers */
+  /* ───────── Helper utilities ───────── */
+
   const update = (field: keyof JobFormData, value: any) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-  const toggleSkill = (skill: string) =>
-    setFormData((prev) => ({
-      ...prev,
-      skills_needed: prev.skills_needed.includes(skill)
-        ? prev.skills_needed.filter((s) => s !== skill)
-        : [...prev.skills_needed, skill]
-    }));
+  /** Replace only the skills that belong to a category; keep the others intact */
+  const updateGroupSkills = (group: string, selected: string[]) =>
+    setFormData((prev) => {
+      const other = prev.skills_needed.filter(
+        (s) => !skillGroups[group].includes(s)
+      );
+      return { ...prev, skills_needed: [...other, ...selected] };
+    });
 
   const validateStep = (step: number) => {
     switch (step) {
@@ -190,6 +194,8 @@ const PostJob = () => {
       : alert('Please fill in all required fields before continuing.');
 
   const prevStep = () => setCurrentStep((p) => Math.max(p - 1, 1));
+
+  /* ───────── Submit handler ───────── */
 
   const handleSubmit = async () => {
     if (!validateStep(4)) {
@@ -226,7 +232,8 @@ const PostJob = () => {
     }
   };
 
-  /* ---------- success screen ---------- */
+  /* ───────── Success screen ───────── */
+
   if (submitSuccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -286,10 +293,11 @@ const PostJob = () => {
     );
   }
 
-  /* ───────────────────── form wizard ───────────────────── */
+  /* ───────────────────── Form wizard ───────────────────── */
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* header */}
+      {/* ---------- Header ---------- */}
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-6 py-4">
           <h1 className="text-2xl font-bold text-gray-900">
@@ -299,7 +307,7 @@ const PostJob = () => {
         </div>
       </div>
 
-      {/* progress bar */}
+      {/* ---------- Progress bar ---------- */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center space-x-2">
@@ -329,7 +337,7 @@ const PostJob = () => {
         </div>
       </div>
 
-      {/* form content */}
+      {/* ---------- Form content ---------- */}
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
@@ -338,13 +346,14 @@ const PostJob = () => {
             ================================================================= */}
             {currentStep === 1 && (
               <div>
+                {/* ---------- Section header ---------- */}
                 <div className="flex items-center mb-6">
                   <Plus className="w-6 h-6 text-blue-600 mr-3" />
                   <h2 className="text-xl font-semibold">Basic Information</h2>
                 </div>
 
                 <div className="space-y-4">
-                  {/* title */}
+                  {/* ---------- Title ---------- */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Opportunity Title *
@@ -359,7 +368,7 @@ const PostJob = () => {
                     />
                   </div>
 
-                  {/* category dropdown (unchanged) */}
+                  {/* ---------- Category ---------- */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Category *
@@ -403,6 +412,8 @@ const PostJob = () => {
                         ))}
                       </select>
                     )}
+
+                    {/* category description */}
                     {formData.category &&
                       categories.find((c) => c.category_name === formData.category)
                         ?.description && (
@@ -416,7 +427,7 @@ const PostJob = () => {
                       )}
                   </div>
 
-                  {/* description */}
+                  {/* ---------- Description ---------- */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Description *
@@ -431,57 +442,63 @@ const PostJob = () => {
                     />
                   </div>
 
-                  {/* skills – UPDATED wrapper/label */}
+                  {/* ---------- Skills Needed (multi‑select per category) ---------- */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Skills Needed
                     </label>
-                    {Object.entries(skillGroups).map(([group, skills]) => (
-                      <details
-                        key={group}
-                        className="mb-3 border border-gray-200 rounded-lg"
-                      >
-                        <summary className="cursor-pointer select-none list-none py-2 px-3 bg-gray-100 font-medium flex justify-between items-center">
-                          {group}
-                        </summary>
-                        <div
-                          className="
-                            grid grid-cols-2 md:grid-cols-3
-                            gap-x-4 gap-y-2
-                            p-3
-                          "
+
+                    {Object.entries(skillGroups).map(([group, skills]) => {
+                      const selectedInGroup = formData.skills_needed.filter((s) =>
+                        skills.includes(s)
+                      );
+                      return (
+                        <details
+                          key={group}
+                          className="mb-3 border border-gray-200 rounded-lg"
                         >
-                          {skills.map((skill) => (
-                            <label
-                              key={skill}
-                              className="
-                                flex items-center gap-2
-                                text-sm whitespace-normal
-                                min-w-[12rem]
-                              "
+                          <summary className="cursor-pointer select-none list-none py-2 px-3 bg-gray-100 font-medium flex justify-between items-center">
+                            {group}
+                          </summary>
+                          <div className="p-3">
+                            <select
+                              multiple
+                              size={Math.min(6, skills.length)}
+                              value={selectedInGroup}
+                              onChange={(e) =>
+                                updateGroupSkills(
+                                  group,
+                                  Array.from(e.target.selectedOptions).map(
+                                    (o) => o.value
+                                  )
+                                )
+                              }
+                              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             >
-                              <input
-                                type="checkbox"
-                                checked={formData.skills_needed.includes(skill)}
-                                onChange={() => toggleSkill(skill)}
-                                className="rounded text-blue-600 focus:ring-blue-500"
-                              />
-                              {skill}
-                            </label>
-                          ))}
-                        </div>
-                      </details>
-                    ))}
+                              {skills.map((skill) => (
+                                <option key={skill} value={skill}>
+                                  {skill}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="mt-1 text-xs text-gray-500">
+                              Hold Ctrl (Windows) or ⌘ (Mac) to select multiple.
+                            </p>
+                          </div>
+                        </details>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
             )}
 
             {/* ================================================================
-                STEP 2 – Location & Contact  (unchanged from previous full file)
+                STEP 2 – Location & Contact
             ================================================================= */}
             {currentStep === 2 && (
               <div>
+                {/* ---------- Section header ---------- */}
                 <div className="flex items-center mb-6">
                   <MapPin className="w-6 h-6 text-blue-600 mr-3" />
                   <h2 className="text-xl font-semibold">Location & Contact</h2>
@@ -541,7 +558,7 @@ const PostJob = () => {
                     />
                   </div>
 
-                  {/* city/state */}
+                  {/* city & state */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -587,10 +604,11 @@ const PostJob = () => {
             )}
 
             {/* ================================================================
-                STEP 3 – Requirements & Schedule  (unchanged)
+                STEP 3 – Requirements & Schedule
             ================================================================= */}
             {currentStep === 3 && (
               <div>
+                {/* ---------- Section header ---------- */}
                 <div className="flex items-center mb-6">
                   <Clock className="w-6 h-6 text-blue-600 mr-3" />
                   <h2 className="text-xl font-semibold">
@@ -741,17 +759,18 @@ const PostJob = () => {
             )}
 
             {/* ================================================================
-                STEP 4 – Additional Details  (unchanged)
+                STEP 4 – Additional Details
             ================================================================= */}
             {currentStep === 4 && (
               <div>
+                {/* ---------- Section header ---------- */}
                 <div className="flex items-center mb-6">
                   <Shield className="w-6 h-6 text-blue-600 mr-3" />
                   <h2 className="text-xl font-semibold">Additional Details</h2>
                 </div>
 
                 <div className="space-y-4">
-                  {/* toggles */}
+                  {/* boolean toggles */}
                   <div className="space-y-3">
                     {([
                       [
@@ -822,9 +841,10 @@ const PostJob = () => {
             )}
 
             {/* ================================================================
-                Navigation
+                Navigation buttons
             ================================================================= */}
             <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+              {/* prev */}
               <button
                 onClick={prevStep}
                 disabled={currentStep === 1}
@@ -834,6 +854,7 @@ const PostJob = () => {
                 <span>Previous</span>
               </button>
 
+              {/* next / submit */}
               {currentStep < 4 ? (
                 <button
                   onClick={nextStep}
