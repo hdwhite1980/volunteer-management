@@ -444,12 +444,12 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
       ------------------------------------------------------------------ */}
       {showVolunteerSignup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
-            <div className="p-6">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+            <div className="p-6 overflow-y-auto flex-1">
               <h2 className="text-2xl font-bold mb-6">Create Volunteer Profile</h2>
               <p className="text-gray-600 mb-6">Please complete your volunteer profile to apply for opportunities.</p>
               
-              <form onSubmit={handleVolunteerSignup} className="space-y-4">
+              <form id="volunteer-signup-form" onSubmit={handleVolunteerSignup} className="space-y-4">
                 {/* Name */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -581,48 +581,52 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
 
                 {/* Consent */}
                 <div className="border-t pt-4">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-start space-x-3">
                     <input 
                       type="checkbox" 
                       id="background_check_consent"
                       checked={volunteerSignupData.background_check_consent} 
                       onChange={(e) => handleVolunteerInputChange('background_check_consent', e.target.checked)} 
-                      className="rounded"
+                      className="mt-1 rounded"
                     />
-                    <label htmlFor="background_check_consent" className="text-sm text-gray-700">
+                    <label htmlFor="background_check_consent" className="text-sm text-gray-700 leading-relaxed">
                       I consent to background check if required for volunteer opportunities
                     </label>
                   </div>
                 </div>
-
-                {/* Buttons */}
-                <div className="flex space-x-4 pt-4">
-                  <button 
-                    type="submit" 
-                    disabled={applying} 
-                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    {applying ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span>Creating Profile...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-4 h-4" />
-                        <span>Create Profile & Continue</span>
-                      </>
-                    )}
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowVolunteerSignup(false)} 
-                    className="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
-                </div>
               </form>
+            </div>
+            
+            {/* Fixed bottom buttons */}
+            <div className="border-t bg-gray-50 p-6 rounded-b-2xl">
+              <div className="flex space-x-4">
+                <button 
+                  type="submit" 
+                  form="volunteer-signup-form"
+                  disabled={applying} 
+                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
+                >
+                  {applying ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <span>Creating Profile...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Create Profile & Continue</span>
+                    </>
+                  )}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setShowVolunteerSignup(false)} 
+                  className="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
             </div>
           </div>
         </div>
