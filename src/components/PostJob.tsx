@@ -404,4 +404,463 @@ const PostJob = () => {
                       </select>
                     )}
                     {formData.category &&
-                      categories.find((c) => c.category_name === formD_
+                      categories.find((c) => c.category_name === formData.category)
+                        ?.description && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          {
+                            categories.find(
+                              (c) => c.category_name === formData.category
+                            )?.description
+                          }
+                        </p>
+                      )}
+                  </div>
+
+                  {/* description */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Description *
+                    </label>
+                    <textarea
+                      required
+                      value={formData.description}
+                      onChange={(e) => update('description', e.target.value)}
+                      rows={6}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Describe the volunteer opportunity, what volunteers will do, and the impact they'll make..."
+                    />
+                  </div>
+
+                  {/* ---------- Skills Needed (grouped) ---------- */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Skills Needed
+                    </label>
+                    {Object.entries(skillGroups).map(([group, skills]) => (
+                      <details
+                        key={group}
+                        className="mb-3 border border-gray-200 rounded-lg"
+                      >
+                        <summary className="cursor-pointer select-none list-none py-2 px-3 bg-gray-100 font-medium flex justify-between items-center">
+                          {group}
+                        </summary>
+                        <div className="flex flex-wrap gap-x-4 gap-y-2 p-3">
+                          {skills.map((skill) => (
+                            <label
+                              key={skill}
+                              className="
+                                w-1/2 md:w-1/3
+                                flex items-center gap-2
+                                text-sm whitespace-nowrap cursor-pointer
+                              "
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.skills_needed.includes(skill)}
+                                onChange={() => toggleSkill(skill)}
+                                className="rounded text-blue-600 focus:ring-blue-500"
+                              />
+                              {skill}
+                            </label>
+                          ))}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ================================================================
+                STEP 2 – Location & Contact
+            ================================================================= */}
+            {currentStep === 2 && (
+              <div>
+                <div className="flex items-center mb-6">
+                  <MapPin className="w-6 h-6 text-blue-600 mr-3" />
+                  <h2 className="text-xl font-semibold">Location & Contact</h2>
+                </div>
+
+                <div className="space-y-4">
+                  {/* contact name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Name
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.contact_name}
+                      onChange={(e) => update('contact_name', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* contact email */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Email *
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.contact_email}
+                      onChange={(e) => update('contact_email', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* contact phone */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Contact Phone
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.contact_phone}
+                      onChange={(e) => update('contact_phone', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* street address */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Street Address
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => update('address', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* city & state */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        City *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.city}
+                        onChange={(e) => update('city', e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        State *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.state}
+                        onChange={(e) => update('state', e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* zipcode */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Zipcode *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.zipcode}
+                      onChange={(e) => update('zipcode', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ================================================================
+                STEP 3 – Requirements & Schedule
+            ================================================================= */}
+            {currentStep === 3 && (
+              <div>
+                <div className="flex items-center mb-6">
+                  <Clock className="w-6 h-6 text-blue-600 mr-3" />
+                  <h2 className="text-xl font-semibold">
+                    Requirements & Schedule
+                  </h2>
+                </div>
+
+                <div className="space-y-4">
+                  {/* time commitment & duration */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Time Commitment *
+                      </label>
+                      <select
+                        required
+                        value={formData.time_commitment}
+                        onChange={(e) =>
+                          update('time_commitment', e.target.value)
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      >
+                        <option value="">Select time commitment</option>
+                        {timeCommitmentOptions.map((opt) => (
+                          <option key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Duration (hours per session)
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={24}
+                        value={formData.duration_hours}
+                        onChange={(e) =>
+                          update(
+                            'duration_hours',
+                            parseInt(e.target.value, 10)
+                          )
+                        }
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* volunteers needed */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Number of Volunteers Needed *
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      required
+                      value={formData.volunteers_needed}
+                      onChange={(e) =>
+                        update(
+                          'volunteers_needed',
+                          parseInt(e.target.value, 10)
+                        )
+                      }
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* age requirement */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Age Requirement
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.age_requirement}
+                      onChange={(e) =>
+                        update('age_requirement', e.target.value)
+                      }
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g., 18+, All ages welcome, 16+ with parent"
+                    />
+                  </div>
+
+                  {/* start & end dates */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.start_date}
+                        onChange={(e) => update('start_date', e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={formData.end_date}
+                        onChange={(e) => update('end_date', e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* preferred times */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Preferred Times
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.preferred_times}
+                      onChange={(e) =>
+                        update('preferred_times', e.target.value)
+                      }
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g., Weekends, Evenings, Monday-Friday 9-5"
+                    />
+                  </div>
+
+                  {/* urgency */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Priority Level
+                    </label>
+                    <select
+                      value={formData.urgency}
+                      onChange={(e) => update('urgency', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      {urgencyOptions.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ================================================================
+                STEP 4 – Additional Details
+            ================================================================= */}
+            {currentStep === 4 && (
+              <div>
+                <div className="flex items-center mb-6">
+                  <Shield className="w-6 h-6 text-blue-600 mr-3" />
+                  <h2 className="text-xl font-semibold">Additional Details</h2>
+                </div>
+
+                <div className="space-y-4">
+                  {/* toggles */}
+                  <div className="space-y-3">
+                    {([
+                      [
+                        'background_check_required',
+                        'Background check required'
+                      ],
+                      ['training_provided', 'Training will be provided'],
+                      ['flexible_schedule', 'Flexible schedule available'],
+                      ['remote_possible', 'Remote work possible'],
+                      [
+                        'transportation_provided',
+                        'Transportation provided'
+                      ],
+                      ['meal_provided', 'Meals provided']
+                    ] as [keyof JobFormData, string][]).map(
+                      ([key, label]) => (
+                        <label key={key} className="flex items-center space-x-3">
+                          <input
+                            type="checkbox"
+                            checked={formData[key] as boolean}
+                            onChange={(e) => update(key, e.target.checked)}
+                            className="rounded text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm">{label}</span>
+                        </label>
+                      )
+                    )}
+                  </div>
+
+                  {/* stipend */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Stipend Amount (if any)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.01}
+                      value={formData.stipend_amount ?? ''}
+                      onChange={(e) =>
+                        update(
+                          'stipend_amount',
+                          e.target.value ? parseFloat(e.target.value) : undefined
+                        )
+                      }
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  {/* expiration */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Posting Expires On
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.expires_at}
+                      onChange={(e) => update('expires_at', e.target.value)}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Leave blank to expire in 30 days
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ================================================================
+                Navigation
+            ================================================================= */}
+            <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+              <button
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                className="flex items-center space-x-2 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Previous</span>
+              </button>
+
+              {currentStep < 4 ? (
+                <button
+                  onClick={nextStep}
+                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <span>Next</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="flex items-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                      <span>Posting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      <span>Post Opportunity</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PostJob;
