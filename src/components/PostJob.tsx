@@ -74,16 +74,18 @@ const PostJob = () => {
   });
 
   const skillsOptions = [
-    'Teaching', 'Tutoring', 'Administrative', 'Computer Skills', 'Social Media',
-    'Marketing', 'Writing', 'Photography', 'Event Planning', 'Fundraising',
-    'Construction', 'Gardening', 'Cooking', 'Cleaning', 'Driving',
-    'Public Speaking', 'Translation', 'Medical Knowledge', 'Legal Knowledge',
-    'Accounting', 'Music', 'Art', 'Sports Coaching', 'Childcare',
-    'Heavy Lifting', 'Electrical Work', 'Plumbing', 'HVAC', 'Roofing',
-    'IT Support', 'Data Entry', 'Mental Health Support', 'Pet Care',
-    'Elder Care', 'Disability Support', 'Crisis Response', 'First Aid',
-    'Supply Chain Management', 'Logistics', 'Documentation', 'Assessment'
+  'Administrative', 'Data Entry', 'Documentation', 'Fundraising', 'Grant Writing / Story Collection',
+  'Driving', 'Heavy Lifting', 'Construction', 'Electrical Work', 'Plumbing', 'HVAC', 'Roofing',
+  'First Aid', 'Medical Knowledge', 'Mental Health Support', 'Crisis Response',
+  'IT Support', 'Translation', 'Disability Support', 'Elder Care', 'Childcare', 'Pet Care',
+  'Cleaning', 'Debris Removal', 'Tarp Installation / Temporary Repairs',
+  'Damage Documentation / Media Support', 'Digital Support / Form Assistance',
+  'Comms & Social Media Outreach', 'Community Awareness / Outreach',
+  'Youth Education / Engagement', 'Homework Help / Learning Support',
+  'Shelter Support / Intake', 'Donation Sorting / Distribution', 'Transportation Coordination',
+  'Legal Aid Navigation', 'Phone Banking / Wellness Checks', 'Shelter Registration Assistance'
   ];
+
 
   const timeCommitmentOptions = [
     'One-time event', 'Weekly', 'Bi-weekly', 'Monthly', 'Quarterly',
