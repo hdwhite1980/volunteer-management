@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 
-/* ─────────────────────────── Types ─────────────────────────── */
+/* ───────────────────────── Types ───────────────────────── */
 interface JobFormData {
   title: string;
   description: string;
@@ -39,19 +39,19 @@ interface JobFormData {
   expires_at: string;
 }
 
-/* ───────────────────────── Component ───────────────────────── */
+/* ───────────────────── Component ───────────────────── */
 const PostJob = () => {
-  /* ----- multi‑step wizard state ----- */
+  /* wizard state */
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [jobId, setJobId] = useState<number | null>(null);
 
-  /* ----- category list from DB ----- */
+  /* DB categories */
   const { categories, loading: categoriesLoading, error: categoriesError } =
     useCategories('volunteer');
 
-  /* ----- form data ----- */
+  /* form data */
   const [formData, setFormData] = useState<JobFormData>({
     title: '',
     description: '',
@@ -81,7 +81,7 @@ const PostJob = () => {
     expires_at: ''
   });
 
-  /* ----- constants ----- */
+  /* skill groups */
   const skillGroups: Record<string, string[]> = {
     'Administration & Documentation': [
       'Administrative',
@@ -154,7 +154,7 @@ const PostJob = () => {
     { value: 'urgent', label: 'Urgent - Immediate need' }
   ];
 
-  /* ----- helpers ----- */
+  /* helpers */
   const update = (field: keyof JobFormData, value: any) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
 
@@ -226,7 +226,7 @@ const PostJob = () => {
     }
   };
 
-  /* ----- success screen ----- */
+  /* ---------- success screen ---------- */
   if (submitSuccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -286,7 +286,7 @@ const PostJob = () => {
     );
   }
 
-  /* ----- form wizard ----- */
+  /* ───────────────────── form wizard ───────────────────── */
   return (
     <div className="min-h-screen bg-gray-50">
       {/* header */}
@@ -334,7 +334,7 @@ const PostJob = () => {
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
             {/* ================================================================
-                STEP 1 – Basic Information
+                STEP 1 – Basic Information
             ================================================================= */}
             {currentStep === 1 && (
               <div>
@@ -359,7 +359,7 @@ const PostJob = () => {
                     />
                   </div>
 
-                  {/* category */}
+                  {/* category dropdown (unchanged) */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Category *
@@ -431,7 +431,7 @@ const PostJob = () => {
                     />
                   </div>
 
-                  {/* ---------- Skills Needed (grouped) ---------- */}
+                  {/* skills – UPDATED wrapper/label */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Skills Needed
@@ -444,14 +444,20 @@ const PostJob = () => {
                         <summary className="cursor-pointer select-none list-none py-2 px-3 bg-gray-100 font-medium flex justify-between items-center">
                           {group}
                         </summary>
-                        <div className="flex flex-wrap gap-x-4 gap-y-2 p-3">
+                        <div
+                          className="
+                            grid grid-cols-2 md:grid-cols-3
+                            gap-x-4 gap-y-2
+                            p-3
+                          "
+                        >
                           {skills.map((skill) => (
                             <label
                               key={skill}
                               className="
-                                w-1/2 md:w-1/3
                                 flex items-center gap-2
-                                text-sm whitespace-nowrap cursor-pointer
+                                text-sm whitespace-normal
+                                min-w-[12rem]
                               "
                             >
                               <input
@@ -472,7 +478,7 @@ const PostJob = () => {
             )}
 
             {/* ================================================================
-                STEP 2 – Location & Contact
+                STEP 2 – Location & Contact  (unchanged from previous full file)
             ================================================================= */}
             {currentStep === 2 && (
               <div>
@@ -535,7 +541,7 @@ const PostJob = () => {
                     />
                   </div>
 
-                  {/* city & state */}
+                  {/* city/state */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -581,7 +587,7 @@ const PostJob = () => {
             )}
 
             {/* ================================================================
-                STEP 3 – Requirements & Schedule
+                STEP 3 – Requirements & Schedule  (unchanged)
             ================================================================= */}
             {currentStep === 3 && (
               <div>
@@ -735,7 +741,7 @@ const PostJob = () => {
             )}
 
             {/* ================================================================
-                STEP 4 – Additional Details
+                STEP 4 – Additional Details  (unchanged)
             ================================================================= */}
             {currentStep === 4 && (
               <div>
