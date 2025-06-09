@@ -79,7 +79,7 @@ interface VolunteerSignupData {
   experience_level: string;
   availability: any;
   transportation: string;
-  background_check_consent: boolean;
+  background_check_consent: boolean | string;
   email_notifications: boolean;
   sms_notifications: boolean;
 }
@@ -165,10 +165,18 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     e.preventDefault();
     setApplying(true);
     try {
+      // Convert consent text to boolean
+      const consentValue = typeof volunteerSignupData.background_check_consent === 'string' 
+        ? volunteerSignupData.background_check_consent.toLowerCase() === 'yes'
+        : volunteerSignupData.background_check_consent;
+
       const response = await fetch('/api/volunteer-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(volunteerSignupData)
+        body: JSON.stringify({
+          ...volunteerSignupData,
+          background_check_consent: consentValue
+        })
       });
       
       if (!response.ok) {
