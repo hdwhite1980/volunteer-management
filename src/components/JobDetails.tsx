@@ -1,12 +1,3 @@
-/* --------------------------------------------------------------------------
-   src/components/JobDetails.tsx – FULL FILE (≈730 lines)
-   Updated 2025‑06‑09
-   ───────────────────────────────────────────────────────────────────────────
-   • Normalises job.skills_needed so it’s always string[]
-   • Volunteer signup modal then application modal
-   • Closes ALL JSX tags (fixed build error)
-   -------------------------------------------------------------------------*/
-
 import React, { useState, useEffect } from 'react';
 import {
   MapPin,
@@ -23,8 +14,6 @@ import {
   Trash2,
   Send,
 } from 'lucide-react';
-
-/* ───────────────────────── Types ───────────────────────── */
 
 interface JobDetailsProps {
   jobId: string;
@@ -84,9 +73,6 @@ interface VolunteerSignupData {
   sms_notifications: boolean;
 }
 
-/* ───────────────────────── Helpers ───────────────────────── */
-
-/** Convert Postgres array literal / CSV / null into clean `string[]` */
 const normalizeSkills = (raw: Job['skills_needed']): string[] => {
   if (!raw) return [];
   if (Array.isArray(raw)) return raw;
@@ -98,7 +84,6 @@ const normalizeSkills = (raw: Job['skills_needed']): string[] => {
     .filter(Boolean);
 };
 
-/** Map urgency → color classes */
 const urgencyColor = (u: string) => {
   switch (u) {
     case 'urgent':
@@ -114,10 +99,7 @@ const urgencyColor = (u: string) => {
   }
 };
 
-/* ───────────────────────── Component ───────────────────────── */
-
 const JobDetails = ({ jobId }: JobDetailsProps) => {
-  /* ---------- state ---------- */
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -126,7 +108,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
   const [showVolunteerSignup, setShowVolunteerSignup] = useState(false);
   const [volunteerId, setVolunteerId] = useState<number | null>(null);
 
-  /* ---------- controlled forms ---------- */
   const [applicationData, setApplicationData] = useState<ApplicationData>({
     volunteer_name: '',
     email: '',
@@ -158,13 +139,9 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     sms_notifications: false,
   });
 
-  /* ---------- effects ---------- */
   useEffect(() => {
     if (jobId) fetchJob();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
-
-  /* ---------- api ---------- */
 
   const fetchJob = async () => {
     try {
@@ -178,8 +155,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
       setLoading(false);
     }
   };
-
-  /* ---------- volunteer signup ---------- */
 
   const submitVolunteerSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -198,7 +173,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
       const { volunteer } = await resp.json();
       setVolunteerId(volunteer.id);
 
-      // pre‑fill app form
       setApplicationData((p) => ({
         ...p,
         volunteer_name: `${volSignup.first_name} ${volSignup.last_name}`,
@@ -214,8 +188,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
       setApplying(false);
     }
   };
-
-  /* ---------- application ---------- */
 
   const submitApplication = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -259,8 +231,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     }
   };
 
-  /* ---------- helpers ---------- */
-
   const hAppChange = (k: keyof ApplicationData, v: string) =>
     setApplicationData((p) => ({ ...p, [k]: v }));
 
@@ -272,8 +242,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     if (volunteerId) setShowApplicationForm(true);
     else setShowVolunteerSignup(true);
   };
-
-  /* ---------- guard renders ---------- */
 
   if (loading) {
     return (
@@ -300,18 +268,12 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     );
   }
 
-  /* ---------- derived ---------- */
-
   const skills = normalizeSkills(job.skills_needed);
-
-  /* ───────────────────────── JSX ───────────────────────── */
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* top container */}
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-4xl mx-auto">
-          {/* back link */}
           <button
             onClick={() => window.history.back()}
             className="mb-6 flex items-center text-blue-600 hover:text-blue-800"
@@ -320,9 +282,7 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
             Back to Job Board
           </button>
 
-          {/* card */}
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            {/* header */}
             <div className="p-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
               <div className="flex justify-between items-start">
                 <div>
@@ -353,12 +313,9 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
               </div>
             </div>
 
-            {/* body */}
             <div className="p-8">
               <div className="grid md:grid-cols-3 gap-8">
-                {/* main column */}
                 <div className="md:col-span-2 space-y-6">
-                  {/* description */}
                   <section>
                     <h2 className="text-xl font-semibold mb-3">Description</h2>
                     <p className="text-gray-700 whitespace-pre-line">
@@ -366,7 +323,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                     </p>
                   </section>
 
-                  {/* skills */}
                   {skills.length > 0 && (
                     <section>
                       <h2 className="text-xl font-semibold mb-3">
@@ -385,7 +341,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                     </section>
                   )}
 
-                  {/* category */}
                   {job.category && (
                     <section>
                       <h2 className="text-xl font-semibold mb-3">Category</h2>
@@ -396,9 +351,7 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                   )}
                 </div>
 
-                {/* sidebar */}
                 <div className="space-y-6">
-                  {/* details */}
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h3 className="font-semibold mb-4">
                       Opportunity Details
@@ -429,7 +382,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                     </div>
                   </div>
 
-                  {/* contact */}
                   <div className="bg-gray-50 rounded-lg p-6">
                     <h3 className="font-semibold mb-4">Contact Information</h3>
                     <div className="space-y-3 text-sm">
@@ -459,7 +411,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                     </div>
                   </div>
 
-                  {/* actions */}
                   <div className="space-y-3">
                     {job.positions_remaining > 0 ? (
                       <button
@@ -506,13 +457,9 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
         </div>
       </div>
 
-      {/* ---------------------------------------------------------------------------------
-         VOLUNTEER SIGN‑UP MODAL
-      ---------------------------------------------------------------------------------- */}
       {showVolunteerSignup && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[85vh] flex flex-col overflow-hidden">
-            {/* scrollable content */}
             <div className="p-4 overflow-y-auto flex-1">
               <h2 className="text-lg font-bold mb-2">
                 Create Volunteer Profile
@@ -526,7 +473,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                 onSubmit={submitVolunteerSignup}
                 className="space-y-3 text-sm"
               >
-                {/* name */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block font-medium mb-1">First Name *</label>
@@ -550,7 +496,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                   </div>
                 </div>
 
-                {/* email / phone */}
                 <div>
                   <label className="block font-medium mb-1">Email *</label>
                   <input
@@ -571,7 +516,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                   />
                 </div>
 
-                {/* address */}
                 <div>
                   <label className="block font-medium mb-1">Address *</label>
                   <input
@@ -609,14 +553,12 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                       type="text"
                       required
                       value={volSignup.zipcode}
-                      onChange={(e) =>
                       onChange={(e) => hVolChange('zipcode', e.target.value)}
                       className="w-full p-2 border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
                 </div>
 
-                {/* emergency contact */}
                 <div className="border-t pt-3 mt-4">
                   <h3 className="font-semibold text-sm mb-2">
                     Emergency Contact
@@ -679,10 +621,9 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                   </div>
                 </div>
 
-                {/* consent */}
                 <div className="border-t pt-3 mt-4">
                   <label className="block font-medium mb-1">
-                    I consent to a background check if required. Type “yes”. *
+                    I consent to a background check if required. Type "yes". *
                   </label>
                   <input
                     type="text"
@@ -698,7 +639,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
               </form>
             </div>
 
-            {/* sticky footer */}
             <div className="border-t bg-gray-50 p-4 rounded-b-xl">
               <div className="flex space-x-3">
                 <button
@@ -733,9 +673,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
         </div>
       )}
 
-      {/* ---------------------------------------------------------------------------------
-         APPLICATION MODAL
-      ---------------------------------------------------------------------------------- */}
       {showApplicationForm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
@@ -745,7 +682,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
               </h2>
 
               <form onSubmit={submitApplication} className="space-y-4">
-                {/* name / email / phone only if no volunteerId */}
                 {!volunteerId && (
                   <>
                     <div>
@@ -790,7 +726,6 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                   </>
                 )}
 
-                {/* cover letter */}
                 <div>
                   <label className="block font-medium mb-2 text-sm">
                     Cover Letter
@@ -802,25 +737,10 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                       hAppChange('cover_letter', e.target.value)
                     }
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Why are you interested in this opportunity? What relevant experience do you have?"
                   />
                 </div>
 
-                {/* experience */}
-                <div>
-                  <label className="block font-medium mb-2 text-sm">
-                    Relevant Experience
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={applicationData.experience}
-                    onChange={(e) =>
-                      hAppChange('experience', e.target.value)
-                    }
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* buttons */}
                 <div className="flex space-x-4 pt-4">
                   <button
                     type="submit"
