@@ -1,6 +1,9 @@
 // src/components/PostJob.tsx
 import React, { useState } from 'react';
-import { Plus, MapPin, Users, Clock, AlertCircle, CheckCircle, ArrowRight, ArrowLeft, Calendar, Shield } from 'lucide-react';
+import {
+  Plus, MapPin, Users, Clock, AlertCircle, CheckCircle,
+  ArrowRight, ArrowLeft, Shield
+} from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 
 interface JobFormData {
@@ -40,10 +43,11 @@ const PostJob = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [jobId, setJobId] = useState<number | null>(null);
-  
-  // Fetch categories from database using the hook
-  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories('volunteer');
-  
+
+  // Fetch categories from database
+  const { categories, loading: categoriesLoading, error: categoriesError } =
+    useCategories('volunteer');
+
   const [formData, setFormData] = useState<JobFormData>({
     title: '',
     description: '',
@@ -73,19 +77,25 @@ const PostJob = () => {
     expires_at: ''
   });
 
+  /** ---------------------------------------------------------------------
+   *  Static option lists
+   * -------------------------------------------------------------------- */
   const skillsOptions = [
-  'Administrative', 'Data Entry', 'Documentation', 'Fundraising', 'Grant Writing / Story Collection',
-  'Driving', 'Heavy Lifting', 'Construction', 'Electrical Work', 'Plumbing', 'HVAC', 'Roofing',
-  'First Aid', 'Medical Knowledge', 'Mental Health Support', 'Crisis Response',
-  'IT Support', 'Translation', 'Disability Support', 'Elder Care', 'Childcare', 'Pet Care',
-  'Cleaning', 'Debris Removal', 'Tarp Installation / Temporary Repairs',
-  'Damage Documentation / Media Support', 'Digital Support / Form Assistance',
-  'Comms & Social Media Outreach', 'Community Awareness / Outreach',
-  'Youth Education / Engagement', 'Homework Help / Learning Support',
-  'Shelter Support / Intake', 'Donation Sorting / Distribution', 'Transportation Coordination',
-  'Legal Aid Navigation', 'Phone Banking / Wellness Checks', 'Shelter Registration Assistance'
+    'Administrative', 'Data Entry', 'Documentation', 'Fundraising',
+    'Grant Writing / Story Collection', 'Driving', 'Heavy Lifting',
+    'Construction', 'Electrical Work', 'Plumbing', 'HVAC', 'Roofing',
+    'First Aid', 'Medical Knowledge', 'Mental Health Support',
+    'Crisis Response', 'IT Support', 'Translation', 'Disability Support',
+    'Elder Care', 'Childcare', 'Pet Care', 'Cleaning', 'Debris Removal',
+    'Tarp Installation / Temporary Repairs',
+    'Damage Documentation / Media Support',
+    'Digital Support / Form Assistance', 'Comms & Social Media Outreach',
+    'Community Awareness / Outreach', 'Youth Education / Engagement',
+    'Homework Help / Learning Support', 'Shelter Support / Intake',
+    'Donation Sorting / Distribution', 'Transportation Coordination',
+    'Legal Aid Navigation', 'Phone Banking / Wellness Checks',
+    'Shelter Registration Assistance'
   ];
-
 
   const timeCommitmentOptions = [
     'One-time event', 'Weekly', 'Bi-weekly', 'Monthly', 'Quarterly',
@@ -93,22 +103,25 @@ const PostJob = () => {
   ];
 
   const urgencyOptions = [
-    { value: 'low', label: 'Low - General opportunity' },
+    { value: 'low',    label: 'Low - General opportunity' },
     { value: 'medium', label: 'Medium - Preferred timeline' },
-    { value: 'high', label: 'High - Needed soon' },
+    { value: 'high',   label: 'High - Needed soon' },
     { value: 'urgent', label: 'Urgent - Immediate need' }
   ];
 
-  const updateFormData = (field: keyof JobFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  /** ---------------------------------------------------------------------
+   *  Helpers
+   * -------------------------------------------------------------------- */
+  const updateFormData = (field: keyof JobFormData, value: any) =>
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
   const handleSkillToggle = (skill: string) => {
-    const current = formData.skills_needed;
-    const updated = current.includes(skill)
-      ? current.filter(s => s !== skill)
-      : [...current, skill];
-    updateFormData('skills_needed', updated);
+    setFormData((prev) => ({
+      ...prev,
+      skills_needed: prev.skills_needed.includes(skill)
+        ? prev.skills_needed.filter((s) => s !== skill)
+        : [...prev.skills_needed, skill]
+    }));
   };
 
   const validateStep = (step: number) => {
@@ -116,41 +129,35 @@ const PostJob = () => {
       case 1:
         return formData.title && formData.description && formData.category;
       case 2:
-        return formData.contact_email && formData.city && formData.state && formData.zipcode;
+        return (
+          formData.contact_email && formData.city && formData.state && formData.zipcode
+        );
       case 3:
         return formData.time_commitment && formData.volunteers_needed > 0;
-      case 4:
-        return true; // Optional fields
       default:
         return true;
     }
   };
 
   const nextStep = () => {
-    if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, 4));
-    } else {
-      alert('Please fill in all required fields before continuing.');
-    }
+    if (validateStep(currentStep)) setCurrentStep((prev) => Math.min(prev + 1, 4));
+    else alert('Please fill in all required fields before continuing.');
   };
 
-  const prevStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
+  const prevStep = () => setCurrentStep((prev) => Math.max(prev - 1, 1));
 
   const handleSubmit = async () => {
     if (!validateStep(4)) {
       alert('Please complete all required fields.');
       return;
     }
-
     setIsSubmitting(true);
-
     try {
-      // Set default expires_at if not provided
       const submitData = {
         ...formData,
-        expires_at: formData.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        expires_at:
+          formData.expires_at ||
+          new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         stipend_amount: formData.stipend_amount || null
       };
 
@@ -169,51 +176,64 @@ const PostJob = () => {
         const error = await response.json();
         alert(`Failed to post job: ${error.error}`);
       }
-    } catch (error) {
+    } catch {
       alert('Failed to post job. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  /** ---------------------------------------------------------------------
+   *  Success screen
+   * -------------------------------------------------------------------- */
   if (submitSuccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-2xl mx-auto p-8">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-6" />
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Job Posted Successfully!</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              Job Posted Successfully!
+            </h1>
             <p className="text-gray-600 mb-8">
-              Your volunteer opportunity has been posted and is now live. Volunteers can view and apply for this position.
+              Your volunteer opportunity has been posted and is now live. Volunteers can
+              view and apply for this position.
             </p>
-            
+
             <div className="bg-gray-50 rounded-lg p-6 mb-8">
-              <h3 className="font-semibold text-gray-900 mb-2">What happens next?</h3>
+              <h3 className="font-semibold text-gray-900 mb-2">
+                What happens next?
+              </h3>
               <ul className="text-left text-gray-600 space-y-2">
                 <li>• Your opportunity is now visible to volunteers</li>
                 <li>• You'll receive applications via email</li>
                 <li>• You can manage applications through your dashboard</li>
-                <li>• The posting will expire on {formData.expires_at ? new Date(formData.expires_at).toLocaleDateString() : 'the scheduled date'}</li>
+                <li>
+                  • The posting will expire on{' '}
+                  {formData.expires_at
+                    ? new Date(formData.expires_at).toLocaleDateString()
+                    : 'the scheduled date'}
+                </li>
               </ul>
             </div>
 
             <div className="flex space-x-4">
               {jobId && (
                 <button
-                  onClick={() => window.location.href = `/jobs/${jobId}`}
+                  onClick={() => (window.location.href = `/jobs/${jobId}`)}
                   className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
                 >
                   View Your Posting
                 </button>
               )}
               <button
-                onClick={() => window.location.href = '/job-board'}
+                onClick={() => (window.location.href = '/job-board')}
                 className="flex-1 bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
               >
                 Browse All Opportunities
               </button>
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => (window.location.href = '/')}
                 className="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
               >
                 Return Home
@@ -225,33 +245,44 @@ const PostJob = () => {
     );
   }
 
+  /** ---------------------------------------------------------------------
+   *  Main multi‑step form
+   * -------------------------------------------------------------------- */
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* ---------- Header ---------- */}
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-6 py-4">
-          <h1 className="text-2xl font-bold text-gray-900">Post Volunteer Opportunity</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Post Volunteer Opportunity
+          </h1>
           <p className="text-gray-600">Step {currentStep} of 4</p>
         </div>
       </div>
 
-      {/* Progress Bar */}
+      {/* ---------- Progress bar ---------- */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center space-x-2">
             {[1, 2, 3, 4].map((step) => (
               <div key={step} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step < currentStep ? 'bg-green-500 text-white' :
-                  step === currentStep ? 'bg-blue-500 text-white' :
-                  'bg-gray-200 text-gray-600'
-                }`}>
+                <div
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    step < currentStep
+                      ? 'bg-green-500 text-white'
+                      : step === currentStep
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-200 text-gray-600'
+                  }`}
+                >
                   {step < currentStep ? '✓' : step}
                 </div>
                 {step < 4 && (
-                  <div className={`w-12 h-1 mx-2 ${
-                    step < currentStep ? 'bg-green-500' : 'bg-gray-200'
-                  }`} />
+                  <div
+                    className={`w-12 h-1 mx-2 ${
+                      step < currentStep ? 'bg-green-500' : 'bg-gray-200'
+                    }`}
+                  />
                 )}
               </div>
             ))}
@@ -259,20 +290,22 @@ const PostJob = () => {
         </div>
       </div>
 
-      {/* Form Content */}
+      {/* ---------- Form content ---------- */}
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-2xl mx-auto">
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-            
-            {/* Step 1: Basic Information */}
+            {/* ================================================================
+               Step 1 ─ Basic Information
+            ================================================================= */}
             {currentStep === 1 && (
               <div>
                 <div className="flex items-center mb-6">
                   <Plus className="w-6 h-6 text-blue-600 mr-3" />
                   <h2 className="text-xl font-semibold">Basic Information</h2>
                 </div>
-                
+
                 <div className="space-y-4">
+                  {/* ---------- Title ---------- */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Opportunity Title *
@@ -287,6 +320,7 @@ const PostJob = () => {
                     />
                   </div>
 
+                  {/* ---------- Category ---------- */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Category *
@@ -309,7 +343,10 @@ const PostJob = () => {
                         >
                           <option value="">Select a category</option>
                           {categories.map((category) => (
-                            <option key={category.id} value={category.category_name}>
+                            <option
+                              key={category.id}
+                              value={category.category_name}
+                            >
                               {category.category_name}
                             </option>
                           ))}
@@ -324,20 +361,31 @@ const PostJob = () => {
                       >
                         <option value="">Select a category</option>
                         {categories.map((category) => (
-                          <option key={category.id} value={category.category_name}>
+                          <option
+                            key={category.id}
+                            value={category.category_name}
+                          >
                             {category.category_name}
                           </option>
                         ))}
                       </select>
                     )}
-                    {/* Show category description if one is selected */}
-                    {formData.category && categories.find(c => c.category_name === formData.category)?.description && (
-                      <p className="mt-2 text-sm text-gray-600">
-                        {categories.find(c => c.category_name === formData.category)?.description}
-                      </p>
-                    )}
+                    {/* Show category description */}
+                    {formData.category &&
+                      categories.find(
+                        (c) => c.category_name === formData.category
+                      )?.description && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          {
+                            categories.find(
+                              (c) => c.category_name === formData.category
+                            )?.description
+                          }
+                        </p>
+                      )}
                   </div>
 
+                  {/* ---------- Description ---------- */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Description *
@@ -345,27 +393,43 @@ const PostJob = () => {
                     <textarea
                       required
                       value={formData.description}
-                      onChange={(e) => updateFormData('description', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('description', e.target.value)
+                      }
                       rows={6}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Describe the volunteer opportunity, what volunteers will do, and the impact they'll make..."
                     />
                   </div>
 
+                  {/* ---------- Skills Needed ---------- */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Skills Needed
                     </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-3">
+                    {/* UPDATED wrapper */}
+                    <div
+                      className="
+                        grid grid-cols-1
+                        sm:grid-cols-2
+                        md:grid-cols-3
+                        gap-x-4 gap-y-2
+                        max-h-60 overflow-y-auto
+                        border border-gray-200 rounded-lg p-3
+                      "
+                    >
                       {skillsOptions.map((skill) => (
-                        <label key={skill} className="flex items-center space-x-2 cursor-pointer">
+                        <label
+                          key={skill}
+                          className="flex items-center gap-2 text-sm whitespace-nowrap cursor-pointer"
+                        >
                           <input
                             type="checkbox"
                             checked={formData.skills_needed.includes(skill)}
                             onChange={() => handleSkillToggle(skill)}
                             className="rounded text-blue-600 focus:ring-blue-500"
                           />
-                          <span className="text-sm">{skill}</span>
+                          {skill}
                         </label>
                       ))}
                     </div>
@@ -374,15 +438,18 @@ const PostJob = () => {
               </div>
             )}
 
-            {/* Step 2: Location & Contact */}
+            {/* ================================================================
+               Step 2 ─ Location & Contact
+            ================================================================= */}
             {currentStep === 2 && (
               <div>
                 <div className="flex items-center mb-6">
                   <MapPin className="w-6 h-6 text-blue-600 mr-3" />
                   <h2 className="text-xl font-semibold">Location & Contact</h2>
                 </div>
-                
+
                 <div className="space-y-4">
+                  {/* Contact Name */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Contact Name
@@ -390,11 +457,14 @@ const PostJob = () => {
                     <input
                       type="text"
                       value={formData.contact_name}
-                      onChange={(e) => updateFormData('contact_name', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('contact_name', e.target.value)
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
+                  {/* Contact Email */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Contact Email *
@@ -403,11 +473,14 @@ const PostJob = () => {
                       type="email"
                       required
                       value={formData.contact_email}
-                      onChange={(e) => updateFormData('contact_email', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('contact_email', e.target.value)
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
+                  {/* Contact Phone */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Contact Phone
@@ -415,11 +488,14 @@ const PostJob = () => {
                     <input
                       type="tel"
                       value={formData.contact_phone}
-                      onChange={(e) => updateFormData('contact_phone', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('contact_phone', e.target.value)
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
+                  {/* Address */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Street Address
@@ -427,11 +503,14 @@ const PostJob = () => {
                     <input
                       type="text"
                       value={formData.address}
-                      onChange={(e) => updateFormData('address', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('address', e.target.value)
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
+                  {/* City & State */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -441,7 +520,9 @@ const PostJob = () => {
                         type="text"
                         required
                         value={formData.city}
-                        onChange={(e) => updateFormData('city', e.target.value)}
+                        onChange={(e) =>
+                          updateFormData('city', e.target.value)
+                        }
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -453,12 +534,15 @@ const PostJob = () => {
                         type="text"
                         required
                         value={formData.state}
-                        onChange={(e) => updateFormData('state', e.target.value)}
+                        onChange={(e) =>
+                          updateFormData('state', e.target.value)
+                        }
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                   </div>
 
+                  {/* Zipcode */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Zipcode *
@@ -467,7 +551,9 @@ const PostJob = () => {
                       type="text"
                       required
                       value={formData.zipcode}
-                      onChange={(e) => updateFormData('zipcode', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('zipcode', e.target.value)
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -475,15 +561,18 @@ const PostJob = () => {
               </div>
             )}
 
-            {/* Step 3: Requirements & Schedule */}
+            {/* ================================================================
+               Step 3 ─ Requirements & Schedule
+            ================================================================= */}
             {currentStep === 3 && (
               <div>
                 <div className="flex items-center mb-6">
                   <Clock className="w-6 h-6 text-blue-600 mr-3" />
                   <h2 className="text-xl font-semibold">Requirements & Schedule</h2>
                 </div>
-                
+
                 <div className="space-y-4">
+                  {/* Time commitment & duration */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -492,12 +581,16 @@ const PostJob = () => {
                       <select
                         required
                         value={formData.time_commitment}
-                        onChange={(e) => updateFormData('time_commitment', e.target.value)}
+                        onChange={(e) =>
+                          updateFormData('time_commitment', e.target.value)
+                        }
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="">Select time commitment</option>
                         {timeCommitmentOptions.map((option) => (
-                          <option key={option} value={option}>{option}</option>
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -510,12 +603,18 @@ const PostJob = () => {
                         min="1"
                         max="24"
                         value={formData.duration_hours}
-                        onChange={(e) => updateFormData('duration_hours', parseInt(e.target.value))}
+                        onChange={(e) =>
+                          updateFormData(
+                            'duration_hours',
+                            parseInt(e.target.value, 10)
+                          )
+                        }
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                   </div>
 
+                  {/* Volunteers needed */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Number of Volunteers Needed *
@@ -525,11 +624,17 @@ const PostJob = () => {
                       min="1"
                       required
                       value={formData.volunteers_needed}
-                      onChange={(e) => updateFormData('volunteers_needed', parseInt(e.target.value))}
+                      onChange={(e) =>
+                        updateFormData(
+                          'volunteers_needed',
+                          parseInt(e.target.value, 10)
+                        )
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
 
+                  {/* Age requirement */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Age Requirement
@@ -537,12 +642,15 @@ const PostJob = () => {
                     <input
                       type="text"
                       value={formData.age_requirement}
-                      onChange={(e) => updateFormData('age_requirement', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('age_requirement', e.target.value)
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="e.g., 18+, All ages welcome, 16+ with parent"
                     />
                   </div>
 
+                  {/* Start & End dates */}
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -551,7 +659,9 @@ const PostJob = () => {
                       <input
                         type="date"
                         value={formData.start_date}
-                        onChange={(e) => updateFormData('start_date', e.target.value)}
+                        onChange={(e) =>
+                          updateFormData('start_date', e.target.value)
+                        }
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
@@ -562,12 +672,15 @@ const PostJob = () => {
                       <input
                         type="date"
                         value={formData.end_date}
-                        onChange={(e) => updateFormData('end_date', e.target.value)}
+                        onChange={(e) =>
+                          updateFormData('end_date', e.target.value)
+                        }
                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                   </div>
 
+                  {/* Preferred times */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Preferred Times
@@ -575,23 +688,30 @@ const PostJob = () => {
                     <input
                       type="text"
                       value={formData.preferred_times}
-                      onChange={(e) => updateFormData('preferred_times', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('preferred_times', e.target.value)
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="e.g., Weekends, Evenings, Monday-Friday 9-5"
                     />
                   </div>
 
+                  {/* Urgency */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Priority Level
                     </label>
                     <select
                       value={formData.urgency}
-                      onChange={(e) => updateFormData('urgency', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('urgency', e.target.value)
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      {urgencyOptions.map((option) => (
-                        <option key={option.value} value={option.value}>{option.label}</option>
+                      {urgencyOptions.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -599,77 +719,54 @@ const PostJob = () => {
               </div>
             )}
 
-            {/* Step 4: Additional Details */}
+            {/* ================================================================
+               Step 4 ─ Additional Details
+            ================================================================= */}
             {currentStep === 4 && (
               <div>
                 <div className="flex items-center mb-6">
                   <Shield className="w-6 h-6 text-blue-600 mr-3" />
                   <h2 className="text-xl font-semibold">Additional Details</h2>
                 </div>
-                
+
                 <div className="space-y-4">
+                  {/* Boolean toggles */}
                   <div className="space-y-3">
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={formData.background_check_required}
-                        onChange={(e) => updateFormData('background_check_required', e.target.checked)}
-                        className="rounded text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Background check required</span>
-                    </label>
-
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={formData.training_provided}
-                        onChange={(e) => updateFormData('training_provided', e.target.checked)}
-                        className="rounded text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Training will be provided</span>
-                    </label>
-
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={formData.flexible_schedule}
-                        onChange={(e) => updateFormData('flexible_schedule', e.target.checked)}
-                        className="rounded text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Flexible schedule available</span>
-                    </label>
-
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={formData.remote_possible}
-                        onChange={(e) => updateFormData('remote_possible', e.target.checked)}
-                        className="rounded text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Remote work possible</span>
-                    </label>
-
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={formData.transportation_provided}
-                        onChange={(e) => updateFormData('transportation_provided', e.target.checked)}
-                        className="rounded text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Transportation provided</span>
-                    </label>
-
-                    <label className="flex items-center space-x-3">
-                      <input
-                        type="checkbox"
-                        checked={formData.meal_provided}
-                        onChange={(e) => updateFormData('meal_provided', e.target.checked)}
-                        className="rounded text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm">Meals provided</span>
-                    </label>
+                    {[
+                      [
+                        'background_check_required',
+                        'Background check required'
+                      ],
+                      ['training_provided', 'Training will be provided'],
+                      ['flexible_schedule', 'Flexible schedule available'],
+                      ['remote_possible', 'Remote work possible'],
+                      [
+                        'transportation_provided',
+                        'Transportation provided'
+                      ],
+                      ['meal_provided', 'Meals provided']
+                    ].map(([key, label]) => (
+                      <label
+                        key={key}
+                        className="flex items-center space-x-3"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData[key as keyof JobFormData] as boolean}
+                          onChange={(e) =>
+                            updateFormData(
+                              key as keyof JobFormData,
+                              e.target.checked
+                            )
+                          }
+                          className="rounded text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm">{label}</span>
+                      </label>
+                    ))}
                   </div>
 
+                  {/* Stipend */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Stipend Amount (if any)
@@ -679,12 +776,20 @@ const PostJob = () => {
                       min="0"
                       step="0.01"
                       value={formData.stipend_amount || ''}
-                      onChange={(e) => updateFormData('stipend_amount', e.target.value ? parseFloat(e.target.value) : undefined)}
+                      onChange={(e) =>
+                        updateFormData(
+                          'stipend_amount',
+                          e.target.value
+                            ? parseFloat(e.target.value)
+                            : undefined
+                        )
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="0.00"
                     />
                   </div>
 
+                  {/* Expiration */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Posting Expires On
@@ -692,17 +797,24 @@ const PostJob = () => {
                     <input
                       type="date"
                       value={formData.expires_at}
-                      onChange={(e) => updateFormData('expires_at', e.target.value)}
+                      onChange={(e) =>
+                        updateFormData('expires_at', e.target.value)
+                      }
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Leave blank to expire in 30 days</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Leave blank to expire in 30 days
+                    </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Navigation Buttons */}
+            {/* ================================================================
+               Navigation buttons
+            ================================================================= */}
             <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+              {/* Prev */}
               <button
                 onClick={prevStep}
                 disabled={currentStep === 1}
@@ -712,6 +824,7 @@ const PostJob = () => {
                 <span>Previous</span>
               </button>
 
+              {/* Next / Submit */}
               {currentStep < 4 ? (
                 <button
                   onClick={nextStep}
@@ -728,7 +841,7 @@ const PostJob = () => {
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                       <span>Posting...</span>
                     </>
                   ) : (
