@@ -442,7 +442,7 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
       {/* Volunteer Signup Modal */}
       {showVolunteerSignup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[80vh] flex flex-col mx-2">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-sm max-h-[80vh] flex flex-col mx-2 overflow-hidden">
             <div className="p-3 overflow-y-auto flex-1">
               <h2 className="text-lg font-bold mb-2">Create Volunteer Profile</h2>
               <p className="text-gray-600 mb-3 text-xs">Complete your profile to apply for opportunities.</p>
@@ -580,17 +580,17 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                 {/* Consent */}
                 <div className="border-t pt-2 mt-2">
                   <div className="bg-gray-50 p-2 rounded border">
-                    <label className="flex items-start space-x-2 cursor-pointer">
+                    <div className="flex items-start space-x-2">
                       <input 
                         type="checkbox" 
                         checked={volunteerSignupData.background_check_consent} 
                         onChange={(e) => handleVolunteerInputChange('background_check_consent', e.target.checked)} 
                         className="mt-0.5 rounded flex-shrink-0 w-3 h-3"
                       />
-                      <span className="text-xs text-gray-700 leading-tight flex-1">
-                        I consent to background check if required for volunteer opportunities
-                      </span>
-                    </label>
+                      <div className="text-xs text-gray-700 leading-tight">
+                        I consent to background check if required
+                      </div>
+                    </div>
                   </div>
                 </div>
               </form>
