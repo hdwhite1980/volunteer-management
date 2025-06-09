@@ -439,9 +439,7 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
         </div>
       </div>
 
-      {/* ------------------------------------------------------------------
-         Volunteer Signup Modal
-      ------------------------------------------------------------------ */}
+      {/* Volunteer Signup Modal */}
       {showVolunteerSignup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
@@ -627,14 +625,11 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
                 </button>
               </div>
             </div>
-            </div>
           </div>
         </div>
       )}
 
-      {/* ------------------------------------------------------------------
-         Application Modal
-      ------------------------------------------------------------------ */}
+      {/* Application Modal */}
       {showApplicationForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
