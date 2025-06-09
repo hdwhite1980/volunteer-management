@@ -1,4 +1,4 @@
-/* --------------------------------------------------------------------------
+/* 
    src/components/JobDetails.tsx – Updated for new job application flow
    
    Changes:
@@ -6,7 +6,7 @@
    2. Then submits job application with volunteer_id
    3. Simplified application data structure
    4. Background check consent as text input
--------------------------------------------------------------------------- */
+*/
 import React, { useState, useEffect } from 'react';
 import {
   MapPin,
@@ -26,7 +26,7 @@ import {
   Send
 } from 'lucide-react';
 
-/* ───────────────────────── Types ───────────────────────── */
+// Types
 interface JobDetailsProps {
   jobId: string;
 }
@@ -85,7 +85,7 @@ interface VolunteerSignupData {
   sms_notifications: boolean;
 }
 
-/* ─────────────────── helpers ─────────────────── */
+// helpers
 /** Convert Postgres array literal or comma list to a clean string[] */
 const normalizeSkills = (raw: Job['skills_needed']): string[] => {
   if (Array.isArray(raw)) return raw;
@@ -98,11 +98,9 @@ const normalizeSkills = (raw: Job['skills_needed']): string[] => {
     .filter(Boolean);
 };
 
-/* --------------------------------------------------------------------------
-   Component
--------------------------------------------------------------------------- */
+// Component
 const JobDetails = ({ jobId }: JobDetailsProps) => {
-  /* ---------------- state ---------------- */
+  // state
   const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -140,13 +138,13 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     sms_notifications: false
   });
 
-  /* ---------------- effects ---------------- */
+  // effects
   useEffect(() => {
     if (jobId) fetchJobDetails();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobId]);
 
-  /* ---------------- fetch ---------------- */
+  // fetch
   const fetchJobDetails = async () => {
     try {
       setLoading(true);
@@ -161,7 +159,7 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     }
   };
 
-  /* ---------------- volunteer signup ---------------- */
+  // volunteer signup
   const handleVolunteerSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setApplying(true);
@@ -204,7 +202,7 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     }
   };
 
-  /* ---------------- application submit ---------------- */
+  // application submit
   const handleApplicationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setApplying(true);
@@ -254,7 +252,7 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     }
   };
 
-  /* ---------------- handlers ---------------- */
+  // handlers
   const handleInputChange = (field: keyof ApplicationData, value: string) =>
     setApplicationData((prev) => ({ ...prev, [field]: value }));
 
@@ -293,9 +291,7 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     }
   };
 
-  /* ----------------------------------------------------------------------
-     Render guards – loading / error
-  ---------------------------------------------------------------------- */
+  // Render guards – loading / error
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -321,12 +317,10 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
     );
   }
 
-  /* ---------------- derived ---------------- */
+  // derived
   const skills = normalizeSkills(job.skills_needed);
 
-  /* ----------------------------------------------------------------------
-     Main render
-  ---------------------------------------------------------------------- */
+  // Main render
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-6 py-8">
