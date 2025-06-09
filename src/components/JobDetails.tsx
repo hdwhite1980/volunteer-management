@@ -579,17 +579,19 @@ const JobDetails = ({ jobId }: JobDetailsProps) => {
 
                 {/* Consent */}
                 <div className="border-t pt-2 mt-2">
-                  <label className="flex items-start space-x-2 cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      checked={volunteerSignupData.background_check_consent} 
-                      onChange={(e) => handleVolunteerInputChange('background_check_consent', e.target.checked)} 
-                      className="mt-0.5 rounded flex-shrink-0 w-3 h-3"
-                    />
-                    <span className="text-xs text-gray-700 leading-tight">
-                      I consent to background check if required
-                    </span>
-                  </label>
+                  <div className="bg-gray-50 p-2 rounded border">
+                    <label className="flex items-start space-x-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={volunteerSignupData.background_check_consent} 
+                        onChange={(e) => handleVolunteerInputChange('background_check_consent', e.target.checked)} 
+                        className="mt-0.5 rounded flex-shrink-0 w-3 h-3"
+                      />
+                      <span className="text-xs text-gray-700 leading-tight flex-1">
+                        I consent to background check if required for volunteer opportunities
+                      </span>
+                    </label>
+                  </div>
                 </div>
               </form>
             </div>
