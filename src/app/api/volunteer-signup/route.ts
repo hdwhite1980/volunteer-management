@@ -9,7 +9,6 @@ interface VolunteerData {
   last_name: string;
   email: string;
   phone?: string;
-  birth_date?: string;
   address: string;
   city: string;
   state: string;
@@ -115,18 +114,18 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create volunteer registration
+    // Create volunteer registration - REMOVED birth_date field
     console.log('Volunteer Signup API: Creating registration...');
     const result = await sql`
       INSERT INTO volunteer_registrations (
-        first_name, last_name, email, phone, birth_date, address, city, state, zipcode,
+        first_name, last_name, email, phone, address, city, state, zipcode,
         latitude, longitude, skills, interests, categories_interested, experience_level,
         availability, max_distance, transportation, emergency_contact_name,
         emergency_contact_phone, emergency_contact_relationship, background_check_consent,
         email_notifications, sms_notifications, notes, status
       ) VALUES (
         ${body.first_name}, ${body.last_name}, ${body.email}, ${body.phone || null},
-        ${body.birth_date || null}, ${body.address}, ${body.city}, ${body.state}, ${body.zipcode},
+        ${body.address}, ${body.city}, ${body.state}, ${body.zipcode},
         ${latitude || null}, ${longitude || null}, ${JSON.stringify(body.skills || [])},
         ${JSON.stringify(body.interests || [])}, ${JSON.stringify(body.categories_interested || [])},
         ${body.experience_level || 'beginner'}, ${JSON.stringify(body.availability || {})},
