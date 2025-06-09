@@ -59,7 +59,7 @@ const PostJob = () => {
   const { categories, loading: categoriesLoading, error: categoriesError } =
     useCategories('volunteer');
 
-  /* form data state */
+  /* form data */
   const [formData, setFormData] = useState<JobFormData>({
     title: '',
     description: '',
@@ -168,7 +168,7 @@ const PostJob = () => {
   const update = (field: keyof JobFormData, value: any) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
 
-  /** replace only skills from one category, keep others */
+  /** replace only skills from one category, keep the rest */
   const updateGroupSkills = (group: string, selected: string[]) =>
     setFormData((prev) => {
       const remaining = prev.skills_needed.filter(
@@ -243,7 +243,6 @@ const PostJob = () => {
   };
 
   /* ───────────────────── success screen ───────────────────── */
-
   if (submitSuccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -304,7 +303,6 @@ const PostJob = () => {
   }
 
   /* ───────────────────── wizard ───────────────────── */
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* header */}
@@ -778,14 +776,8 @@ const PostJob = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {/* boolean toggles grid */}
-                  <div
-                    className="
-                      grid grid-cols-1
-                      sm:grid-cols-2
-                      gap-x-4 gap-y-2
-                    "
-                  >
+                  {/* boolean toggles in flex‑wrap */}
+                  <div className="flex flex-wrap">
                     {([
                       ['background_check_required', 'Background check required'],
                       ['training_provided', 'Training will be provided'],
@@ -797,9 +789,10 @@ const PostJob = () => {
                       <label
                         key={key}
                         className="
-                          flex items-center gap-2
+                          w-full sm:w-1/2
+                          mb-2
+                          inline-flex items-center gap-2
                           text-sm whitespace-normal
-                          min-w-[12rem]
                         "
                       >
                         <input
