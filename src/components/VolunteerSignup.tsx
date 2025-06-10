@@ -1,4 +1,628 @@
-// src/components/VolunteerSignup.tsx
+style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
+                    placeholder="(555) 123-4567"
+                    onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                    onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                  />
+                  <ErrorMessage error={errors.phone} />
+                </div>
+
+                <div>
+                  <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                    <Calendar style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
+                    <span>Date of Birth</span>
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.birth_date}
+                    onChange={(e) => updateFormData('birth_date', e.target.value)}
+                    style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
+                    onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                    onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Location */}
+          {currentStep === 2 && (
+            <div style={{ padding: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
+                <div style={{ backgroundColor: '#dcfce7', borderRadius: '0.5rem', padding: '0.75rem', marginRight: '1rem' }}>
+                  <MapPin style={{ width: '2rem', height: '2rem', color: '#16a34a' }} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', margin: 0 }}>Location & Transportation</h2>
+                  <p style={{ color: '#6b7280', margin: 0 }}>Help us find opportunities near you</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'grid', gap: '1.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                    Street Address *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.address}
+                    onChange={(e) => updateFormData('address', e.target.value)}
+                    style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
+                    placeholder="123 Main Street"
+                    onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                    onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                  />
+                  <ErrorMessage error={errors.address} />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                    ZIP Code *
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type="text"
+                      required
+                      value={formData.zipcode}
+                      onChange={(e) => updateFormData('zipcode', e.target.value)}
+                      style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
+                      placeholder="12345"
+                      maxLength={10}
+                      onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                      onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                    />
+                    {zipLoading && (
+                      <div style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)' }}>
+                        <Loader2 style={{ width: '1.25rem', height: '1.25rem', animation: 'spin 1s linear infinite', color: '#2563eb' }} />
+                      </div>
+                    )}
+                  </div>
+                  <ErrorMessage error={errors.zipcode || zipError} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                      City *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.city}
+                      onChange={(e) => updateFormData('city', e.target.value)}
+                      style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
+                      placeholder="City name"
+                      onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                      onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                    />
+                    <ErrorMessage error={errors.city} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                      State *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.state}
+                      onChange={(e) => updateFormData('state', e.target.value)}
+                      style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
+                      placeholder="State"
+                      maxLength={2}
+                      onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                      onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                    />
+                    <ErrorMessage error={errors.state} />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                    Maximum Travel Distance
+                  </label>
+                  <select
+                    value={formData.max_distance}
+                    onChange={(e) => updateFormData('max_distance', parseInt(e.target.value))}
+                    style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none', backgroundColor: '#ffffff' }}
+                    onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                    onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                  >
+                    <option value={5}>Within 5 miles</option>
+                    <option value={10}>Within 10 miles</option>
+                    <option value={25}>Within 25 miles</option>
+                    <option value={50}>Within 50 miles</option>
+                    <option value={100}>Within 100 miles</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                    Transportation
+                  </label>
+                  <select
+                    value={formData.transportation}
+                    onChange={(e) => updateFormData('transportation', e.target.value)}
+                    style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none', backgroundColor: '#ffffff' }}
+                    onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                    onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                  >
+                    <option value="own">Own Vehicle</option>
+                    <option value="public">Public Transportation</option>
+                    <option value="carpool">Willing to Carpool</option>
+                    <option value="limited">Limited Transportation</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Skills & Interests */}
+          {currentStep === 3 && (
+            <div style={{ padding: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
+                <div style={{ backgroundColor: '#f3e8ff', borderRadius: '0.5rem', padding: '0.75rem', marginRight: '1rem' }}>
+                  <Heart style={{ width: '2rem', height: '2rem', color: '#9333ea' }} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', margin: 0 }}>Skills & Interests</h2>
+                  <p style={{ color: '#6b7280', margin: 0 }}>Help us match you with the right opportunities</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'grid', gap: '2rem' }}>
+                <div>
+                  <h3 style={{ fontWeight: 'bold', color: '#111827', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+                    <Award style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem', color: '#2563eb' }} />
+                    <span>Skills</span>
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                    {skillsOptions.map((skill) => (
+                      <label key={skill} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.75rem', borderRadius: '0.75rem', border: '1px solid #e5e7eb', transition: 'all 0.2s', backgroundColor: '#ffffff' }} onMouseEnter={e => { e.currentTarget.style.borderColor = '#93c5fd'; e.currentTarget.style.backgroundColor = '#eff6ff'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.backgroundColor = '#ffffff'; }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.skills.includes(skill)}
+                          onChange={() => handleSkillToggle(skill)}
+                          style={{ marginRight: '0.75rem', width: '1rem', height: '1rem', accentColor: '#2563eb' }}
+                        />
+                        <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{skill}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ fontWeight: 'bold', color: '#111827', marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
+                    <Heart style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem', color: '#dc2626' }} />
+                    <span>Interests</span>
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '0.75rem' }}>
+                    {interestsOptions.map((interest) => (
+                      <label key={interest} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.75rem', borderRadius: '0.75rem', border: '1px solid #e5e7eb', transition: 'all 0.2s', backgroundColor: '#ffffff' }} onMouseEnter={e => { e.currentTarget.style.borderColor = '#d8b4fe'; e.currentTarget.style.backgroundColor = '#faf5ff'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.backgroundColor = '#ffffff'; }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.interests.includes(interest)}
+                          onChange={() => handleInterestToggle(interest)}
+                          style={{ marginRight: '0.75rem', width: '1rem', height: '1rem', accentColor: '#9333ea' }}
+                        />
+                        <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{interest}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1rem' }}>
+                    <Target style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem', color: '#16a34a' }} />
+                    <h3 style={{ fontWeight: 'bold', color: '#111827', margin: 0 }}>Preferred Categories</h3>
+                    {categoriesLoading && <Loader2 style={{ width: '1rem', height: '1rem', marginLeft: '0.5rem', animation: 'spin 1s linear infinite', color: '#2563eb' }} />}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem' }}>
+                    {categoriesLoading ? (
+                      <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                        <Loader2 style={{ width: '2rem', height: '2rem', animation: 'spin 1s linear infinite', color: '#2563eb', marginRight: '0.5rem' }} />
+                        <span style={{ color: '#6b7280' }}>Loading categories...</span>
+                      </div>
+                    ) : (
+                      volunteerCategories.map((category) => (
+                        <label key={category.id} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.75rem', borderRadius: '0.75rem', border: '1px solid #e5e7eb', transition: 'all 0.2s', backgroundColor: '#ffffff' }} onMouseEnter={e => { e.currentTarget.style.borderColor = '#86efac'; e.currentTarget.style.backgroundColor = '#f0fdf4'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = '#e5e7eb'; e.currentTarget.style.backgroundColor = '#ffffff'; }}>
+                          <input
+                            type="checkbox"
+                            checked={formData.categories_interested.includes(category.category_name)}
+                            onChange={() => handleCategoryToggle(category.category_name)}
+                            style={{ marginRight: '0.75rem', width: '1rem', height: '1rem', accentColor: '#16a34a' }}
+                          />
+                          <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>{category.category_name}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                    Experience Level
+                  </label>
+                  <select
+                    value={formData.experience_level}
+                    onChange={(e) => updateFormData('experience_level', e.target.value)}
+                    style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none', backgroundColor: '#ffffff' }}
+                    onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                    onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                  >
+                    <option value="beginner">🌱 Beginner - New to volunteering</option>
+                    <option value="some">🌿 Some Experience - 1-2 years</option>
+                    <option value="experienced">🌳 Experienced - 3+ years</option>
+                    <option value="expert">🏆 Expert - Leadership experience</option>
+                  </select>
+                </div>
+
+                <ErrorMessage error={errors.skills} />
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Availability */}
+          {currentStep === 4 && (
+            <div style={{ padding: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
+                <div style={{ backgroundColor: '#dbeafe', borderRadius: '0.5rem', padding: '0.75rem', marginRight: '1rem' }}>
+                  <Clock style={{ width: '2rem', height: '2rem', color: '#2563eb' }} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', margin: 0 }}>Availability</h2>
+                  <p style={{ color: '#6b7280', margin: 0 }}>When are you available to volunteer?</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'grid', gap: '1.5rem' }}>
+                {Object.keys(formData.availability).map((day) => (
+                  <div key={day} style={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: '1rem', padding: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                      <h3 style={{ fontWeight: 'bold', fontSize: '1.125rem', textTransform: 'capitalize', color: '#111827', margin: 0 }}>{day}</h3>
+                      <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.availability[day as keyof typeof formData.availability].available}
+                          onChange={(e) => handleAvailabilityChange(day, 'available', e.target.checked)}
+                          style={{ marginRight: '0.75rem', width: '1.25rem', height: '1.25rem', accentColor: '#2563eb' }}
+                        />
+                        <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>Available</span>
+                      </label>
+                    </div>
+                    
+                    {formData.availability[day as keyof typeof formData.availability].available && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.75rem', marginTop: '1rem' }}>
+                        {timeSlots.map((timeSlot) => (
+                          <label key={timeSlot} style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid #d1d5db', transition: 'all 0.2s', backgroundColor: '#ffffff' }} onMouseEnter={e => { e.currentTarget.style.borderColor = '#60a5fa'; e.currentTarget.style.backgroundColor = '#eff6ff'; }} onMouseLeave={e => { e.currentTarget.style.borderColor = '#d1d5db'; e.currentTarget.style.backgroundColor = '#ffffff'; }}>
+                            <input
+                              type="checkbox"
+                              checked={formData.availability[day as keyof typeof formData.availability].times.includes(timeSlot)}
+                              onChange={() => handleTimeSlotToggle(day, timeSlot)}
+                              style={{ marginRight: '0.5rem', width: '1rem', height: '1rem', accentColor: '#2563eb' }}
+                            />
+                            <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>{timeSlot}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <ErrorMessage error={errors.availability} />
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Emergency Contact & Consent */}
+          {currentStep === 5 && (
+            <div style={{ padding: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
+                <div style={{ backgroundColor: '#fee2e2', borderRadius: '0.5rem', padding: '0.75rem', marginRight: '1rem' }}>
+                  <Shield style={{ width: '2rem', height: '2rem', color: '#dc2626' }} />
+                </div>
+                <div>
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', margin: 0 }}>Emergency Contact & Consent</h2>
+                  <p style={{ color: '#6b7280', margin: 0 }}>Final step - safety and preferences</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'grid', gap: '1.5rem' }}>
+                <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', borderRadius: '1rem', padding: '1.5rem' }}>
+                  <h3 style={{ fontWeight: 'bold', color: '#991b1b', marginBottom: '1rem', display: 'flex', alignItems: 'center', margin: 0 }}>
+                    <Shield style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }} />
+                    <span>Emergency Contact Information</span>
+                  </h3>
+                  
+                  <div style={{ display: 'grid', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                        Emergency Contact Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.emergency_contact_name}
+                        onChange={(e) => updateFormData('emergency_contact_name', e.target.value)}
+                        style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
+                        placeholder="Full name of emergency contact"
+                        onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                        onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                      />
+                      <ErrorMessage error={errors.emergency_contact_name} />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                        Emergency Contact Phone *
+                      </label>
+                      <input
+                        type="tel"
+                        required
+                        value={formData.emergency_contact_phone}
+                        onChange={(e) => updateFormData('emergency_contact_phone', e.target.value)}
+                        style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
+                        placeholder="(555) 123-4567"
+                        onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                        onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                      />
+                      <ErrorMessage error={errors.emergency_contact_phone} />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                        Relationship *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.emergency_contact_relationship}
+                        onChange={(e) => updateFormData('emergency_contact_relationship', e.target.value)}
+                        style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
+                        placeholder="e.g., Spouse, Parent, Sibling, Friend"
+                        onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                        onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                      />
+                      <ErrorMessage error={errors.emergency_contact_relationship} />
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '1rem', padding: '1.5rem' }}>
+                  <h3 style={{ fontWeight: 'bold', color: '#1e40af', marginBottom: '1rem', margin: 0 }}>Consent & Preferences</h3>
+                  
+                  <div style={{ display: 'grid', gap: '1rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.background_check_consent}
+                        onChange={(e) => updateFormData('background_check_consent', e.target.checked)}
+                        style={{ marginTop: '0.25rem', marginRight: '0.75rem', width: '1.25rem', height: '1.25rem', accentColor: '#2563eb' }}
+                      />
+                      <div>
+                        <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                          📧 Send me email notifications about volunteer opportunities
+                        </span>
+                        <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem', margin: 0 }}>
+                          We'll send you relevant opportunities and important updates
+                        </p>
+                      </div>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.sms_notifications}
+                        onChange={(e) => updateFormData('sms_notifications', e.target.checked)}
+                        style={{ marginTop: '0.25rem', marginRight: '0.75rem', width: '1.25rem', height: '1.25rem', accentColor: '#2563eb' }}
+                      />
+                      <div>
+                        <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                          📱 Send me SMS notifications about urgent opportunities
+                        </span>
+                        <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem', margin: 0 }}>
+                          Get text alerts for time-sensitive volunteer needs
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                    Additional Notes
+                  </label>
+                  <textarea
+                    value={formData.notes}
+                    onChange={(e) => updateFormData('notes', e.target.value)}
+                    rows={4}
+                    style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none', resize: 'none' }}
+                    placeholder="Tell us anything else we should know about your volunteer interests, special accommodations needed, or other relevant information..."
+                    onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                    onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
+                  />
+                </div>
+
+                <ErrorMessage error={errors.submit} />
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div style={{ backgroundColor: '#f9fafb', padding: '1.5rem 2rem', borderTop: '1px solid #e5e7eb' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <button
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '0.75rem 1.5rem',
+                  border: '2px solid #d1d5db',
+                  borderRadius: '0.75rem',
+                  color: '#374151',
+                  backgroundColor: '#ffffff',
+                  fontWeight: '600',
+                  cursor: currentStep === 1 ? 'not-allowed' : 'pointer',
+                  opacity: currentStep === 1 ? 0.5 : 1,
+                  transition: 'all 0.2s',
+                  fontSize: '0.875rem'
+                }}
+                onMouseEnter={e => {
+                  if (currentStep !== 1) {
+                    e.currentTarget.style.backgroundColor = '#f9fafb';
+                    e.currentTarget.style.borderColor = '#9ca3af';
+                  }
+                }}
+                onMouseLeave={e => {
+                  if (currentStep !== 1) {
+                    e.currentTarget.style.backgroundColor = '#ffffff';
+                    e.currentTarget.style.borderColor = '#d1d5db';
+                  }
+                }}
+              >
+                <ArrowLeft style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }} />
+                <span>Previous</span>
+              </button>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                <button
+                  onClick={autoSave}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0.5rem 1rem',
+                    color: '#6b7280',
+                    backgroundColor: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'color 0.2s',
+                    fontSize: '0.875rem'
+                  }}
+                  disabled={isAutoSaving}
+                  onMouseEnter={e => e.currentTarget.style.color = '#2563eb'}
+                  onMouseLeave={e => e.currentTarget.style.color = '#6b7280'}
+                >
+                  {isAutoSaving ? (
+                    <Loader2 style={{ width: '1rem', height: '1rem', marginRight: '0.5rem', animation: 'spin 1s linear infinite' }} />
+                  ) : (
+                    <Save style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
+                  )}
+                  <span>Save Progress</span>
+                </button>
+
+                {currentStep < 5 ? (
+                  <button
+                    onClick={nextStep}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0.75rem 2rem',
+                      backgroundColor: '#2563eb',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '0.75rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      fontSize: '0.875rem',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.backgroundColor = '#1d4ed8';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                      e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.backgroundColor = '#2563eb';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                    }}
+                  >
+                    <span>Next</span>
+                    <ArrowRight style={{ width: '1.25rem', height: '1.25rem', marginLeft: '0.5rem' }} />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSubmit}
+                    disabled={isSubmitting}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '0.75rem 2rem',
+                      backgroundColor: '#16a34a',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '0.75rem',
+                      fontWeight: '600',
+                      cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                      opacity: isSubmitting ? 0.5 : 1,
+                      transition: 'all 0.2s',
+                      fontSize: '0.875rem',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                    onMouseEnter={e => {
+                      if (!isSubmitting) {
+                        e.currentTarget.style.backgroundColor = '#15803d';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                        e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!isSubmitting) {
+                        e.currentTarget.style.backgroundColor = '#16a34a';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                      }
+                    }}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem', animation: 'spin 1s linear infinite' }} />
+                        <span>Submitting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.5rem' }} />
+                        <span>Complete Registration</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Add keyframe animations */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `
+      }} />
+    </div>
+  );
+};
+
+export default VolunteerSignup;' }}
+                      />
+                      <div>
+                        <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>
+                          I consent to background checks as required by volunteer opportunities
+                        </span>
+                        <p style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem', margin: 0 }}>
+                          Some opportunities may require background checks for safety reasons
+                        </p>
+                      </div>
+                    </label>
+
+                    <label style={{ display: 'flex', alignItems: 'flex-start', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={formData.email_notifications}
+                        onChange={(e) => updateFormData('email_notifications', e.target.checked)}
+                        style={{ marginTop: '0.25rem', marginRight: '0.75rem', width: '1.25rem', height: '1.25rem', accentColor: '#2563eb// src/components/VolunteerSignup.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   User, MapPin, Heart, Clock, Shield, CheckCircle, ArrowRight, ArrowLeft, 
@@ -369,8 +993,8 @@ const VolunteerSignup = () => {
   const ErrorMessage = ({ error }: { error?: string | null }) => {
     if (!error) return null;
     return (
-      <div className="flex items-center space-x-2 text-red-600 text-sm mt-1">
-        <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+      <div style={{ display: 'flex', alignItems: 'center', marginTop: '0.25rem', color: '#dc2626', fontSize: '0.875rem' }}>
+        <AlertTriangle style={{ width: '1rem', height: '1rem', marginRight: '0.5rem', flexShrink: 0 }} />
         <span>{error}</span>
       </div>
     );
@@ -379,8 +1003,8 @@ const VolunteerSignup = () => {
   const AutoSaveIndicator = () => {
     if (isAutoSaving) {
       return (
-        <div className="flex items-center space-x-2 text-blue-600 text-sm">
-          <Loader2 className="w-4 h-4 animate-spin" />
+        <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: '#2563eb' }}>
+          <Loader2 style={{ width: '1rem', height: '1rem', marginRight: '0.5rem', animation: 'spin 1s linear infinite' }} />
           <span>Saving...</span>
         </div>
       );
@@ -388,8 +1012,8 @@ const VolunteerSignup = () => {
     
     if (lastSaved) {
       return (
-        <div className="flex items-center space-x-2 text-green-600 text-sm">
-          <Save className="w-4 h-4" />
+        <div style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', color: '#16a34a' }}>
+          <Save style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
           <span>Saved {lastSaved.toLocaleTimeString()}</span>
         </div>
       );
@@ -400,35 +1024,35 @@ const VolunteerSignup = () => {
 
   if (submitSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl border p-8 text-center">
-            <div className="mb-6">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">Welcome to our volunteer community!</h1>
-              <p className="text-gray-600 mb-8">Your registration was successful. We're excited to have you join us in making a difference.</p>
+      <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f0fdf4 100%)', padding: '2rem' }}>
+        <div style={{ maxWidth: '64rem', margin: '0 auto' }}>
+          <div style={{ backgroundColor: '#ffffff', borderRadius: '1rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid #e5e7eb', padding: '2rem', textAlign: 'center' }}>
+            <div style={{ marginBottom: '1.5rem' }}>
+              <CheckCircle style={{ width: '4rem', height: '4rem', color: '#16a34a', margin: '0 auto 1rem', display: 'block' }} />
+              <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#111827', marginBottom: '1rem' }}>Welcome to our volunteer community!</h1>
+              <p style={{ color: '#6b7280', marginBottom: '2rem' }}>Your registration was successful. We're excited to have you join us in making a difference.</p>
             </div>
             
             {nearbyJobs.length > 0 && (
-              <div className="text-left mb-8">
-                <h2 className="text-xl font-semibold mb-4">Opportunities near you:</h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem' }}>Opportunities near you:</h2>
+                <div style={{ display: 'grid', gap: '1rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
                   {nearbyJobs.slice(0, 6).map((job: any, index: number) => (
-                    <div key={index} className="bg-gray-50 rounded-lg p-4 border hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start mb-3">
+                    <div key={index} style={{ backgroundColor: '#f9fafb', borderRadius: '0.5rem', padding: '1rem', border: '1px solid #e5e7eb', transition: 'box-shadow 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)'} onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                         <div>
-                          <h3 className="font-medium text-gray-900">{job.title}</h3>
-                          <p className="text-sm text-gray-600">{job.location}</p>
-                          <p className="text-sm text-blue-600">{job.category}</p>
+                          <h3 style={{ fontWeight: '500', color: '#111827', fontSize: '0.875rem' }}>{job.title}</h3>
+                          <p style={{ fontSize: '0.75rem', color: '#6b7280' }}>{job.location}</p>
+                          <p style={{ fontSize: '0.75rem', color: '#2563eb' }}>{job.category}</p>
                         </div>
                         {job.distance && (
-                          <span className="text-sm text-gray-500 bg-green-100 px-2 py-1 rounded">
+                          <span style={{ fontSize: '0.75rem', color: '#6b7280', backgroundColor: '#dcfce7', padding: '0.25rem 0.5rem', borderRadius: '9999px' }}>
                             {job.distance} mi
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
                           {job.volunteers_needed} volunteers needed
                         </span>
                       </div>
@@ -438,16 +1062,20 @@ const VolunteerSignup = () => {
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <button
                 onClick={() => window.location.href = '/job-board'}
-                className="bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                style={{ backgroundColor: '#2563eb', color: '#ffffff', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#1d4ed8'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#2563eb'}
               >
                 Browse All Opportunities
               </button>
               <button
                 onClick={() => window.location.href = '/'}
-                className="bg-gray-200 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                style={{ backgroundColor: '#e5e7eb', color: '#374151', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#d1d5db'}
+                onMouseLeave={e => e.currentTarget.style.backgroundColor = '#e5e7eb'}
               >
                 Return Home
               </button>
@@ -459,20 +1087,20 @@ const VolunteerSignup = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 50%, #f3e8ff 100%)' }}>
       {/* Header */}
-      <div className="bg-white shadow-lg border-b">
-        <div className="max-w-4xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
+      <div style={{ backgroundColor: '#ffffff', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)', borderBottom: '1px solid #e5e7eb' }}>
+        <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <h1 className="text-3xl font-bold text-blue-600">
+              <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', color: '#2563eb', margin: 0 }}>
                 Volunteer Registration
               </h1>
-              <p className="text-gray-600 mt-1">Join our community of changemakers</p>
+              <p style={{ color: '#6b7280', marginTop: '0.25rem', margin: 0 }}>Join our community of changemakers</p>
             </div>
-            <div className="hidden md:flex items-center space-x-4">
-              <div className="bg-blue-100 rounded-lg p-3">
-                <Award className="w-6 h-6 text-blue-600" />
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <div style={{ backgroundColor: '#dbeafe', borderRadius: '0.5rem', padding: '0.75rem', display: 'none' }}>
+                <Award style={{ width: '1.5rem', height: '1.5rem', color: '#2563eb' }} />
               </div>
             </div>
           </div>
@@ -480,60 +1108,78 @@ const VolunteerSignup = () => {
       </div>
 
       {/* Progress Bar */}
-      <div className="bg-white border-b">
-        <div className="max-w-4xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-700">Step {currentStep} of 5</span>
+      <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e5e7eb' }}>
+        <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '1rem 1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.875rem', fontWeight: '500', color: '#374151' }}>Step {currentStep} of 5</span>
             <AutoSaveIndicator />
           </div>
-          <div className="flex items-center space-x-2">
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             {[1, 2, 3, 4, 5].map((step) => (
-              <div key={step} className="flex items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
-                  step < currentStep ? 'bg-green-500 text-white' :
-                  step === currentStep ? 'bg-blue-500 text-white' :
-                  'bg-gray-200 text-gray-600'
-                }`}>
-                  {step < currentStep ? <CheckCircle className="w-5 h-5" /> : step}
+              <React.Fragment key={step}>
+                <div style={{
+                  width: '2.5rem',
+                  height: '2.5rem',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  transition: 'all 0.3s',
+                  backgroundColor: step < currentStep ? '#16a34a' : step === currentStep ? '#2563eb' : '#e5e7eb',
+                  color: step < currentStep || step === currentStep ? '#ffffff' : '#6b7280'
+                }}>
+                  {step < currentStep ? <CheckCircle style={{ width: '1.25rem', height: '1.25rem' }} /> : step}
                 </div>
                 {step < 5 && (
-                  <div className={`w-16 h-2 mx-2 rounded-full transition-all duration-500 ${
-                    step < currentStep ? 'bg-green-500' : 'bg-gray-200'
-                  }`} />
+                  <div style={{
+                    width: '4rem',
+                    height: '0.5rem',
+                    margin: '0 0.5rem',
+                    borderRadius: '9999px',
+                    transition: 'all 0.5s',
+                    backgroundColor: step < currentStep ? '#16a34a' : '#e5e7eb'
+                  }} />
                 )}
-              </div>
+              </React.Fragment>
             ))}
           </div>
-          <div className="mt-2 bg-gray-200 rounded-full h-2">
+          <div style={{ marginTop: '0.5rem', backgroundColor: '#e5e7eb', borderRadius: '9999px', height: '0.5rem' }}>
             <div 
-              className="bg-blue-500 h-2 rounded-full transition-all duration-500 ease-out"
-              style={{ width: `${(currentStep / 5) * 100}%` }}
+              style={{
+                backgroundColor: '#2563eb',
+                height: '0.5rem',
+                borderRadius: '9999px',
+                transition: 'all 0.5s ease-out',
+                width: `${(currentStep / 5) * 100}%`
+              }}
             />
           </div>
         </div>
       </div>
 
       {/* Form Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-2xl shadow-xl border overflow-hidden">
+      <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '2rem 1.5rem' }}>
+        <div style={{ backgroundColor: '#ffffff', borderRadius: '1rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid #e5e7eb', overflow: 'hidden' }}>
           
           {/* Step 1: Personal Information */}
           {currentStep === 1 && (
-            <div className="p-8">
-              <div className="flex items-center mb-8">
-                <div className="bg-blue-100 rounded-lg p-3 mr-4">
-                  <User className="w-8 h-8 text-blue-600" />
+            <div style={{ padding: '2rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '2rem' }}>
+                <div style={{ backgroundColor: '#dbeafe', borderRadius: '0.5rem', padding: '0.75rem', marginRight: '1rem' }}>
+                  <User style={{ width: '2rem', height: '2rem', color: '#2563eb' }} />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Personal Information</h2>
-                  <p className="text-gray-600">Tell us about yourself</p>
+                  <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827', margin: 0 }}>Personal Information</h2>
+                  <p style={{ color: '#6b7280', margin: 0 }}>Tell us about yourself</p>
                 </div>
               </div>
               
-              <div className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
+              <div style={{ display: 'grid', gap: '1.5rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem' }}>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
                       First Name *
                     </label>
                     <input
@@ -541,13 +1187,15 @@ const VolunteerSignup = () => {
                       required
                       value={formData.first_name}
                       onChange={(e) => updateFormData('first_name', e.target.value)}
-                      className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
                       placeholder="Enter your first name"
+                      onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                      onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
                     />
                     <ErrorMessage error={errors.first_name} />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
                       Last Name *
                     </label>
                     <input
@@ -555,16 +1203,18 @@ const VolunteerSignup = () => {
                       required
                       value={formData.last_name}
                       onChange={(e) => updateFormData('last_name', e.target.value)}
-                      className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
                       placeholder="Enter your last name"
+                      onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                      onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
                     />
                     <ErrorMessage error={errors.last_name} />
                   </div>
                 </div>
 
                 <div>
-                  <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-2">
-                    <Mail className="w-4 h-4" />
+                  <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                    <Mail style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
                     <span>Email Address *</span>
                   </label>
                   <input
@@ -572,15 +1222,17 @@ const VolunteerSignup = () => {
                     required
                     value={formData.email}
                     onChange={(e) => updateFormData('email', e.target.value)}
-                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    style={{ width: '100%', padding: '1rem', border: '1px solid #d1d5db', borderRadius: '0.75rem', fontSize: '0.875rem', transition: 'all 0.2s', outline: 'none' }}
                     placeholder="your.email@example.com"
+                    onFocus={e => { e.target.style.borderColor = '#2563eb'; e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)'; }}
+                    onBlur={e => { e.target.style.borderColor = '#d1d5db'; e.target.style.boxShadow = 'none'; }}
                   />
                   <ErrorMessage error={errors.email} />
                 </div>
 
                 <div>
-                  <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-2">
-                    <Phone className="w-4 h-4" />
+                  <label style={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem', fontWeight: '600', color: '#374151', marginBottom: '0.5rem' }}>
+                    <Phone style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
                     <span>Phone Number *</span>
                   </label>
                   <input
@@ -588,505 +1240,4 @@ const VolunteerSignup = () => {
                     required
                     value={formData.phone}
                     onChange={(e) => updateFormData('phone', e.target.value)}
-                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="(555) 123-4567"
-                  />
-                  <ErrorMessage error={errors.phone} />
-                </div>
-
-                <div>
-                  <label className="flex items-center space-x-2 text-sm font-semibold text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>Date of Birth</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.birth_date}
-                    onChange={(e) => updateFormData('birth_date', e.target.value)}
-                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Location */}
-          {currentStep === 2 && (
-            <div className="p-8">
-              <div className="flex items-center mb-8">
-                <div className="bg-green-100 rounded-lg p-3 mr-4">
-                  <MapPin className="w-8 h-8 text-green-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Location & Transportation</h2>
-                  <p className="text-gray-600">Help us find opportunities near you</p>
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Street Address *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.address}
-                    onChange={(e) => updateFormData('address', e.target.value)}
-                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                    placeholder="123 Main Street"
-                  />
-                  <ErrorMessage error={errors.address} />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    ZIP Code *
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      required
-                      value={formData.zipcode}
-                      onChange={(e) => updateFormData('zipcode', e.target.value)}
-                      className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      placeholder="12345"
-                      maxLength={10}
-                    />
-                    {zipLoading && (
-                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                        <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                      </div>
-                    )}
-                  </div>
-                  <ErrorMessage error={errors.zipcode || zipError} />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      City *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.city}
-                      onChange={(e) => updateFormData('city', e.target.value)}
-                      className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      placeholder="City name"
-                    />
-                    <ErrorMessage error={errors.city} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      State *
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.state}
-                      onChange={(e) => updateFormData('state', e.target.value)}
-                      className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      placeholder="State"
-                      maxLength={2}
-                    />
-                    <ErrorMessage error={errors.state} />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Maximum Travel Distance
-                  </label>
-                  <select
-                    value={formData.max_distance}
-                    onChange={(e) => updateFormData('max_distance', parseInt(e.target.value))}
-                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  >
-                    <option value={5}>Within 5 miles</option>
-                    <option value={10}>Within 10 miles</option>
-                    <option value={25}>Within 25 miles</option>
-                    <option value={50}>Within 50 miles</option>
-                    <option value={100}>Within 100 miles</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Transportation
-                  </label>
-                  <select
-                    value={formData.transportation}
-                    onChange={(e) => updateFormData('transportation', e.target.value)}
-                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  >
-                    <option value="own">Own Vehicle</option>
-                    <option value="public">Public Transportation</option>
-                    <option value="carpool">Willing to Carpool</option>
-                    <option value="limited">Limited Transportation</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Skills & Interests */}
-          {currentStep === 3 && (
-            <div className="p-8">
-              <div className="flex items-center mb-8">
-                <div className="bg-purple-100 rounded-lg p-3 mr-4">
-                  <Heart className="w-8 h-8 text-purple-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Skills & Interests</h2>
-                  <p className="text-gray-600">Help us match you with the right opportunities</p>
-                </div>
-              </div>
-              
-              <div className="space-y-8">
-                <div>
-                  <h3 className="font-bold text-gray-900 mb-4 flex items-center space-x-2">
-                    <Award className="w-5 h-5 text-blue-600" />
-                    <span>Skills</span>
-                  </h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {skillsOptions.map((skill) => (
-                      <label key={skill} className="flex items-center space-x-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-200">
-                        <input
-                          type="checkbox"
-                          checked={formData.skills.includes(skill)}
-                          onChange={() => handleSkillToggle(skill)}
-                          className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
-                        />
-                        <span className="text-sm font-medium">{skill}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-gray-900 mb-4 flex items-center space-x-2">
-                    <Heart className="w-5 h-5 text-red-600" />
-                    <span>Interests</span>
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {interestsOptions.map((interest) => (
-                      <label key={interest} className="flex items-center space-x-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-200">
-                        <input
-                          type="checkbox"
-                          checked={formData.interests.includes(interest)}
-                          onChange={() => handleInterestToggle(interest)}
-                          className="rounded text-purple-600 focus:ring-purple-500 w-4 h-4"
-                        />
-                        <span className="text-sm font-medium">{interest}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center space-x-2 mb-4">
-                    <Target className="w-5 h-5 text-green-600" />
-                    <h3 className="font-bold text-gray-900">Preferred Categories</h3>
-                    {categoriesLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {categoriesLoading ? (
-                      <div className="col-span-full flex items-center justify-center py-8">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                        <span className="ml-2 text-gray-600">Loading categories...</span>
-                      </div>
-                    ) : (
-                      volunteerCategories.map((category) => (
-                        <label key={category.id} className="flex items-center space-x-3 cursor-pointer p-3 rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-200">
-                          <input
-                            type="checkbox"
-                            checked={formData.categories_interested.includes(category.category_name)}
-                            onChange={() => handleCategoryToggle(category.category_name)}
-                            className="rounded text-green-600 focus:ring-green-500 w-4 h-4"
-                          />
-                          <span className="text-sm font-medium">{category.category_name}</span>
-                        </label>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Experience Level
-                  </label>
-                  <select
-                    value={formData.experience_level}
-                    onChange={(e) => updateFormData('experience_level', e.target.value)}
-                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                  >
-                    <option value="beginner">🌱 Beginner - New to volunteering</option>
-                    <option value="some">🌿 Some Experience - 1-2 years</option>
-                    <option value="experienced">🌳 Experienced - 3+ years</option>
-                    <option value="expert">🏆 Expert - Leadership experience</option>
-                  </select>
-                </div>
-
-                <ErrorMessage error={errors.skills} />
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Availability */}
-          {currentStep === 4 && (
-            <div className="p-8">
-              <div className="flex items-center mb-8">
-                <div className="bg-blue-100 rounded-lg p-3 mr-4">
-                  <Clock className="w-8 h-8 text-blue-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Availability</h2>
-                  <p className="text-gray-600">When are you available to volunteer?</p>
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                {Object.keys(formData.availability).map((day) => (
-                  <div key={day} className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-lg capitalize text-gray-900">{day}</h3>
-                      <label className="flex items-center space-x-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={formData.availability[day as keyof typeof formData.availability].available}
-                          onChange={(e) => handleAvailabilityChange(day, 'available', e.target.checked)}
-                          className="rounded text-blue-600 focus:ring-blue-500 w-5 h-5"
-                        />
-                        <span className="text-sm font-medium">Available</span>
-                      </label>
-                    </div>
-                    
-                    {formData.availability[day as keyof typeof formData.availability].available && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
-                        {timeSlots.map((timeSlot) => (
-                          <label key={timeSlot} className="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200">
-                            <input
-                              type="checkbox"
-                              checked={formData.availability[day as keyof typeof formData.availability].times.includes(timeSlot)}
-                              onChange={() => handleTimeSlotToggle(day, timeSlot)}
-                              className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4"
-                            />
-                            <span className="text-xs font-medium">{timeSlot}</span>
-                          </label>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <ErrorMessage error={errors.availability} />
-              </div>
-            </div>
-          )}
-
-          {/* Step 5: Emergency Contact & Consent */}
-          {currentStep === 5 && (
-            <div className="p-8">
-              <div className="flex items-center mb-8">
-                <div className="bg-red-100 rounded-lg p-3 mr-4">
-                  <Shield className="w-8 h-8 text-red-600" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Emergency Contact & Consent</h2>
-                  <p className="text-gray-600">Final step - safety and preferences</p>
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
-                  <h3 className="font-bold text-red-900 mb-4 flex items-center space-x-2">
-                    <Shield className="w-5 h-5" />
-                    <span>Emergency Contact Information</span>
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Emergency Contact Name *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.emergency_contact_name}
-                        onChange={(e) => updateFormData('emergency_contact_name', e.target.value)}
-                        className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                        placeholder="Full name of emergency contact"
-                      />
-                      <ErrorMessage error={errors.emergency_contact_name} />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Emergency Contact Phone *
-                      </label>
-                      <input
-                        type="tel"
-                        required
-                        value={formData.emergency_contact_phone}
-                        onChange={(e) => updateFormData('emergency_contact_phone', e.target.value)}
-                        className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                        placeholder="(555) 123-4567"
-                      />
-                      <ErrorMessage error={errors.emergency_contact_phone} />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Relationship *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={formData.emergency_contact_relationship}
-                        onChange={(e) => updateFormData('emergency_contact_relationship', e.target.value)}
-                        className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                        placeholder="e.g., Spouse, Parent, Sibling, Friend"
-                      />
-                      <ErrorMessage error={errors.emergency_contact_relationship} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
-                  <h3 className="font-bold text-blue-900 mb-4">Consent & Preferences</h3>
-                  
-                  <div className="space-y-4">
-                    <label className="flex items-start space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.background_check_consent}
-                        onChange={(e) => updateFormData('background_check_consent', e.target.checked)}
-                        className="mt-1 rounded text-blue-600 focus:ring-blue-500 w-5 h-5"
-                      />
-                      <div>
-                        <span className="text-sm font-medium">
-                          I consent to background checks as required by volunteer opportunities
-                        </span>
-                        <p className="text-xs text-gray-600 mt-1">
-                          Some opportunities may require background checks for safety reasons
-                        </p>
-                      </div>
-                    </label>
-
-                    <label className="flex items-start space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.email_notifications}
-                        onChange={(e) => updateFormData('email_notifications', e.target.checked)}
-                        className="mt-1 rounded text-blue-600 focus:ring-blue-500 w-5 h-5"
-                      />
-                      <div>
-                        <span className="text-sm font-medium">
-                          📧 Send me email notifications about volunteer opportunities
-                        </span>
-                        <p className="text-xs text-gray-600 mt-1">
-                          We'll send you relevant opportunities and important updates
-                        </p>
-                      </div>
-                    </label>
-
-                    <label className="flex items-start space-x-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={formData.sms_notifications}
-                        onChange={(e) => updateFormData('sms_notifications', e.target.checked)}
-                        className="mt-1 rounded text-blue-600 focus:ring-blue-500 w-5 h-5"
-                      />
-                      <div>
-                        <span className="text-sm font-medium">
-                          📱 Send me SMS notifications about urgent opportunities
-                        </span>
-                        <p className="text-xs text-gray-600 mt-1">
-                          Get text alerts for time-sensitive volunteer needs
-                        </p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Additional Notes
-                  </label>
-                  <textarea
-                    value={formData.notes}
-                    onChange={(e) => updateFormData('notes', e.target.value)}
-                    rows={4}
-                    className="w-full p-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
-                    placeholder="Tell us anything else we should know about your volunteer interests, special accommodations needed, or other relevant information..."
-                  />
-                </div>
-
-                <ErrorMessage error={errors.submit} />
-              </div>
-            </div>
-          )}
-
-          {/* Navigation Buttons */}
-          <div className="bg-gray-50 px-8 py-6 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-              <button
-                onClick={prevStep}
-                disabled={currentStep === 1}
-                className="flex items-center space-x-2 px-6 py-3 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-semibold"
-              >
-                <ArrowLeft className="w-5 h-5" />
-                <span>Previous</span>
-              </button>
-
-              <div className="flex items-center space-x-4">
-                <button
-                  onClick={autoSave}
-                  className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-blue-600 transition-colors"
-                  disabled={isAutoSaving}
-                >
-                  {isAutoSaving ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4" />
-                  )}
-                  <span className="text-sm">Save Progress</span>
-                </button>
-
-                {currentStep < 5 ? (
-                  <button
-                    onClick={nextStep}
-                    className="flex items-center space-x-2 px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-semibold shadow-lg"
-                  >
-                    <span>Next</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleSubmit}
-                    disabled={isSubmitting}
-                    className="flex items-center space-x-2 px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:opacity-50 transition-all duration-200 font-semibold shadow-lg"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                        <span>Submitting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="w-5 h-5" />
-                        <span>Complete Registration</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default VolunteerSignup;
+                    style={{ width: '100%', padding: '1rem', border: '
