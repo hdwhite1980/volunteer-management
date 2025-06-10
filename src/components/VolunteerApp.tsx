@@ -788,14 +788,14 @@ const VolunteerApp = () => {
               <Search className="w-5 h-5 inline mr-3" />
               View Database
             </button>
-            <Link
-              href="/post-job"
+            <button
+              onClick={() => window.location.href = '/post-job'}
               className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <Plus className="w-5 h-5 inline mr-3" />
               Post Opportunity
-            </Link>
-</div>
+            </button>
+    </div>
 
           {/* Powered by AHTS */}
           <div className="fixed bottom-6 right-6">
