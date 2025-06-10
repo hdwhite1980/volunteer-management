@@ -185,17 +185,6 @@ const PostJob = () => {
         s => !skillGroups[group].includes(s)
       );
       return { ...prev, skills_needed: [...remaining, ...selected] };
-      <>
-        <div className="bg-white shadow-sm border-b">
-          <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-            <h1 className="text-xl font-bold">Post Volunteer Opportunity</h1>
-            <div className="flex space-x-4">
-              <Link href="/job-board" className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700">Browse Opportunities</Link>
-              <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">← Back to Main</Link>
-            </div>
-          </div>
-        </div>
-        {/* existing content */}
     });
   };
 
@@ -848,7 +837,6 @@ const PostJob = () => {
         </div>
       </div>
     </div>
-      </>
   );
 };
 

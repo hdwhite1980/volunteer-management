@@ -93,7 +93,6 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
 
   if (loading) {
     return (
-    <>
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold">Volunteer Opportunities</h1>
@@ -103,7 +102,6 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
           </div>
         </div>
       </div>
-      {/* existing content */}
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
@@ -550,7 +548,6 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
         )}
       </div>
     </div>
-    </>
   );
 };
 
