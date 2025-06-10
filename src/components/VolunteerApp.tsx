@@ -168,7 +168,66 @@
     );
   };
 
-  // Activity Form with improved UI
+  // Loading screen
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-lg rounded-2xl mb-6">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          </div>
+          <p className="text-white text-lg">Loading...</p>
+        </div>
+      </div>
+    );
+  };
+
+  // UPDATED Render current view with authentication checks - includes job board cases
+  const renderCurrentView = () => {
+    console.log('Current view:', currentView, 'Authenticated:', isAuthenticated);
+    
+    switch (currentView) {
+      case 'partnership':
+        return <PartnershipForm />;
+      case 'activity':
+        return <ActivityForm />;
+      case 'dashboard':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        return <Dashboard />;
+      case 'users':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        if (currentUser?.role !== 'admin') {
+          alert('Access denied. Admin privileges required.');
+          setCurrentView('dashboard');
+          return <Dashboard />;
+        }
+        return <UserManagement />;
+      case 'upload':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        return <UploadComponent />;
+      // NEW CASES FOR JOB BOARD:
+      case 'post-job':
+        // No auth required for posting jobs
+        return <PostJobPage />;
+      case 'job-board':
+        return <JobBoardPage />;
+      case 'login':
+        return <LoginPage />;
+      default:
+        return <LandingPage />;
+    }
+  };
+
+  return renderCurrentView();
+};
+
+export default VolunteerApp;  // Activity Form with improved UI
   const ActivityForm = () => {
     const [formData, setFormData] = useState({
       volunteer_name: '',
@@ -859,68 +918,658 @@
         </div>
       </div>
     );
-  };
+  };  // Partnership Form with improved UI
+  const PartnershipForm = () => {
+    const [formData, setFormData] = useState({
+      first_name: '',
+      last_name: '',
+      organization: '',
+      email: '',
+      phone: '',
+      families_served: '',
+      prepared_by_first: '',
+      prepared_by_last: '',
+      position_title: ''
+    });
+    const [eventRows, setEventRows] = useState([
+      { date: '', site: '', zip: '', hours: '', volunteers: '' }
+    ]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Loading screen
-  if (isLoading) {
+    const addEventRow = () => {
+      if (eventRows.length < 11) {
+        setEventRows([...eventRows, { date: '', site: '', zip: '', hours: '', volunteers: '' }]);
+      }
+    };
+
+    const removeEventRow = (index: number) => {
+      if (eventRows.length > 1) {
+        const newRows = eventRows.filter((_, i) => i !== index);
+        setEventRows(newRows);
+      }
+    };
+
+    const updateEventRow = (index: number, field: keyof typeof eventRows[0], value: string) => {
+      const newRows = [...eventRows];
+      newRows[index][field] = value;  
+      setEventRows(newRows);
+    };
+
+    const generatePDF = () => {
+      const currentFormData = {
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        organization: formData.organization,
+        email: formData.email,
+        phone: formData.phone,
+        families_served: formData.families_served,
+        prepared_by_first: formData.prepared_by_first,
+        prepared_by_last: formData.prepared_by_last,
+        position_title: formData.position_title,
+        events: eventRows.filter(row => row.date || row.site)
+      };
+      
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Agency Partnership Volunteer Log</title>
+              <style>
+                @page { margin: 0.5in; }
+                body { 
+                  font-family: Arial, sans-serif; 
+                  margin: 0; 
+                  padding: 20px;
+                  font-size: 12px;
+                  line-height: 1.4;
+                  background: white;
+                }
+                
+                .header {
+                  text-align: center;
+                  margin-bottom: 30px;
+                  border-bottom: 2px solid #000;
+                  padding-bottom: 15px;
+                }
+                
+                .header h1 {
+                  font-size: 18px;
+                  font-weight: bold;
+                  margin: 0 0 5px 0;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                }
+                
+                .header h2 {
+                  font-size: 16px;
+                  font-weight: bold;
+                  margin: 5px 0;
+                  text-transform: uppercase;
+                }
+                
+                .date-section {
+                  text-align: right;
+                  margin-bottom: 20px;
+                  font-weight: bold;
+                }
+                
+                .form-section {
+                  margin-bottom: 20px;
+                }
+                
+                .field-row {
+                  display: flex;
+                  margin-bottom: 8px;
+                  align-items: center;
+                }
+                
+                .field-label {
+                  font-weight: bold;
+                  min-width: 120px;
+                  margin-right: 10px;
+                }
+                
+                .field-line {
+                  flex: 1;
+                  border-bottom: 1px solid #000;
+                  height: 20px;
+                  padding-left: 5px;
+                  padding-bottom: 2px;
+                }
+                
+                .volunteer-table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-top: 20px;
+                  border: 2px solid #000;
+                }
+                
+                .volunteer-table th {
+                  border: 1px solid #000;
+                  padding: 8px 4px;
+                  text-align: center;
+                  font-weight: bold;
+                  background-color: #f0f0f0;
+                  font-size: 10px;
+                  vertical-align: middle;
+                }
+                
+                .volunteer-table td {
+                  border: 1px solid #000;
+                  padding: 8px 4px;
+                  text-align: center;
+                  height: 25px;
+                  vertical-align: middle;
+                }
+                
+                .table-title {
+                  text-align: center;
+                  font-weight: bold;
+                  font-size: 14px;
+                  margin: 20px 0 10px 0;
+                  text-transform: uppercase;
+                }
+                
+                .total-row {
+                  background-color: #f0f0f0;
+                  font-weight: bold;
+                }
+                
+                .signature-section {
+                  margin-top: 30px;
+                  display: flex;
+                  justify-content: space-between;
+                }
+                
+                .signature-box {
+                  width: 30%;
+                  text-align: center;
+                }
+                
+                .signature-line {
+                  border-bottom: 1px solid #000;
+                  height: 30px;
+                  margin-bottom: 5px;
+                }
+                
+                .powered-by {
+                  position: fixed;
+                  bottom: 10px;
+                  right: 10px;
+                  font-size: 8px;
+                  color: #999;
+                }
+                
+                @media print {
+                  .powered-by { position: absolute; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <h1>Virtu Community Enhancement Group</h1>
+                <h2>Agency Partnership Volunteer Log</h2>
+              </div>
+              
+              <div class="date-section">
+                Date: ${new Date().toLocaleDateString('en-US', { 
+                  month: '2-digit', 
+                  day: '2-digit', 
+                  year: 'numeric' 
+                }).replace(/\//g, '/')}
+              </div>
+              
+              <div class="form-section">
+                <div class="field-row">
+                  <span class="field-label">Name:</span>
+                  <div class="field-line">${currentFormData.first_name} ${currentFormData.last_name}</div>
+                </div>
+                <div class="field-row">
+                  <span class="field-label">Organization:</span>
+                  <div class="field-line">${currentFormData.organization}</div>
+                </div>
+                <div class="field-row">
+                  <span class="field-label">Email:</span>
+                  <div class="field-line">${currentFormData.email}</div>
+                </div>
+                <div class="field-row">
+                  <span class="field-label">Phone:</span>
+                  <div class="field-line">${currentFormData.phone}</div>
+                </div>
+              </div>
+              
+              <div class="table-title">Agency Partnership Volunteer Log</div>
+              
+              <table class="volunteer-table">
+                <thead>
+                  <tr>
+                    <th>Event Date</th>
+                    <th>Event Site Zip</th>
+                    <th>Total Number of<br>Hours Worked</th>
+                    <th>Total Number of<br>Volunteers</th>
+                    <th>Total Volunteer<br>Hours</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${Array.from({length: 10}, (_, i) => {
+                    const event = currentFormData.events[i];
+                    const totalHours = event ? (parseInt(event.hours || '0') * parseInt(event.volunteers || '1')) : '';
+                    return `
+                      <tr>
+                        <td>${event ? new Date(event.date).toLocaleDateString() : ''}</td>
+                        <td>${event ? event.zip : ''}</td>
+                        <td>${event ? event.hours : ''}</td>
+                        <td>${event ? event.volunteers : ''}</td>
+                        <td>${totalHours}</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                  <tr class="total-row">
+                    <td colspan="4" style="text-align: center; font-weight: bold;">TOTAL VOLUNTEER HOURS</td>
+                    <td style="font-weight: bold;">
+                      ${currentFormData.events.reduce((total, event) => {
+                        if (event.hours && event.volunteers) {
+                          return total + (parseInt(event.hours) * parseInt(event.volunteers));
+                        }
+                        return total;
+                      }, 0)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              
+              <div class="signature-section">
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div><strong>Prepared by:</strong><br>${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
+                </div>
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div><strong>Position/Title:</strong><br>${currentFormData.position_title}</div>
+                </div>
+                <div class="signature-box">
+                  <div class="signature-line"></div>
+                  <div><strong>Date/Time:</strong><br>${new Date().toLocaleDateString()}</div>
+                </div>
+              </div>
+              
+              <div class="powered-by">Powered by AHTS</div>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+      }
+    };
+
+    const calculateTotalHours = () => {
+      return eventRows.reduce((total, row) => {
+        if (row.hours && row.volunteers) {
+          return total + (parseInt(row.hours) * parseInt(row.volunteers));
+        }
+        return total;
+      }, 0);
+    };
+
+    const handleSubmit = async () => {
+      setIsSubmitting(true);
+      try {
+        if (!formData.first_name || !formData.last_name || !formData.email || !formData.organization || !formData.phone || !formData.prepared_by_first || !formData.prepared_by_last || !formData.position_title) {
+          alert('Please fill in all required fields (marked with *)');
+          return;
+        }
+
+        if (!formData.families_served || isNaN(parseInt(formData.families_served))) {
+          alert('Please enter a valid number for families served');
+          return;
+        }
+
+        const validEvents = eventRows.filter(row => row.date && row.site);
+        
+        if (validEvents.length === 0) {
+          alert('Please add at least one event with a date and site location');
+          return;
+        }
+
+        const submitData = {
+          first_name: formData.first_name.trim(),
+          last_name: formData.last_name.trim(),
+          organization: formData.organization.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone.trim(),
+          families_served: parseInt(formData.families_served),
+          prepared_by_first: formData.prepared_by_first.trim(),
+          prepared_by_last: formData.prepared_by_last.trim(),
+          position_title: formData.position_title.trim(),
+          events: validEvents
+        };
+
+        const response = await fetch('/api/partnership-logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(submitData),
+        });
+
+        if (response.ok) {
+          alert('Partnership log submitted successfully!');
+          setCurrentView('landing');
+        } else {
+          const result = await response.json();
+          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Submission error:', error);
+        alert('Error submitting form. Please check your internet connection and try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 backdrop-blur-lg rounded-2xl mb-6">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl">
+                  <Building2 className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-800">Partnership Volunteer Log</h1>
+                  <p className="text-sm text-gray-600">Record agency partnership activities</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCurrentView('landing')}
+                className="text-blue-600 hover:text-blue-800 font-medium"
+              >
+                ← Back to Home
+              </button>
+            </div>
           </div>
-          <p className="text-white text-lg">Loading...</p>
+        </div>
+
+        <div className="container mx-auto px-6 py-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+              <div className="p-8">
+                <div className="space-y-8">
+                  {/* Personal Information Section */}
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                      <User className="w-5 h-5 mr-2 text-blue-600" />
+                      Personal Information
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          First Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.first_name}
+                          onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter first name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Last Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.last_name}
+                          onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter last name"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Organization *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.organization}
+                          onChange={(e) => setFormData({...formData, organization: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter organization name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="your.email@example.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Phone Number *
+                        </label>
+                        <input
+                          type="tel"
+                          required
+                          value={formData.phone}
+                          onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="(555) 123-4567"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Total Families Served *
+                        </label>
+                        <input
+                          type="number"
+                          required
+                          min="0"
+                          value={formData.families_served}
+                          onChange={(e) => setFormData({...formData, families_served: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Prepared By - First Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.prepared_by_first}
+                          onChange={(e) => setFormData({...formData, prepared_by_first: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter first name"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Prepared By - Last Name *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.prepared_by_last}
+                          onChange={(e) => setFormData({...formData, prepared_by_last: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter last name"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Position/Title *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.position_title}
+                          onChange={(e) => setFormData({...formData, position_title: e.target.value})}
+                          className="w-full p-4 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50/50 transition-all duration-200"
+                          placeholder="Enter your position or title"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Volunteer Hours Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                        <Clock className="w-5 h-5 mr-2 text-blue-600" />
+                        Volunteer Hours & Events
+                      </h3>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-600">Total Volunteer Hours</p>
+                        <p className="text-2xl font-bold text-blue-600">{calculateTotalHours()}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-xl p-6">
+                      <div className="space-y-4">
+                        {eventRows.map((row, index) => (
+                          <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="font-medium text-gray-900">Event #{index + 1}</h4>
+                              {eventRows.length > 1 && (
+                                <button
+                                  onClick={() => removeEventRow(index)}
+                                  className="text-red-500 hover:text-red-700 p-1"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                            <div className="grid md:grid-cols-5 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Event Date
+                                </label>
+                                <input
+                                  type="date"
+                                  value={row.date}
+                                  onChange={(e) => updateEventRow(index, 'date', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Event Site
+                                </label>
+                                <input
+                                  type="text"
+                                  value={row.site}
+                                  onChange={(e) => updateEventRow(index, 'site', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                  placeholder="Location"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Zip Code
+                                </label>
+                                <input
+                                  type="text"
+                                  value={row.zip}
+                                  onChange={(e) => updateEventRow(index, 'zip', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                  placeholder="12345"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  Hours Worked
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.5"
+                                  min="0"
+                                  value={row.hours}
+                                  onChange={(e) => updateEventRow(index, 'hours', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                  # Volunteers
+                                </label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={row.volunteers}
+                                  onChange={(e) => updateEventRow(index, 'volunteers', e.target.value)}
+                                  className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                  placeholder="1"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      
+                      {eventRows.length < 11 && (
+                        <button
+                          type="button"
+                          onClick={addEventRow}
+                          className="mt-4 flex items-center space-x-2 text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                        >
+                          <Plus className="w-4 h-4" />
+                          <span>Add Another Event</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Submit Section */}
+                  <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
+                    <button
+                      type="button"
+                      onClick={generatePDF}
+                      className="flex-1 bg-gray-600 text-white py-4 px-6 rounded-xl font-semibold hover:bg-gray-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
+                    >
+                      <Download className="w-5 h-5" />
+                      <span>Preview PDF</span>
+                    </button>
+                    <button
+                      onClick={handleSubmit}
+                      disabled={isSubmitting}
+                      className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                          <span>Submitting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="w-5 h-5" />
+                          <span>Submit Partnership Log</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
-  };
-
-  // UPDATED Render current view with authentication checks - includes job board cases
-  const renderCurrentView = () => {
-    console.log('Current view:', currentView, 'Authenticated:', isAuthenticated);
-    
-    switch (currentView) {
-      case 'partnership':
-        return <PartnershipForm />;
-      case 'activity':
-        return <ActivityForm />;
-      case 'dashboard':
-        if (!isAuthenticated) {
-          return <LoginPage />;
-        }
-        return <Dashboard />;
-      case 'users':
-        if (!isAuthenticated) {
-          return <LoginPage />;
-        }
-        if (currentUser?.role !== 'admin') {
-          alert('Access denied. Admin privileges required.');
-          setCurrentView('dashboard');
-          return <Dashboard />;
-        }
-        return <UserManagement />;
-      case 'upload':
-        if (!isAuthenticated) {
-          return <LoginPage />;
-        }
-        return <UploadComponent />;
-      // ADD THESE NEW CASES:
-      case 'post-job':
-        // No auth required for posting jobs
-        return <PostJobPage />;
-      case 'job-board':
-        return <JobBoardPage />;
-      case 'login':
-        return <LoginPage />;
-      default:
-        return <LandingPage />;
-    }
-  };
-
-  return renderCurrentView();
-};
-
-export default VolunteerApp;'use client';
+  };'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Upload, Download, Search, Clock, Users, Building2, User, Lock, Plus, Edit, Trash2, LogOut, CheckCircle, AlertCircle } from 'lucide-react';
@@ -1620,7 +2269,7 @@ const VolunteerApp = () => {
   const LandingPage = () => (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc=')] opacity-20"></div>
       
       <div className="relative z-10">
         <div className="container mx-auto px-6 py-16">
@@ -2061,202 +2710,3 @@ const VolunteerApp = () => {
       </div>
     );
   };
-
-  // Partnership Form with improved UI
-  const PartnershipForm = () => {
-    const [formData, setFormData] = useState({
-      first_name: '',
-      last_name: '',
-      organization: '',
-      email: '',
-      phone: '',
-      families_served: '',
-      prepared_by_first: '',
-      prepared_by_last: '',
-      position_title: ''
-    });
-    const [eventRows, setEventRows] = useState([
-      { date: '', site: '', zip: '', hours: '', volunteers: '' }
-    ]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const addEventRow = () => {
-      if (eventRows.length < 11) {
-        setEventRows([...eventRows, { date: '', site: '', zip: '', hours: '', volunteers: '' }]);
-      }
-    };
-
-    const removeEventRow = (index: number) => {
-      if (eventRows.length > 1) {
-        const newRows = eventRows.filter((_, i) => i !== index);
-        setEventRows(newRows);
-      }
-    };
-
-    const updateEventRow = (index: number, field: keyof typeof eventRows[0], value: string) => {
-      const newRows = [...eventRows];
-      newRows[index][field] = value;  
-      setEventRows(newRows);
-    };
-
-    const generatePDF = () => {
-      const currentFormData = {
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        organization: formData.organization,
-        email: formData.email,
-        phone: formData.phone,
-        families_served: formData.families_served,
-        prepared_by_first: formData.prepared_by_first,
-        prepared_by_last: formData.prepared_by_last,
-        position_title: formData.position_title,
-        events: eventRows.filter(row => row.date || row.site)
-      };
-      
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Agency Partnership Volunteer Log</title>
-              <style>
-                @page { margin: 0.5in; }
-                body { 
-                  font-family: Arial, sans-serif; 
-                  margin: 0; 
-                  padding: 20px;
-                  font-size: 12px;
-                  line-height: 1.4;
-                  background: white;
-                }
-                
-                .header {
-                  text-align: center;
-                  margin-bottom: 30px;
-                  border-bottom: 2px solid #000;
-                  padding-bottom: 15px;
-                }
-                
-                .header h1 {
-                  font-size: 18px;
-                  font-weight: bold;
-                  margin: 0 0 5px 0;
-                  text-transform: uppercase;
-                  letter-spacing: 1px;
-                }
-                
-                .header h2 {
-                  font-size: 16px;
-                  font-weight: bold;
-                  margin: 5px 0;
-                  text-transform: uppercase;
-                }
-                
-                .date-section {
-                  text-align: right;
-                  margin-bottom: 20px;
-                  font-weight: bold;
-                }
-                
-                .form-section {
-                  margin-bottom: 20px;
-                }
-                
-                .field-row {
-                  display: flex;
-                  margin-bottom: 8px;
-                  align-items: center;
-                }
-                
-                .field-label {
-                  font-weight: bold;
-                  min-width: 120px;
-                  margin-right: 10px;
-                }
-                
-                .field-line {
-                  flex: 1;
-                  border-bottom: 1px solid #000;
-                  height: 20px;
-                  padding-left: 5px;
-                  padding-bottom: 2px;
-                }
-                
-                .volunteer-table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin-top: 20px;
-                  border: 2px solid #000;
-                }
-                
-                .volunteer-table th {
-                  border: 1px solid #000;
-                  padding: 8px 4px;
-                  text-align: center;
-                  font-weight: bold;
-                  background-color: #f0f0f0;
-                  font-size: 10px;
-                  vertical-align: middle;
-                }
-                
-                .volunteer-table td {
-                  border: 1px solid #000;
-                  padding: 8px 4px;
-                  text-align: center;
-                  height: 25px;
-                  vertical-align: middle;
-                }
-                
-                .table-title {
-                  text-align: center;
-                  font-weight: bold;
-                  font-size: 14px;
-                  margin: 20px 0 10px 0;
-                  text-transform: uppercase;
-                }
-                
-                .total-row {
-                  background-color: #f0f0f0;
-                  font-weight: bold;
-                }
-                
-                .signature-section {
-                  margin-top: 30px;
-                  display: flex;
-                  justify-content: space-between;
-                }
-                
-                .signature-box {
-                  width: 30%;
-                  text-align: center;
-                }
-                
-                .signature-line {
-                  border-bottom: 1px solid #000;
-                  height: 30px;
-                  margin-bottom: 5px;
-                }
-                
-                .powered-by {
-                  position: fixed;
-                  bottom: 10px;
-                  right: 10px;
-                  font-size: 8px;
-                  color: #999;
-                }
-                
-                @media print {
-                  .powered-by { position: absolute; }
-                }
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <h1>Virtu Community Enhancement Group</h1>
-                <h2>Agency Partnership Volunteer Log</h2>
-              </div>
-              
-              <div class="date-section">
-                Date: ${new Date().toLocaleDateString('en-US', { 
-                  month: '2-digit', 
-                  day: '2-digit',
