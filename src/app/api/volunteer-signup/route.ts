@@ -89,6 +89,9 @@ function validatePersonalInfo(data: VolunteerData): ValidationError[] {
     const today = new Date();
     const age = today.getFullYear() - birthDate.getFullYear();
     if (age < 13) {
+      errors.push({ field: 'birth_date', message: 'Volunteers must be at least 13 years old' });
+    }
+    if (age > 120) {
       errors.push({ field: 'birth_date', message: 'Please enter a valid birth date' });
     }
   }
@@ -259,12 +262,6 @@ async function findNearbyOpportunities(
   try {
     console.log(`Volunteer Signup API: Finding opportunities within ${maxDistance} miles...`);
     
-    let categoryFilter = '';
-    if (categories.length > 0) {
-      const categoryList = categories.map(c => `'${c.replace(/'/g, "''")}'`).join(',');
-      categoryFilter = `AND j.category IN (${categoryList})`;
-    }
-
     const jobResults = await sql`
       SELECT 
         j.id,
@@ -276,7 +273,6 @@ async function findNearbyOpportunities(
         j.description,
         j.start_date,
         j.end_date,
-        j.urgency_level,
         calculate_distance_miles(
           COALESCE(j.latitude, zc.latitude),
           COALESCE(j.longitude, zc.longitude),
@@ -293,14 +289,7 @@ async function findNearbyOpportunities(
           ${latitude},
           ${longitude}
         ) <= ${maxDistance}
-      ORDER BY 
-        CASE 
-          WHEN j.urgency_level = 'urgent' THEN 1
-          WHEN j.urgency_level = 'high' THEN 2
-          WHEN j.urgency_level = 'medium' THEN 3
-          ELSE 4
-        END,
-        distance_miles ASC
+      ORDER BY distance_miles ASC
       LIMIT 15
     ` as any[];
     
@@ -308,33 +297,6 @@ async function findNearbyOpportunities(
   } catch (error) {
     console.warn('Volunteer Signup API: Error finding nearby opportunities:', error);
     return [];
-  }
-}
-
-async function sendWelcomeNotification(volunteer: any): Promise<void> {
-  try {
-    // Here you would integrate with your email service (SendGrid, AWS SES, etc.)
-    console.log(`Volunteer Signup API: Welcome notification sent to ${volunteer.email}`);
-    
-    // Example notification content
-    const welcomeData = {
-      to: volunteer.email,
-      subject: 'Welcome to Our Volunteer Community!',
-      template: 'volunteer-welcome',
-      data: {
-        firstName: volunteer.first_name,
-        lastName: volunteer.last_name,
-        loginUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://yourapp.com'}/login`,
-        profileUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://yourapp.com'}/profile`
-      }
-    };
-
-    // TODO: Implement actual email sending
-    // await emailService.send(welcomeData);
-    
-  } catch (error) {
-    console.error('Volunteer Signup API: Error sending welcome notification:', error);
-    // Don't fail the registration if email fails
   }
 }
 
@@ -410,7 +372,7 @@ export async function POST(request: NextRequest) {
       coordinates = { latitude: body.latitude, longitude: body.longitude };
     }
 
-    // Create volunteer registration with transaction
+    // Create volunteer registration
     console.log('Volunteer Signup API: Creating volunteer registration...');
     const registrationResult = await sql`
       INSERT INTO volunteer_registrations (
@@ -460,13 +422,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Send welcome notification (non-blocking)
-    if (sanitizedData.email_notifications) {
-      sendWelcomeNotification(volunteer).catch(error => {
-        console.error('Volunteer Signup API: Welcome notification failed:', error);
-      });
-    }
-
     // Log successful registration for analytics
     try {
       await sql`
@@ -488,7 +443,7 @@ export async function POST(request: NextRequest) {
       console.warn('Volunteer Signup API: Failed to log activity:', logError);
     }
 
-    // Return success response with enhanced data
+    // Return success response
     return NextResponse.json({
       success: true,
       message: 'Registration completed successfully! Welcome to our volunteer community.',
@@ -505,22 +460,10 @@ export async function POST(request: NextRequest) {
         location: `${job.city}, ${job.state}`,
         distance: job.distance_miles ? Math.round(job.distance_miles * 10) / 10 : null,
         volunteers_needed: job.volunteers_needed,
-        urgency_level: job.urgency_level || 'normal',
         start_date: job.start_date,
         end_date: job.end_date,
         description: job.description ? job.description.substring(0, 150) + '...' : null
-      })),
-      recommendations: {
-        complete_profile: !sanitizedData.birth_date || sanitizedData.skills.length < 3,
-        upload_documents: sanitizedData.background_check_consent,
-        explore_opportunities: nearbyJobs.length > 0
-      },
-      next_steps: [
-        'Check your email for a welcome message with important information',
-        'Review the nearby opportunities we found for you',
-        'Complete your profile to get better opportunity matches',
-        'Browse all available opportunities on our job board'
-      ]
+      }))
     }, { status: 201 });
 
   } catch (error) {
@@ -536,105 +479,45 @@ export async function POST(request: NextRequest) {
         message: isValidationError 
           ? 'Please check your information and try again'
           : 'We encountered a technical issue. Please try again in a few moments.',
-        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
-        support_contact: process.env.SUPPORT_EMAIL || 'support@yourapp.com'
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
       },
       { status: isValidationError ? 400 : 500 }
     );
   }
 }
 
-// Enhanced GET endpoint for retrieving volunteer registrations
+// GET endpoint for retrieving volunteer registrations
 export async function GET(request: NextRequest) {
   try {
-    // Note: Add authentication middleware here for production
-    // const user = await authenticateRequest(request);
-    // if (!user || user.role !== 'admin') {
-    //   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    // }
-
     const url = new URL(request.url);
     const page = Math.max(1, parseInt(url.searchParams.get('page') || '1'));
     const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit') || '20')));
-    const search = url.searchParams.get('search') || '';
-    const status = url.searchParams.get('status') || 'active';
-    const experience = url.searchParams.get('experience') || '';
-    const city = url.searchParams.get('city') || '';
-    const state = url.searchParams.get('state') || '';
-    
     const offset = (page - 1) * limit;
 
-    console.log('Volunteer Signup API: Fetching volunteer registrations with filters...');
-
-    // Build dynamic query with filters
-    let whereConditions = ['status = $1'];
-    let queryParams: any[] = [status];
-    let paramIndex = 2;
-
-    if (search) {
-      whereConditions.push(`(first_name ILIKE ${paramIndex} OR last_name ILIKE ${paramIndex} OR email ILIKE ${paramIndex})`);
-      queryParams.push(`%${search}%`);
-      paramIndex++;
-    }
-
-    if (experience) {
-      whereConditions.push(`experience_level = ${paramIndex}`);
-      queryParams.push(experience);
-      paramIndex++;
-    }
-
-    if (city) {
-      whereConditions.push(`city ILIKE ${paramIndex}`);
-      queryParams.push(`%${city}%`);
-      paramIndex++;
-    }
-
-    if (state) {
-      whereConditions.push(`state = ${paramIndex}`);
-      queryParams.push(state.toUpperCase());
-      paramIndex++;
-    }
-
-    const whereClause = whereConditions.join(' AND ');
+    console.log('Volunteer Signup API: Fetching volunteer registrations...');
 
     const volunteers = await sql`
       SELECT 
-        id, first_name, last_name, email, phone, city, state, zipcode,
-        categories_interested, experience_level, max_distance, transportation,
-        email_notifications, sms_notifications, status, created_at, updated_at,
-        (SELECT COUNT(*) FROM job_applications ja WHERE ja.volunteer_id = volunteer_registrations.id) as applications_count
+        id, first_name, last_name, email, city, state, zipcode,
+        categories_interested, experience_level, status, created_at
       FROM volunteer_registrations
-      WHERE ${sql.unsafe(whereClause)}
+      WHERE status = 'active'
       ORDER BY created_at DESC
       LIMIT ${limit} OFFSET ${offset}
     ` as any[];
 
     const countResult = await sql`
-      SELECT COUNT(*) as total FROM volunteer_registrations 
-      WHERE ${sql.unsafe(whereClause)}
+      SELECT COUNT(*) as total FROM volunteer_registrations WHERE status = 'active'
     ` as any[];
     
     const total = parseInt(countResult[0]?.total || '0');
-
-    // Get summary statistics
-    const stats = await sql`
-      SELECT 
-        COUNT(*) as total_volunteers,
-        COUNT(*) FILTER (WHERE status = 'active') as active_volunteers,
-        COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE - INTERVAL '30 days') as new_this_month,
-        COUNT(DISTINCT city || ', ' || state) as locations_served
-      FROM volunteer_registrations
-    ` as any[];
 
     return NextResponse.json({
       volunteers: volunteers.map(vol => ({
         ...vol,
         categories_interested: typeof vol.categories_interested === 'string' 
           ? JSON.parse(vol.categories_interested) 
-          : vol.categories_interested || [],
-        full_name: `${vol.first_name} ${vol.last_name}`,
-        location: `${vol.city}, ${vol.state}`,
-        phone_display: vol.phone ? `${vol.phone.slice(0,3)}-${vol.phone.slice(3,6)}-${vol.phone.slice(6)}` : null
+          : vol.categories_interested || []
       })),
       pagination: {
         page,
@@ -643,15 +526,7 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil(total / limit),
         hasNext: page * limit < total,
         hasPrev: page > 1
-      },
-      filters: {
-        search,
-        status,
-        experience,
-        city,
-        state
-      },
-      statistics: stats[0] || {}
+      }
     });
 
   } catch (error) {
@@ -664,7 +539,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-} 'Volunteers must be at least 13 years old' });
-    }
-    if (age > 120) {
-      errors.push({ field: 'birth_date', message:
+}
