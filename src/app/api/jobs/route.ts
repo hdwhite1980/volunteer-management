@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
         ? body.skills_needed.split(',').map((s:string)=>s.trim())
         : [];
 
-    // Insert job without posted_by (no auth required)
+    // Insert job with posted_by as NULL (no auth required)
     const insert = await sql`\
       INSERT INTO jobs (
         title, description, category, contact_name, contact_email, contact_phone, 
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
         time_commitment, duration_hours, volunteers_needed, age_requirement, 
         background_check_required, training_provided, start_date, end_date, 
         flexible_schedule, preferred_times, urgency, remote_possible, 
-        transportation_provided, meal_provided, stipend_amount, 
+        transportation_provided, meal_provided, stipend_amount, posted_by,
         expires_at, status
       ) VALUES (
         ${body.title}, ${body.description}, ${body.category}, 
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
         ${body.flexible_schedule ?? false}, ${body.preferred_times ?? ''}, 
         ${body.urgency ?? 'medium'}, ${body.remote_possible ?? false}, 
         ${body.transportation_provided ?? false}, ${body.meal_provided ?? false}, 
-        ${body.stipend_amount ?? null}, 
+        ${body.stipend_amount ?? null}, ${null},
         ${body.expires_at ?? sql`CURRENT_TIMESTAMP + INTERVAL '30 days'`}, 'active'
       ) 
       RETURNING id, title, created_at;\
@@ -170,6 +170,12 @@ export async function POST(req: NextRequest) {
     
   } catch (err) {
     console.error('Jobs POST error →', err);
-    return NextResponse.json({ error: 'Failed to create job' }, { status: 500 });
+    
+    // Return detailed error for debugging
+    return NextResponse.json({ 
+      error: 'Failed to create job',
+      details: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined
+    }, { status: 500 });
   }
 }
