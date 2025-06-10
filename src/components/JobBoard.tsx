@@ -1,6 +1,5 @@
 // src/components/JobBoard.tsx
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { MapPin, Clock, Users, Calendar, Star, Mail, Phone, AlertCircle, CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 
@@ -93,15 +92,6 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
 
   if (loading) {
     return (
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold">Volunteer Opportunities</h1>
-          <div className="flex space-x-4">
-            <Link href="/post-job" className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">Post Opportunity</Link>
-            <Link href="/" className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">← Back to Main</Link>
-          </div>
-        </div>
-      </div>
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
