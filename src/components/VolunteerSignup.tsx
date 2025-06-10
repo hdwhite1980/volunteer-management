@@ -41,7 +41,6 @@ interface FormData {
   state: string;
   zipcode: string;
   skills: string[];
-  interests: string[];
   categories_interested: string[];
   experience_level: string;
   availability: {
@@ -88,7 +87,6 @@ const VolunteerSignup = () => {
     state: '',
     zipcode: '',
     skills: [],
-    interests: [],
     categories_interested: [],
     experience_level: 'beginner',
     availability: {
@@ -205,19 +203,12 @@ const VolunteerSignup = () => {
   }, [zipData]);
 
   const skillsOptions = [
-    'Teaching', 'Tutoring', 'Administrative', 'Computer Skills', 'Social Media',
-    'Marketing', 'Writing', 'Photography', 'Event Planning', 'Fundraising',
-    'Construction', 'Gardening', 'Cooking', 'Cleaning', 'Driving',
-    'Public Speaking', 'Translation', 'Medical Knowledge', 'Legal Knowledge',
-    'Accounting', 'Music', 'Art', 'Sports Coaching', 'Childcare'
-  ];
-
-  const interestsOptions = [
-    'Working with Children', 'Working with Seniors', 'Working with Animals',
-    'Environmental Protection', 'Education', 'Healthcare', 'Arts & Culture',
-    'Sports & Recreation', 'Community Development', 'Disaster Relief',
-    'Homelessness', 'Food Security', 'Mental Health', 'Technology',
-    'Faith-based Work', 'International Aid', 'Research', 'Advocacy'
+    'Debris Removal', 'Tree Cutting', 'Tarp Installation', 'General Construction', 'Roofing',
+    'Electrical Work', 'Plumbing', 'HVAC Repair', 'Heavy Equipment Operation', 'First Aid',
+    'EMT Support', 'Crisis Counseling', 'Volunteer Coordination', 'Data Entry', 'Supply Chain Management',
+    'Driving', 'Inventory Management', 'Tech Support', 'Form Assistance', 'Translation',
+    'Shelter Support', 'Childcare', 'Elder Care', 'Disability Support', 'Pet Care',
+    'Meal Preparation', 'Hygiene Kit Distribution', 'Social Media Updates', 'Phone Banking', 'Documentation'
   ];
 
   const timeSlots = [
@@ -290,8 +281,8 @@ const VolunteerSignup = () => {
         });
         break;
       case 3:
-        if (formData.skills.length === 0 && formData.interests.length === 0 && formData.categories_interested.length === 0) {
-          newErrors.skills = 'Please select at least one skill, interest, or category';
+        if (formData.skills.length === 0 && formData.categories_interested.length === 0) {
+          newErrors.skills = 'Please select at least one skill or category';
           isValid = false;
         }
         break;
@@ -323,14 +314,6 @@ const VolunteerSignup = () => {
       ? current.filter(s => s !== skill)
       : [...current, skill];
     updateFormData('skills', updated);
-  };
-
-  const handleInterestToggle = (interest: string) => {
-    const current = formData.interests;
-    const updated = current.includes(interest)
-      ? current.filter(i => i !== interest)
-      : [...current, interest];
-    updateFormData('interests', updated);
   };
 
   const handleCategoryToggle = (category: string) => {
@@ -383,11 +366,17 @@ const VolunteerSignup = () => {
     setIsSubmitting(true);
 
     try {
+      // Send form data without interests field
+      const submitData = {
+        ...formData,
+        interests: [] // Send empty array for interests to maintain API compatibility
+      };
+
       const response = await fetch('/api/volunteer-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(submitData)
       });
 
       if (response.ok) {
@@ -960,7 +949,7 @@ const VolunteerSignup = () => {
             </div>
           )}
 
-          {/* Step 3: Skills & Interests */}
+          {/* Step 3: Skills & Categories */}
           {currentStep === 3 && (
             <div style={styles.formContent}>
               <div style={styles.sectionHeader}>
@@ -968,7 +957,7 @@ const VolunteerSignup = () => {
                   <Heart style={{ width: '32px', height: '32px', color: '#9333ea' }} />
                 </div>
                 <div>
-                  <h2 style={styles.sectionTitle}>Skills & Interests</h2>
+                  <h2 style={styles.sectionTitle}>Skills & Categories</h2>
                   <p style={styles.sectionDescription}>Help us match you with the right opportunities</p>
                 </div>
               </div>
@@ -993,30 +982,6 @@ const VolunteerSignup = () => {
                           style={styles.checkbox}
                         />
                         <span style={{ fontSize: '14px', fontWeight: '500' }}>{skill}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 style={{ fontWeight: 'bold', color: '#111827', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Heart style={{ width: '20px', height: '20px', color: '#dc2626' }} />
-                    <span>Interests</span>
-                  </h3>
-                  <div style={styles.checkboxGroup}>
-                    {interestsOptions.map((interest) => (
-                      <label key={interest} style={{
-                        ...styles.checkboxLabel,
-                        borderColor: formData.interests.includes(interest) ? '#9333ea' : '#e5e7eb',
-                        backgroundColor: formData.interests.includes(interest) ? '#f3e8ff' : '#ffffff'
-                      }}>
-                        <input
-                          type="checkbox"
-                          checked={formData.interests.includes(interest)}
-                          onChange={() => handleInterestToggle(interest)}
-                          style={styles.checkbox}
-                        />
-                        <span style={{ fontSize: '14px', fontWeight: '500' }}>{interest}</span>
                       </label>
                     ))}
                   </div>
