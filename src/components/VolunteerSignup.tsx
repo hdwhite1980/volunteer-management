@@ -387,7 +387,7 @@ const VolunteerSignup = () => {
     </div>
   );
 
-  const ErrorMessage = ({ error }: { error?: string }) => {
+  const ErrorMessage = ({ error }: { error?: string | null }) => {
     if (!error) return null;
     return (
       <div className="flex items-center space-x-2 text-red-600 text-sm mt-1">
