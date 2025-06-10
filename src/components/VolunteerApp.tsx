@@ -774,45 +774,21 @@ const VolunteerApp = () => {
 
           {/* Secondary Actions - Add Post Job for Admins */}
           <div className="flex flex-wrap justify-center gap-6">
-            <button
-              onClick={() => {
-                console.log('View Database clicked, authenticated:', isAuthenticated);
-                if (isAuthenticated) {
-                  setCurrentView('dashboard');
-                } else {
-                  setCurrentView('login');
-                }
-              }}
+            <Link
+              href="/job-board"
               className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <Search className="w-5 h-5 inline mr-3" />
-              View Database
-            </button>
-            <button
-              onClick={() => {
-                console.log('Upload Forms clicked, authenticated:', isAuthenticated);
-                if (isAuthenticated) {
-                  setCurrentView('upload');
-                } else {
-                  setCurrentView('login');
-                }
-              }}
+              Browse Opportunities
+            </Link>
+            <Link
+              href="/post-job"
               className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              <Upload className="w-5 h-5 inline mr-3" />
-              Upload Forms
-            </button>
-            {/* NEW: Post Job for authenticated users */}
-            {isAuthenticated && (
-              <button
-                onClick={() => window.location.href = '/post-job'}
-                className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <Plus className="w-5 h-5 inline mr-3" />
-                Post Opportunity
-              </button>
-            )}
-          </div>
+              <Plus className="w-5 h-5 inline mr-3" />
+              Post Opportunity
+            </Link>
+</div>
 
           {/* Powered by AHTS */}
           <div className="fixed bottom-6 right-6">
