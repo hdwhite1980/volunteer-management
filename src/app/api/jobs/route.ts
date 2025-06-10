@@ -1,5 +1,5 @@
 /* --------------------------------------------------------------------------
-   src/app/api/jobs/route.ts  – UPDATED (generic annotations removed)
+   src/app/api/jobs/route.ts  – UPDATED (no auth required for POST)
 -------------------------------------------------------------------------- */
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/database';
@@ -117,11 +117,10 @@ export async function GET(req: NextRequest) {
   }
 }
 
-/* ───────── POST /api/jobs ───────── */
+/* ───────── POST /api/jobs (NO AUTH REQUIRED) ───────── */
 export async function POST(req: NextRequest) {
   try {
-    const user = await checkAuth(req);
-    if (!user) return NextResponse.json({ error: 'Auth required' }, { status: 401 });
+    console.log('Jobs API: Creating job (no auth required)');
 
     const body = await req.json();
     const reqd = ['title','description','category','contact_email','zipcode','volunteers_needed'];
@@ -134,11 +133,41 @@ export async function POST(req: NextRequest) {
         ? body.skills_needed.split(',').map((s:string)=>s.trim())
         : [];
 
+    // Insert job without posted_by (no auth required)
     const insert = await sql`\
-      INSERT INTO jobs (title, description, category, contact_name, contact_email, contact_phone, address, city, state, zipcode, latitude, longitude, skills_needed, time_commitment, duration_hours, volunteers_needed, age_requirement, background_check_required, training_provided, start_date, end_date, flexible_schedule, preferred_times, urgency, remote_possible, transportation_provided, meal_provided, stipend_amount, posted_by, expires_at, status) VALUES (${body.title}, ${body.description}, ${body.category}, ${body.contact_name ?? ''}, ${body.contact_email}, ${body.contact_phone ?? ''}, ${body.address ?? ''}, ${body.city ?? ''}, ${body.state ?? ''}, ${body.zipcode}, ${body.latitude ?? null}, ${body.longitude ?? null}, ${skillsArray}, ${body.time_commitment ?? ''}, ${body.duration_hours ?? null}, ${body.volunteers_needed}, ${body.age_requirement ?? ''}, ${body.background_check_required ?? false}, ${body.training_provided ?? false}, ${body.start_date ?? null}, ${body.end_date ?? null}, ${body.flexible_schedule ?? false}, ${body.preferred_times ?? ''}, ${body.urgency ?? 'medium'}, ${body.remote_possible ?? false}, ${body.transportation_provided ?? false}, ${body.meal_provided ?? false}, ${body.stipend_amount ?? null}, ${user.id}, ${body.expires_at ?? sql`CURRENT_TIMESTAMP + INTERVAL '30 days'`}, 'active') RETURNING id, title, created_at;\
+      INSERT INTO jobs (
+        title, description, category, contact_name, contact_email, contact_phone, 
+        address, city, state, zipcode, latitude, longitude, skills_needed, 
+        time_commitment, duration_hours, volunteers_needed, age_requirement, 
+        background_check_required, training_provided, start_date, end_date, 
+        flexible_schedule, preferred_times, urgency, remote_possible, 
+        transportation_provided, meal_provided, stipend_amount, 
+        expires_at, status
+      ) VALUES (
+        ${body.title}, ${body.description}, ${body.category}, 
+        ${body.contact_name ?? ''}, ${body.contact_email}, ${body.contact_phone ?? ''}, 
+        ${body.address ?? ''}, ${body.city ?? ''}, ${body.state ?? ''}, ${body.zipcode}, 
+        ${body.latitude ?? null}, ${body.longitude ?? null}, ${skillsArray}, 
+        ${body.time_commitment ?? ''}, ${body.duration_hours ?? null}, ${body.volunteers_needed}, 
+        ${body.age_requirement ?? ''}, ${body.background_check_required ?? false}, 
+        ${body.training_provided ?? false}, ${body.start_date ?? null}, ${body.end_date ?? null}, 
+        ${body.flexible_schedule ?? false}, ${body.preferred_times ?? ''}, 
+        ${body.urgency ?? 'medium'}, ${body.remote_possible ?? false}, 
+        ${body.transportation_provided ?? false}, ${body.meal_provided ?? false}, 
+        ${body.stipend_amount ?? null}, 
+        ${body.expires_at ?? sql`CURRENT_TIMESTAMP + INTERVAL '30 days'`}, 'active'
+      ) 
+      RETURNING id, title, created_at;\
     ` as { id: number; title: string; created_at: Date }[];
 
-    return NextResponse.json({ success: true, job: insert[0], message: 'Job posted' }, { status: 201 });
+    console.log(`Jobs API: Successfully created job ${insert[0].id} (no auth)`);
+
+    return NextResponse.json({ 
+      success: true, 
+      job: insert[0], 
+      message: 'Job posted successfully' 
+    }, { status: 201 });
+    
   } catch (err) {
     console.error('Jobs POST error →', err);
     return NextResponse.json({ error: 'Failed to create job' }, { status: 500 });
