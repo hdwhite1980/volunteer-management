@@ -133,6 +133,9 @@ export async function POST(req: NextRequest) {
         ? body.skills_needed.split(',').map((s:string)=>s.trim())
         : [];
 
+    // Calculate expires_at in JavaScript instead of SQL
+    const expiresAt = body.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+
     // Insert job with posted_by as NULL (no auth required)
     const insert = await sql`\
       INSERT INTO jobs (
@@ -155,7 +158,7 @@ export async function POST(req: NextRequest) {
         ${body.urgency ?? 'medium'}, ${body.remote_possible ?? false}, 
         ${body.transportation_provided ?? false}, ${body.meal_provided ?? false}, 
         ${body.stipend_amount ?? null}, ${null},
-        ${body.expires_at ?? sql`CURRENT_TIMESTAMP + INTERVAL '30 days'`}, 'active'
+        ${expiresAt}, 'active'
       ) 
       RETURNING id, title, created_at;\
     ` as { id: number; title: string; created_at: Date }[];
