@@ -406,30 +406,44 @@ const PostJob = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Skills Needed
                     </label>
-                    <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
-                      {Object.entries(skillGroups).map(([groupName, skills]) => (
-                        <div key={groupName} className="mb-4 last:mb-0">
-                          <h4 className="font-semibold text-gray-800 mb-2 text-sm border-b border-gray-200 pb-1">
-                            {groupName}
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                            {skills.map((skill) => (
-                              <label key={skill} className="flex items-center space-x-2 cursor-pointer text-sm">
-                                <input
-                                  type="checkbox"
-                                  checked={formData.skills_needed.includes(skill)}
-                                  onChange={() => handleSkillToggle(skill)}
-                                  className="rounded text-blue-600 focus:ring-blue-500"
-                                />
-                                <span>{skill}</span>
-                              </label>
-                            ))}
+                    <div className="space-y-4">
+                      {Object.entries(skillGroups).map(([groupName, skills]) => {
+                        const selectedSkillsInGroup = formData.skills_needed.filter(skill => 
+                          skills.includes(skill)
+                        );
+                        
+                        return (
+                          <div key={groupName}>
+                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                              {groupName}
+                            </label>
+                            <select
+                              multiple
+                              value={selectedSkillsInGroup}
+                              onChange={(e) => {
+                                const selected = Array.from(e.target.selectedOptions).map(option => option.value);
+                                updateGroupSkills(groupName, selected);
+                              }}
+                              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              style={{ minHeight: '100px' }}
+                            >
+                              {skills.map((skill) => (
+                                <option key={skill} value={skill}>
+                                  {skill}
+                                </option>
+                              ))}
+                            </select>
+                            {selectedSkillsInGroup.length > 0 && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Selected: {selectedSkillsInGroup.join(', ')}
+                              </p>
+                            )}
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
-                      Select all skills that would be helpful for this opportunity
+                      Hold Ctrl (Cmd on Mac) to select multiple skills from each category
                     </p>
                   </div>
                 </div>
