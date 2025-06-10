@@ -774,13 +774,20 @@ const VolunteerApp = () => {
 
           {/* Secondary Actions - Add Post Job for Admins */}
           <div className="flex flex-wrap justify-center gap-6">
-            <Link
-              href="/job-board"
+            <button
+              onClick={() => {
+                console.log('View Database clicked, authenticated:', isAuthenticated);
+                if (isAuthenticated) {
+                  setCurrentView('dashboard');
+                } else {
+                  setCurrentView('login');
+                }
+              }}
               className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               <Search className="w-5 h-5 inline mr-3" />
-              Browse Opportunities
-            </Link>
+              View Database
+            </button>
             <Link
               href="/post-job"
               className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
