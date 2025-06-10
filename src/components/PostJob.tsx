@@ -1,6 +1,5 @@
 // src/components/PostJob.tsx
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Plus, MapPin, Users, Clock, AlertCircle, CheckCircle, ArrowRight, ArrowLeft, Calendar, Shield } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
 import { useZipLookup } from '@/hooks/useZipLookup';
