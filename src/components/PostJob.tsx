@@ -100,13 +100,58 @@ const PostJob = () => {
     ? categories.map(cat => cat.category_name)
     : fallbackCategories;
 
-  const skillsOptions = [
-    'Teaching', 'Tutoring', 'Administrative', 'Computer Skills', 'Social Media',
-    'Marketing', 'Writing', 'Photography', 'Event Planning', 'Fundraising',
-    'Construction', 'Gardening', 'Cooking', 'Cleaning', 'Driving',
-    'Public Speaking', 'Translation', 'Medical Knowledge', 'Legal Knowledge',
-    'Accounting', 'Music', 'Art', 'Sports Coaching', 'Childcare'
-  ];
+  // Organized skills by category with headers
+  const skillGroups: Record<string, string[]> = {
+    'Administration & Documentation': [
+      'Administrative',
+      'Data Entry',
+      'Documentation',
+      'Fundraising',
+      'Grant Writing / Story Collection',
+    ],
+    'Construction & Repair': [
+      'Heavy Lifting',
+      'Construction',
+      'Electrical Work',
+      'Plumbing',
+      'HVAC',
+      'Roofing',
+      'Debris Removal',
+      'Tarp Installation / Temporary Repairs',
+      'Damage Documentation / Media Support',
+    ],
+    'Health & Safety': [
+      'First Aid',
+      'Medical Knowledge',
+      'Mental Health Support',
+      'Crisis Response',
+      'Disability Support',
+    ],
+    'Community & Support': [
+      'IT Support',
+      'Translation',
+      'Elder Care',
+      'Childcare',
+      'Pet Care',
+      'Cleaning',
+      'Shelter Support / Intake',
+      'Legal Aid Navigation',
+      'Phone Banking / Wellness Checks',
+    ],
+    'Education & Outreach': [
+      'Comms & Social Media Outreach',
+      'Community Awareness / Outreach',
+      'Youth Education / Engagement',
+      'Homework Help / Learning Support',
+    ],
+    'Logistics': [
+      'Driving',
+      'Transportation Coordination',
+      'Donation Sorting / Distribution',
+      'Digital Support / Form Assistance',
+      'Shelter Registration Assistance',
+    ],
+  };
 
   const timeCommitmentOptions = [
     'One-time event', 'Weekly', 'Bi-weekly', 'Monthly', 'Quarterly',
@@ -130,6 +175,16 @@ const PostJob = () => {
       ? current.filter(s => s !== skill)
       : [...current, skill];
     updateFormData('skills_needed', updated);
+  };
+
+  // Handle skills selection by group
+  const updateGroupSkills = (group: string, selected: string[]) => {
+    setFormData(prev => {
+      const remaining = prev.skills_needed.filter(
+        s => !skillGroups[group].includes(s)
+      );
+      return { ...prev, skills_needed: [...remaining, ...selected] };
+    });
   };
 
   const validateStep = (step: number) => {
@@ -351,19 +406,31 @@ const PostJob = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Skills Needed
                     </label>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
-                      {skillsOptions.map((skill) => (
-                        <label key={skill} className="flex items-center space-x-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={formData.skills_needed.includes(skill)}
-                            onChange={() => handleSkillToggle(skill)}
-                            className="rounded text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-sm">{skill}</span>
-                        </label>
+                    <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
+                      {Object.entries(skillGroups).map(([groupName, skills]) => (
+                        <div key={groupName} className="mb-4 last:mb-0">
+                          <h4 className="font-semibold text-gray-800 mb-2 text-sm border-b border-gray-200 pb-1">
+                            {groupName}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                            {skills.map((skill) => (
+                              <label key={skill} className="flex items-center space-x-2 cursor-pointer text-sm">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.skills_needed.includes(skill)}
+                                  onChange={() => handleSkillToggle(skill)}
+                                  className="rounded text-blue-600 focus:ring-blue-500"
+                                />
+                                <span>{skill}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
                       ))}
                     </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Select all skills that would be helpful for this opportunity
+                    </p>
                   </div>
                 </div>
               </div>
