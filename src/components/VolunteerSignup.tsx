@@ -576,7 +576,7 @@ const VolunteerSignup = () => {
       fontSize: '16px',
       transition: 'all 0.2s ease',
       backgroundColor: '#ffffff',
-      resize: 'none'
+      resize: 'none' as const
     },
     grid: {
       display: 'grid',
