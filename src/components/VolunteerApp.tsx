@@ -1462,6 +1462,7 @@ const VolunteerApp = () => {
       default:
         return <LandingPage />;
     }
+  return renderCurrentView();
   };
 
   return renderCurrentView();
