@@ -1,8 +1,9 @@
 'use client';
 import Link from 'next/link';
+import VolunteerManagementAdminDashboard from './VolunteerManagementAdminDashboard';
 
 import React, { useState, useEffect } from 'react';
-import { Upload, Download, Search, Clock, Users, Building2, User, Lock, Plus, Edit, Trash2, LogOut, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, Download, Search, Clock, Users, Building2, User, Lock, Plus, Edit, Trash2, LogOut, CheckCircle, AlertCircle, Navigation, BarChart3 } from 'lucide-react';
 
 interface Volunteer {
   name: string;
@@ -315,7 +316,7 @@ const VolunteerApp = () => {
 
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center space-x-3">
-                  <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  <AlertCircle, Navigation, BarChart3 className="w-5 h-5 text-red-500 flex-shrink-0" />
                   <p className="text-red-700 text-sm">{error}</p>
                 </div>
               )}
@@ -504,6 +505,15 @@ const VolunteerApp = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-3">
+{currentUser?.role === 'admin' && (
+                  <button
+                    onClick={() => setCurrentView('admin-dashboard')}
+                    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    <span>Admin Dashboard</span>
+                  </button>
+                )}
                 <button
                   onClick={() => setShowCreateForm(true)}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
@@ -512,7 +522,14 @@ const VolunteerApp = () => {
                   <span>Create User</span>
                 </button>
                 <button
-                  onClick={() => setCurrentView('dashboard')}
+                  onClick={() => window.location.href = '/'}
+                  className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:border-blue-400 transition-colors"
+                >
+                  <Navigation className="w-4 h-4" />
+                  <span>Home</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('dashboard')
                   className="text-blue-600 hover:text-blue-800 font-medium"
                 >
                   ← Dashboard
@@ -634,6 +651,15 @@ const VolunteerApp = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-3">
+{currentUser?.role === 'admin' && (
+                  <button
+                    onClick={() => setCurrentView('admin-dashboard')}
+                    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    <span>Admin Dashboard</span>
+                  </button>
+                )}
                             <button
                               onClick={() => startEdit(user)}
                               className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-lg transition-colors"
@@ -919,6 +945,15 @@ const VolunteerApp = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-3">
+{currentUser?.role === 'admin' && (
+                  <button
+                    onClick={() => setCurrentView('admin-dashboard')}
+                    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    <span>Admin Dashboard</span>
+                  </button>
+                )}
                 {currentUser?.role === 'admin' && (
                   <button
                     onClick={() => {
@@ -2490,11 +2525,27 @@ const VolunteerApp = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-3">
+{currentUser?.role === 'admin' && (
+                  <button
+                    onClick={() => setCurrentView('admin-dashboard')}
+                    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    <span>Admin Dashboard</span>
+                  </button>
+                )}
                 <span className="text-sm text-gray-600">
                   Logged in as: {currentUser?.username}
                 </span>
                 <button
-                  onClick={() => setCurrentView('dashboard')}
+                  onClick={() => window.location.href = '/'}
+                  className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:border-blue-400 transition-colors"
+                >
+                  <Navigation className="w-4 h-4" />
+                  <span>Home</span>
+                </button>
+                <button
+                  onClick={() => setCurrentView('dashboard')
                   className="text-blue-600 hover:text-blue-800 font-medium"
                 >
                   ← Dashboard
@@ -2573,7 +2624,7 @@ const VolunteerApp = () => {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
                     <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
-                      <AlertCircle className="w-5 h-5 mr-2" />
+                      <AlertCircle, Navigation, BarChart3 className="w-5 h-5 mr-2" />
                       Upload Instructions
                     </h4>
                     <ul className="space-y-2 text-sm text-blue-700">

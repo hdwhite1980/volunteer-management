@@ -1,4 +1,4 @@
-// src/app/api/volunteer-signup/route.ts
+// src/app/api/volunteer-signup/route.ts - UPDATED WITH USERNAME GENERATION
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 
@@ -50,6 +50,46 @@ interface ValidationError {
   field: string;
   message: string;
 }
+
+// USERNAME GENERATION FUNCTIONS
+const generateUsername = (firstName: string, lastName: string, birthDate?: string): string => {
+  const firstTwoLetters = firstName.substring(0, 2).toLowerCase();
+  const fullLastName = lastName.toLowerCase().replace(/[^a-z]/g, ''); // Remove non-letters
+  
+  let year = '';
+  if (birthDate) {
+    year = new Date(birthDate).getFullYear().toString();
+  } else {
+    // If no birth date, use current year as fallback
+    year = new Date().getFullYear().toString();
+  }
+  
+  return `${firstTwoLetters}${fullLastName}${year}`;
+};
+
+const generateUniqueUsername = async (firstName: string, lastName: string, birthDate?: string): Promise<string> => {
+  let baseUsername = generateUsername(firstName, lastName, birthDate);
+  let username = baseUsername;
+  let counter = 1;
+  
+  // Check if username already exists in database
+  while (true) {
+    const existingUser = await sql`
+      SELECT id FROM volunteer_registrations WHERE username = ${username}
+    ` as any[];
+    
+    if (existingUser.length === 0) {
+      // Username is unique
+      break;
+    }
+    
+    // If username exists, add a number to make it unique
+    username = `${baseUsername}${counter}`;
+    counter++;
+  }
+  
+  return username;
+};
 
 // Enhanced validation functions
 function validatePersonalInfo(data: VolunteerData): ValidationError[] {
@@ -302,7 +342,7 @@ async function findNearbyOpportunities(
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Volunteer Signup API: Processing enhanced registration...');
+    console.log('Volunteer Signup API: Processing enhanced registration with username generation...');
     
     const body = await request.json() as VolunteerData;
     
@@ -366,21 +406,30 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // GENERATE UNIQUE USERNAME
+    console.log('Volunteer Signup API: Generating unique username...');
+    const username = await generateUniqueUsername(
+      sanitizedData.first_name, 
+      sanitizedData.last_name, 
+      sanitizedData.birth_date
+    );
+    console.log(`Generated username: ${username}`);
+
     // Get coordinates for the volunteer's location
     let coordinates = await getCoordinatesForZip(sanitizedData.zipcode);
     if (!coordinates && (body.latitude && body.longitude)) {
       coordinates = { latitude: body.latitude, longitude: body.longitude };
     }
 
-    // Create volunteer registration
-    console.log('Volunteer Signup API: Creating volunteer registration...');
+    // Create volunteer registration WITH USERNAME
+    console.log('Volunteer Signup API: Creating volunteer registration with username...');
     const registrationResult = await sql`
       INSERT INTO volunteer_registrations (
         first_name, last_name, email, phone, birth_date, address, city, state, zipcode,
         latitude, longitude, skills, interests, categories_interested, experience_level,
         availability, max_distance, transportation, emergency_contact_name,
         emergency_contact_phone, emergency_contact_relationship, background_check_consent,
-        email_notifications, sms_notifications, notes, status, created_at, updated_at
+        email_notifications, sms_notifications, notes, status, username, created_at, updated_at
       ) VALUES (
         ${sanitizedData.first_name}, ${sanitizedData.last_name}, ${sanitizedData.email}, 
         ${sanitizedData.phone}, ${sanitizedData.birth_date || null}, ${sanitizedData.address}, 
@@ -392,10 +441,10 @@ export async function POST(request: NextRequest) {
         ${sanitizedData.transportation || 'own'}, ${sanitizedData.emergency_contact_name}, 
         ${sanitizedData.emergency_contact_phone}, ${sanitizedData.emergency_contact_relationship}, 
         ${sanitizedData.background_check_consent || false}, ${sanitizedData.email_notifications !== false}, 
-        ${sanitizedData.sms_notifications || false}, ${sanitizedData.notes}, 'active', 
+        ${sanitizedData.sms_notifications || false}, ${sanitizedData.notes}, 'active', ${username},
         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )
-      RETURNING id, first_name, last_name, email, created_at
+      RETURNING id, first_name, last_name, email, username, created_at
     ` as any[];
 
     if (registrationResult.length === 0) {
@@ -403,7 +452,7 @@ export async function POST(request: NextRequest) {
     }
 
     const volunteer = registrationResult[0];
-    console.log(`Volunteer Signup API: Successfully registered volunteer ${volunteer.id}`);
+    console.log(`Volunteer Signup API: Successfully registered volunteer ${volunteer.id} with username ${volunteer.username}`);
 
     // Find nearby opportunities
     let nearbyJobs: NearbyJob[] = [];
@@ -430,6 +479,7 @@ export async function POST(request: NextRequest) {
         ) VALUES (
           'volunteer', ${volunteer.id}, 'registration_completed',
           ${JSON.stringify({
+            username: volunteer.username,
             skills_count: sanitizedData.skills.length,
             interests_count: sanitizedData.interests.length,
             categories_count: sanitizedData.categories_interested.length,
@@ -443,14 +493,15 @@ export async function POST(request: NextRequest) {
       console.warn('Volunteer Signup API: Failed to log activity:', logError);
     }
 
-    // Return success response
+    // Return success response WITH USERNAME
     return NextResponse.json({
       success: true,
-      message: 'Registration completed successfully! Welcome to our volunteer community.',
+      message: `Registration completed successfully! Your username is: ${volunteer.username}`,
       volunteer: {
         id: volunteer.id,
         name: `${volunteer.first_name} ${volunteer.last_name}`,
         email: volunteer.email,
+        username: volunteer.username, // INCLUDE USERNAME IN RESPONSE
         registered_at: volunteer.created_at
       },
       nearby_opportunities: nearbyJobs.map(job => ({
@@ -486,7 +537,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET endpoint for retrieving volunteer registrations
+// GET endpoint for retrieving volunteer registrations - UPDATED TO INCLUDE USERNAME
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
@@ -498,8 +549,11 @@ export async function GET(request: NextRequest) {
 
     const volunteers = await sql`
       SELECT 
-        id, first_name, last_name, email, city, state, zipcode,
-        categories_interested, experience_level, status, created_at
+        id, first_name, last_name, email, phone, birth_date, address, city, state, zipcode,
+        latitude, longitude, skills, interests, categories_interested, experience_level,
+        availability, max_distance, transportation, emergency_contact_name,
+        emergency_contact_phone, emergency_contact_relationship, background_check_consent,
+        email_notifications, sms_notifications, notes, status, username, created_at, updated_at
       FROM volunteer_registrations
       WHERE status = 'active'
       ORDER BY created_at DESC
@@ -515,9 +569,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       volunteers: volunteers.map(vol => ({
         ...vol,
+        skills: typeof vol.skills === 'string' ? JSON.parse(vol.skills) : vol.skills || [],
+        interests: typeof vol.interests === 'string' ? JSON.parse(vol.interests) : vol.interests || [],
         categories_interested: typeof vol.categories_interested === 'string' 
           ? JSON.parse(vol.categories_interested) 
-          : vol.categories_interested || []
+          : vol.categories_interested || [],
+        availability: typeof vol.availability === 'string' ? JSON.parse(vol.availability) : vol.availability || {}
       })),
       pagination: {
         page,

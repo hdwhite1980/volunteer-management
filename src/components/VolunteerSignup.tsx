@@ -1,9 +1,9 @@
-// src/components/VolunteerSignup.tsx
+// src/components/VolunteerSignup.tsx - UPDATED WITH HOME BUTTON & USERNAME DISPLAY
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   User, MapPin, Heart, Clock, Shield, CheckCircle, ArrowRight, ArrowLeft, 
   Info, Calendar, Phone, Mail, AlertTriangle, Loader2,
-  Star, Award, Users, Target, Save
+  Star, Award, Users, Target, Save, Navigation, Home
 } from 'lucide-react';
 
 // Define static categories to avoid external dependencies that might not exist
@@ -67,10 +67,24 @@ interface FormErrors {
   [key: string]: string;
 }
 
+interface RegistrationResult {
+  success: boolean;
+  message: string;
+  volunteer: {
+    id: number;
+    name: string;
+    email: string;
+    username?: string;
+    registered_at: string;
+  };
+  nearby_opportunities?: any[];
+}
+
 const VolunteerSignup = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [registrationResult, setRegistrationResult] = useState<RegistrationResult | null>(null);
   const [nearbyJobs, setNearbyJobs] = useState<any[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isAutoSaving, setIsAutoSaving] = useState(false);
@@ -380,7 +394,8 @@ const VolunteerSignup = () => {
       });
 
       if (response.ok) {
-        const result = await response.json();
+        const result: RegistrationResult = await response.json();
+        setRegistrationResult(result);
         setNearbyJobs(result.nearby_opportunities || []);
         setSubmitSuccess(true);
         localStorage.removeItem('volunteer_signup_draft');
@@ -631,7 +646,7 @@ const VolunteerSignup = () => {
     }
   };
 
-  if (submitSuccess) {
+  if (submitSuccess && registrationResult) {
     return (
       <div style={styles.container}>
         <div style={{ padding: '32px' }}>
@@ -640,7 +655,37 @@ const VolunteerSignup = () => {
               <div style={{ marginBottom: '24px' }}>
                 <CheckCircle style={{ width: '64px', height: '64px', color: '#16a34a', margin: '0 auto 16px' }} />
                 <h1 style={{ fontSize: '30px', fontWeight: 'bold', color: '#111827', marginBottom: '16px' }}>Welcome to our volunteer community!</h1>
-                <p style={{ color: '#6b7280', marginBottom: '32px' }}>Your registration was successful. We're excited to have you join us in making a difference.</p>
+                <p style={{ color: '#6b7280', marginBottom: '32px' }}>{registrationResult.message}</p>
+              </div>
+              
+              {/* User Information Card */}
+              <div style={{ backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '24px', marginBottom: '24px' }}>
+                <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#1e293b', marginBottom: '16px' }}>Your Registration Details</h2>
+                <div style={{ display: 'grid', gap: '12px', textAlign: 'left' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: '500', color: '#64748b' }}>Name:</span>
+                    <span style={{ color: '#1e293b' }}>{registrationResult.volunteer.name}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontWeight: '500', color: '#64748b' }}>Email:</span>
+                    <span style={{ color: '#1e293b' }}>{registrationResult.volunteer.email}</span>
+                  </div>
+                  {registrationResult.volunteer.username && (
+                    <div style={{ backgroundColor: '#dbeafe', borderRadius: '12px', padding: '16px', marginTop: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <span style={{ fontWeight: '600', color: '#1e40af' }}>Your Username:</span>
+                        <span style={{ fontFamily: 'monospace', fontSize: '18px', fontWeight: 'bold', color: '#1e40af' }}>@{registrationResult.volunteer.username}</span>
+                      </div>
+                      <p style={{ fontSize: '14px', color: '#3730a3', margin: 0, textAlign: 'center' }}>
+                        💡 Use this username when applying for volunteer opportunities
+                      </p>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #e2e8f0' }}>
+                    <span style={{ fontWeight: '500', color: '#64748b' }}>Registered:</span>
+                    <span style={{ color: '#1e293b' }}>{new Date(registrationResult.volunteer.registered_at).toLocaleDateString()}</span>
+                  </div>
+                </div>
               </div>
               
               {nearbyJobs.length > 0 && (
@@ -683,6 +728,7 @@ const VolunteerSignup = () => {
                   onClick={() => window.location.href = '/'}
                   style={{ ...styles.button, ...styles.buttonSecondary, justifyContent: 'center' }}
                 >
+                  <Home style={{ width: '20px', height: '20px' }} />
                   Return Home
                 </button>
               </div>
@@ -695,7 +741,7 @@ const VolunteerSignup = () => {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
+      {/* Header with Home Button */}
       <div style={styles.header}>
         <div style={styles.headerContent}>
           <div>
@@ -703,6 +749,34 @@ const VolunteerSignup = () => {
             <p style={styles.subtitle}>Join our community of changemakers</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <button
+              onClick={() => window.location.href = '/'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 20px',
+                backgroundColor: 'transparent',
+                color: '#2563eb',
+                border: '2px solid #2563eb',
+                borderRadius: '12px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = '#2563eb';
+                e.currentTarget.style.color = '#ffffff';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = '#2563eb';
+              }}
+            >
+              <Navigation style={{ width: '20px', height: '20px' }} />
+              <span>Home</span>
+            </button>
             <div style={{ backgroundColor: '#dbeafe', borderRadius: '8px', padding: '12px' }}>
               <Award style={{ width: '24px', height: '24px', color: '#2563eb' }} />
             </div>
@@ -836,6 +910,9 @@ const VolunteerSignup = () => {
                     onChange={(e) => updateFormData('birth_date', e.target.value)}
                     style={styles.input}
                   />
+                  <p style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                    💡 Your birth date helps us generate your unique username
+                  </p>
                 </div>
               </div>
             </div>
