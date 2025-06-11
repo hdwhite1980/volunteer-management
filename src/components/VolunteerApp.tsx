@@ -156,7 +156,6 @@ const VolunteerApp = () => {
         console.log('Frontend: Login successful, setting user state...');
         setIsAuthenticated(true);
         setCurrentUser(data.user);
-        // Always go to dashboard after successful login
         setCurrentView('dashboard');
         return { success: true };
       } else {
@@ -242,7 +241,6 @@ const VolunteerApp = () => {
       console.error('Dashboard: Error loading volunteers:', error);
     }
   };
-
   // Login Component
   const LoginPage = () => {
     const [formData, setFormData] = useState({ username: '', password: '' });
@@ -602,12 +600,10 @@ const VolunteerApp = () => {
   // Landing Page Component
   const LandingPage = () => (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
-      {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
       
       <div className="relative z-10">
         <div className="container mx-auto px-6 py-16">
-          {/* Header */}
           <div className="text-center mb-20">
             <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl mb-8 shadow-2xl">
               <Users className="w-12 h-12 text-white" />
@@ -624,9 +620,7 @@ const VolunteerApp = () => {
             </p>
           </div>
 
-          {/* Main Action Cards - 2x2 Grid */}
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-16">
-            {/* Partnership Card */}
             <div className="group bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-white/20 hover:border-white/30 hover:-translate-y-2">
               <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <Building2 className="w-10 h-10 text-white" />
@@ -646,7 +640,6 @@ const VolunteerApp = () => {
               </button>
             </div>
 
-            {/* Activity Card */}
             <div className="group bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-white/20 hover:border-white/30 hover:-translate-y-2">
               <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <Clock className="w-10 h-10 text-white" />
@@ -666,7 +659,6 @@ const VolunteerApp = () => {
               </button>
             </div>
 
-            {/* Job Board Card */}
             <div className="group bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-white/20 hover:border-white/30 hover:-translate-y-2">
               <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <Search className="w-10 h-10 text-white" />
@@ -686,7 +678,6 @@ const VolunteerApp = () => {
               </button>
             </div>
 
-            {/* Volunteer Signup Card */}
             <div className="group bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 border border-white/20 hover:border-white/30 hover:-translate-y-2">
               <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
                 <Users className="w-10 h-10 text-white" />
@@ -707,7 +698,6 @@ const VolunteerApp = () => {
             </div>
           </div>
 
-          {/* Secondary Actions */}
           <div className="flex flex-wrap justify-center gap-6">
             <button
               onClick={() => {
@@ -732,7 +722,6 @@ const VolunteerApp = () => {
             </button>
           </div>
 
-          {/* Powered by AHTS */}
           <div className="fixed bottom-6 right-6">
             <div className="bg-black/20 backdrop-blur-sm rounded-lg px-3 py-2">
               <p className="text-xs text-gray-400">Powered by AHTS</p>
@@ -743,7 +732,7 @@ const VolunteerApp = () => {
     </div>
   );
 
-  // Enhanced Dashboard
+  // Dashboard Component
   const Dashboard = () => {
     const [filterType, setFilterType] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
@@ -890,7 +879,6 @@ const VolunteerApp = () => {
         </div>
 
         <div className="max-w-7xl mx-auto p-6">
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center">
@@ -929,7 +917,6 @@ const VolunteerApp = () => {
             </div>
           </div>
 
-          {/* Filters and Search */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
@@ -956,7 +943,6 @@ const VolunteerApp = () => {
             </div>
           </div>
 
-          {/* Volunteers Table */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
@@ -1031,7 +1017,6 @@ const VolunteerApp = () => {
             )}
           </div>
 
-          {/* Quick Actions */}
           <div className="mt-8 flex justify-center">
             <div className="flex flex-col sm:flex-row gap-4">
               <button
@@ -1060,7 +1045,6 @@ const VolunteerApp = () => {
       </div>
     );
   };
-
   // Partnership Form
   const PartnershipForm = () => {
     const [formData, setFormData] = useState({
@@ -1094,254 +1078,6 @@ const VolunteerApp = () => {
       const newRows = [...eventRows];
       newRows[index][field] = value;  
       setEventRows(newRows);
-    };
-
-    const generatePDF = () => {
-      const currentFormData = {
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        organization: formData.organization,
-        email: formData.email,
-        phone: formData.phone,
-        families_served: formData.families_served,
-        prepared_by_first: formData.prepared_by_first,
-        prepared_by_last: formData.prepared_by_last,
-        position_title: formData.position_title,
-        events: eventRows.filter(row => row.date || row.site)
-      };
-      
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Agency Partnership Volunteer Log</title>
-              <style>
-                @page { margin: 0.5in; }
-                body { 
-                  font-family: Arial, sans-serif; 
-                  margin: 0; 
-                  padding: 20px;
-                  font-size: 12px;
-                  line-height: 1.4;
-                  background: white;
-                }
-                
-                .header {
-                  text-align: center;
-                  margin-bottom: 30px;
-                  border-bottom: 2px solid #000;
-                  padding-bottom: 15px;
-                }
-                
-                .header h1 {
-                  font-size: 18px;
-                  font-weight: bold;
-                  margin: 0 0 5px 0;
-                  text-transform: uppercase;
-                  letter-spacing: 1px;
-                }
-                
-                .header h2 {
-                  font-size: 16px;
-                  font-weight: bold;
-                  margin: 5px 0;
-                  text-transform: uppercase;
-                }
-                
-                .date-section {
-                  text-align: right;
-                  margin-bottom: 20px;
-                  font-weight: bold;
-                }
-                
-                .form-section {
-                  margin-bottom: 20px;
-                }
-                
-                .field-row {
-                  display: flex;
-                  margin-bottom: 8px;
-                  align-items: center;
-                }
-                
-                .field-label {
-                  font-weight: bold;
-                  min-width: 120px;
-                  margin-right: 10px;
-                }
-                
-                .field-line {
-                  flex: 1;
-                  border-bottom: 1px solid #000;
-                  height: 20px;
-                  padding-left: 5px;
-                  padding-bottom: 2px;
-                }
-                
-                .volunteer-table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin-top: 20px;
-                  border: 2px solid #000;
-                }
-                
-                .volunteer-table th {
-                  border: 1px solid #000;
-                  padding: 8px 4px;
-                  text-align: center;
-                  font-weight: bold;
-                  background-color: #f0f0f0;
-                  font-size: 10px;
-                  vertical-align: middle;
-                }
-                
-                .volunteer-table td {
-                  border: 1px solid #000;
-                  padding: 8px 4px;
-                  text-align: center;
-                  height: 25px;
-                  vertical-align: middle;
-                }
-                
-                .table-title {
-                  text-align: center;
-                  font-weight: bold;
-                  font-size: 14px;
-                  margin: 20px 0 10px 0;
-                  text-transform: uppercase;
-                }
-                
-                .total-row {
-                  background-color: #f0f0f0;
-                  font-weight: bold;
-                }
-                
-                .signature-section {
-                  margin-top: 30px;
-                  display: flex;
-                  justify-content: space-between;
-                }
-                
-                .signature-box {
-                  width: 30%;
-                  text-align: center;
-                }
-                
-                .signature-line {
-                  border-bottom: 1px solid #000;
-                  height: 30px;
-                  margin-bottom: 5px;
-                }
-                
-                .powered-by {
-                  position: fixed;
-                  bottom: 10px;
-                  right: 10px;
-                  font-size: 8px;
-                  color: #999;
-                }
-                
-                @media print {
-                  .powered-by { position: absolute; }
-                }
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <h1>Virtu Community Enhancement Group</h1>
-                <h2>Agency Partnership Volunteer Log</h2>
-              </div>
-              
-              <div class="date-section">
-                Date: ${new Date().toLocaleDateString('en-US', { 
-                  month: '2-digit', 
-                  day: '2-digit', 
-                  year: 'numeric' 
-                }).replace(/\//g, '/')}
-              </div>
-              
-              <div class="form-section">
-                <div class="field-row">
-                  <span class="field-label">Name:</span>
-                  <div class="field-line">${currentFormData.first_name} ${currentFormData.last_name}</div>
-                </div>
-                <div class="field-row">
-                  <span class="field-label">Organization:</span>
-                  <div class="field-line">${currentFormData.organization}</div>
-                </div>
-                <div class="field-row">
-                  <span class="field-label">Email:</span>
-                  <div class="field-line">${currentFormData.email}</div>
-                </div>
-                <div class="field-row">
-                  <span class="field-label">Phone:</span>
-                  <div class="field-line">${currentFormData.phone}</div>
-                </div>
-              </div>
-              
-              <div class="table-title">Agency Partnership Volunteer Log</div>
-              
-              <table class="volunteer-table">
-                <thead>
-                  <tr>
-                    <th>Event Date</th>
-                    <th>Event Site Zip</th>
-                    <th>Total Number of<br>Hours Worked</th>
-                    <th>Total Number of<br>Volunteers</th>
-                    <th>Total Volunteer<br>Hours</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${Array.from({length: 10}, (_, i) => {
-                    const event = currentFormData.events[i];
-                    const totalHours = event ? (parseInt(event.hours || '0') * parseInt(event.volunteers || '1')) : '';
-                    return `
-                      <tr>
-                        <td>${event ? new Date(event.date).toLocaleDateString() : ''}</td>
-                        <td>${event ? event.zip : ''}</td>
-                        <td>${event ? event.hours : ''}</td>
-                        <td>${event ? event.volunteers : ''}</td>
-                        <td>${totalHours}</td>
-                      </tr>
-                    `;
-                  }).join('')}
-                  <tr class="total-row">
-                    <td colspan="4" style="text-align: center; font-weight: bold;">TOTAL VOLUNTEER HOURS</td>
-                    <td style="font-weight: bold;">
-                      ${currentFormData.events.reduce((total, event) => {
-                        if (event.hours && event.volunteers) {
-                          return total + (parseInt(event.hours) * parseInt(event.volunteers));
-                        }
-                        return total;
-                      }, 0)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              
-              <div class="signature-section">
-                <div class="signature-box">
-                  <div class="signature-line"></div>
-                  <div><strong>Prepared by:</strong><br>${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
-                </div>
-                <div class="signature-box">
-                  <div class="signature-line"></div>
-                  <div><strong>Position/Title:</strong><br>${currentFormData.position_title}</div>
-                </div>
-                <div class="signature-box">
-                  <div class="signature-line"></div>
-                  <div><strong>Date/Time:</strong><br>${new Date().toLocaleDateString()}</div>
-                </div>
-              </div>
-              
-              <div class="powered-by">Powered by AHTS</div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-      }
     };
 
     const calculateTotalHours = () => {
@@ -1412,14 +1148,12 @@ const VolunteerApp = () => {
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto p-6">
           <div className="bg-white rounded-lg shadow-lg">
-            {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-6 rounded-t-lg">
               <h1 className="text-2xl font-bold mb-2">Agency Partnership Volunteer Log</h1>
               <p className="text-blue-100">Record organizational volunteer activities and track families served</p>
             </div>
 
             <div className="p-6">
-              {/* Contact Information */}
               <div className="mb-8">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                   <User className="w-5 h-5 mr-2" />
@@ -1432,6 +1166,389 @@ const VolunteerApp = () => {
                     </label>
                     <input
                       type="text"
+                      value={formData.first_name}
+                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter first name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.last_name}
+                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter last name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Organization *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.organization}
+                      onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter organization name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone *
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Families Served *
+                    </label>
+                    <input
+                      type="number"
+                      value={formData.families_served}
+                      onChange={(e) => setFormData({ ...formData, families_served: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Number of families served"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                    <Clock className="w-5 h-5 mr-2" />
+                    Event Details
+                  </h2>
+                  <button
+                    onClick={addEventRow}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Event
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {eventRows.map((row, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-medium text-gray-700">Event {index + 1}</h3>
+                        {eventRows.length > 1 && (
+                          <button
+                            onClick={() => removeEventRow(index)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
+                          <input
+                            type="text"
+                            value={row.zip}
+                            onChange={(e) => updateEventRow(index, 'zip', e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="ZIP"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Hours Worked</label>
+                          <input
+                            type="number"
+                            value={row.hours}
+                            onChange={(e) => updateEventRow(index, 'hours', e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Hours"
+                            min="0"
+                            step="0.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Volunteers</label>
+                          <input
+                            type="number"
+                            value={row.volunteers}
+                            onChange={(e) => updateEventRow(index, 'volunteers', e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Count"
+                            min="1"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                  <div className="text-lg font-semibold text-blue-800">
+                    Total Volunteer Hours: {calculateTotalHours()}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <Edit className="w-5 h-5 mr-2" />
+                  Prepared By
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      First Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.prepared_by_first}
+                      onChange={(e) => setFormData({ ...formData, prepared_by_first: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Preparer's first name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Last Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.prepared_by_last}
+                      onChange={(e) => setFormData({ ...formData, prepared_by_last: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Preparer's last name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Position/Title *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.position_title}
+                      onChange={(e) => setFormData({ ...formData, position_title: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Job title or position"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-end">
+                <button
+                  onClick={() => setCurrentView('landing')}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Submit Log
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Activity Form
+  const ActivityForm = () => {
+    const [formData, setFormData] = useState({
+      volunteer_name: '',
+      email: '',
+      phone: '',
+      student_id: '',
+      prepared_by_first: '',
+      prepared_by_last: '',
+      position_title: ''
+    });
+    const [activities, setActivities] = useState([
+      { date: '', activity: '', organization: '', location: '', hours: '', description: '' }
+    ]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const addActivity = () => {
+      setActivities([...activities, { date: '', activity: '', organization: '', location: '', hours: '', description: '' }]);
+    };
+
+    const removeActivity = (index: number) => {
+      if (activities.length > 1) {
+        const newActivities = activities.filter((_, i) => i !== index);
+        setActivities(newActivities);
+      }
+    };
+
+    const updateActivity = (index: number, field: keyof typeof activities[0], value: string) => {
+      const newActivities = [...activities];
+      newActivities[index][field] = value;
+      setActivities(newActivities);
+    };
+
+    const calculateTotalHours = () => {
+      return activities.reduce((total, activity) => {
+        return total + (parseFloat(activity.hours) || 0);
+      }, 0);
+    };
+
+    const handleSubmit = async () => {
+      setIsSubmitting(true);
+      try {
+        if (!formData.volunteer_name || !formData.email || !formData.prepared_by_first || !formData.prepared_by_last || !formData.position_title) {
+          alert('Please fill in all required fields (marked with *)');
+          return;
+        }
+
+        const validActivities = activities.filter(activity => 
+          activity.date && activity.activity && activity.organization && activity.description
+        );
+        
+        if (validActivities.length === 0) {
+          alert('Please add at least one complete activity with date, type, organization, and description');
+          return;
+        }
+
+        for (const activity of validActivities) {
+          if (!activity.hours || isNaN(parseFloat(activity.hours))) {
+            alert('Please enter valid hours for all activities');
+            return;
+          }
+        }
+
+        const submitData = {
+          volunteer_name: formData.volunteer_name.trim(),
+          email: formData.email.trim(),
+          phone: formData.phone?.trim() || null,
+          student_id: formData.student_id?.trim() || null,
+          prepared_by_first: formData.prepared_by_first.trim(),
+          prepared_by_last: formData.prepared_by_last.trim(),
+          position_title: formData.position_title.trim(),
+          activities: validActivities.map(activity => ({
+            date: activity.date,
+            activity: activity.activity,
+            organization: activity.organization.trim(),
+            location: activity.location?.trim() || '',
+            hours: activity.hours,
+            description: activity.description.trim()
+          }))
+        };
+
+        const response = await fetch('/api/activity-logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(submitData),
+        });
+
+        if (response.ok) {
+          alert('Activity log submitted successfully!');
+          setCurrentView('landing');
+        } else {
+          const result = await response.json();
+          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.error('Submission error:', error);
+        alert('Error submitting form. Please check your internet connection and try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto p-6">
+          <div className="bg-white rounded-lg shadow-lg">
+            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6 rounded-t-lg">
+              <h1 className="text-2xl font-bold mb-2">Activity Log (ICS 214)</h1>
+              <p className="text-green-100">Record individual volunteer activities and track service hours</p>
+            </div>
+
+            <div className="p-6">
+              <div className="mb-8">
+                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                  <User className="w-5 h-5 mr-2" />
+                  Volunteer Information
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Volunteer Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.volunteer_name}
+                      onChange={(e) => setFormData({ ...formData, volunteer_name: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Enter full name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Student ID (if applicable)
+                    </label>
+                    <input
+                      type="text"
                       value={formData.student_id}
                       onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
@@ -1441,7 +1558,6 @@ const VolunteerApp = () => {
                 </div>
               </div>
 
-              {/* Activities */}
               <div className="mb-8">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold text-gray-800 flex items-center">
@@ -1541,7 +1657,6 @@ const VolunteerApp = () => {
                   ))}
                 </div>
 
-                {/* Total Hours Display */}
                 <div className="mt-4 p-4 bg-green-50 rounded-lg">
                   <div className="text-lg font-semibold text-green-800">
                     Total Volunteer Hours: {calculateTotalHours()}
@@ -1549,7 +1664,6 @@ const VolunteerApp = () => {
                 </div>
               </div>
 
-              {/* Prepared By Information */}
               <div className="mb-8">
                 <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
                   <Edit className="w-5 h-5 mr-2" />
@@ -1595,20 +1709,12 @@ const VolunteerApp = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-end">
                 <button
                   onClick={() => setCurrentView('landing')}
                   className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
                 >
                   Cancel
-                </button>
-                <button
-                  onClick={generateActivityPDF}
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Preview PDF
                 </button>
                 <button
                   onClick={handleSubmit}
@@ -1793,109 +1899,7 @@ const VolunteerApp = () => {
   return renderCurrentView();
 };
 
-export default VolunteerApp;="text"
-                      value={formData.first_name}
-                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter first name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.last_name}
-                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter last name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Organization *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.organization}
-                      onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter organization name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter email address"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone *
-                    </label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Families Served *
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.families_served}
-                      onChange={(e) => setFormData({ ...formData, families_served: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Number of families served"
-                      min="0"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Event Details */}
-              <div className="mb-8">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                    <Calendar className="w-5 h-5 mr-2" />
-                    Event Details
-                  </h2>
-                  <button
-                    onClick={addEventRow}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Event
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {eventRows.map((row, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-medium text-gray-700">Event {index + 1}</h3>
-                        {eventRows.length > 1 && (
-                          <button
-                            onClick={() => removeEventRow(index)}
-                            className="text-red-600 hover:text-red-800"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                        <div>
+export default VolunteerApp;
                           <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                           <input
                             type="date"
@@ -1915,588 +1919,3 @@ export default VolunteerApp;="text"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
-                          <input
-                            type="text"
-                            value={row.zip}
-                            onChange={(e) => updateEventRow(index, 'zip', e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="ZIP"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Hours Worked</label>
-                          <input
-                            type="number"
-                            value={row.hours}
-                            onChange={(e) => updateEventRow(index, 'hours', e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Hours"
-                            min="0"
-                            step="0.5"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Volunteers</label>
-                          <input
-                            type="number"
-                            value={row.volunteers}
-                            onChange={(e) => updateEventRow(index, 'volunteers', e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Count"
-                            min="1"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Total Hours Display */}
-                <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                  <div className="text-lg font-semibold text-blue-800">
-                    Total Volunteer Hours: {calculateTotalHours()}
-                  </div>
-                </div>
-              </div>
-
-              {/* Prepared By Information */}
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                  <Edit className="w-5 h-5 mr-2" />
-                  Prepared By
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      First Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.prepared_by_first}
-                      onChange={(e) => setFormData({ ...formData, prepared_by_first: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Preparer's first name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.prepared_by_last}
-                      onChange={(e) => setFormData({ ...formData, prepared_by_last: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Preparer's last name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Position/Title *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.position_title}
-                      onChange={(e) => setFormData({ ...formData, position_title: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Job title or position"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-end">
-                <button
-                  onClick={() => setCurrentView('landing')}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={generatePDF}
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Preview PDF
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Submit Log
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  // Activity Form
-  const ActivityForm = () => {
-    const [formData, setFormData] = useState({
-      volunteer_name: '',
-      email: '',
-      phone: '',
-      student_id: '',
-      prepared_by_first: '',
-      prepared_by_last: '',
-      position_title: ''
-    });
-    const [activities, setActivities] = useState([
-      { date: '', activity: '', organization: '', location: '', hours: '', description: '' }
-    ]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const addActivity = () => {
-      setActivities([...activities, { date: '', activity: '', organization: '', location: '', hours: '', description: '' }]);
-    };
-
-    const removeActivity = (index: number) => {
-      if (activities.length > 1) {
-        const newActivities = activities.filter((_, i) => i !== index);
-        setActivities(newActivities);
-      }
-    };
-
-    const updateActivity = (index: number, field: keyof typeof activities[0], value: string) => {
-      const newActivities = [...activities];
-      newActivities[index][field] = value;
-      setActivities(newActivities);
-    };
-
-    const calculateTotalHours = () => {
-      return activities.reduce((total, activity) => {
-        return total + (parseFloat(activity.hours) || 0);
-      }, 0);
-    };
-
-    const generateActivityPDF = () => {
-      const currentFormData = {
-        volunteer_name: formData.volunteer_name,
-        email: formData.email,
-        phone: formData.phone,
-        student_id: formData.student_id,
-        prepared_by_first: formData.prepared_by_first,
-        prepared_by_last: formData.prepared_by_last,
-        position_title: formData.position_title,
-        activities: activities.filter(activity => activity.date || activity.activity || activity.organization)
-      };
-      
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Activity Log (ICS 214)</title>
-              <style>
-                @page { margin: 0.5in; }
-                body { 
-                  font-family: Arial, sans-serif; 
-                  margin: 0; 
-                  padding: 15px;
-                  font-size: 11px;
-                  line-height: 1.3;
-                  background: white;
-                }
-                
-                .header {
-                  text-align: center;
-                  margin-bottom: 15px;
-                  border: 2px solid #000;
-                  padding: 10px;
-                }
-                
-                .header h1 {
-                  font-size: 16px;
-                  font-weight: bold;
-                  margin: 0;
-                  text-transform: uppercase;
-                }
-                
-                .form-section {
-                  border: 1px solid #000;
-                  margin-bottom: 10px;
-                  padding: 8px;
-                }
-                
-                .section-header {
-                  font-weight: bold;
-                  margin-bottom: 8px;
-                  font-size: 12px;
-                }
-                
-                .field-grid {
-                  display: grid;
-                  grid-template-columns: 1fr 1fr 1fr;
-                  gap: 15px;
-                  margin-bottom: 8px;
-                }
-                
-                .field {
-                  display: flex;
-                  align-items: center;
-                }
-                
-                .field-label {
-                  font-weight: bold;
-                  margin-right: 5px;
-                  min-width: 80px;
-                  font-size: 10px;
-                }
-                
-                .field-line {
-                  flex: 1;
-                  border-bottom: 1px solid #000;
-                  height: 18px;
-                  padding-left: 3px;
-                  padding-bottom: 1px;
-                }
-                
-                .resources-table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin: 10px 0;
-                }
-                
-                .resources-table th {
-                  border: 1px solid #000;
-                  padding: 4px;
-                  text-align: center;
-                  font-weight: bold;
-                  background-color: #f0f0f0;
-                  font-size: 10px;
-                }
-                
-                .resources-table td {
-                  border: 1px solid #000;
-                  padding: 4px;
-                  height: 20px;
-                }
-                
-                .activity-table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin: 10px 0;
-                }
-                
-                .activity-table th {
-                  border: 1px solid #000;
-                  padding: 6px 4px;
-                  text-align: center;
-                  font-weight: bold;
-                  background-color: #f0f0f0;
-                  font-size: 10px;
-                }
-                
-                .activity-table td {
-                  border: 1px solid #000;
-                  padding: 4px;
-                  vertical-align: top;
-                  min-height: 25px;
-                  font-size: 10px;
-                }
-                
-                .signature-section {
-                  display: grid;
-                  grid-template-columns: 1fr 1fr 1fr;
-                  gap: 20px;
-                  margin-top: 20px;
-                  border: 1px solid #000;
-                  padding: 10px;
-                }
-                
-                .signature-box {
-                  text-align: center;
-                }
-                
-                .signature-line {
-                  border-bottom: 1px solid #000;
-                  height: 25px;
-                  margin-bottom: 3px;
-                }
-                
-                .powered-by {
-                  position: fixed;
-                  bottom: 10px;
-                  right: 10px;
-                  font-size: 8px;
-                  color: #999;
-                }
-                
-                @media print {
-                  .powered-by { position: absolute; }
-                }
-              </style>
-            </head>
-            <body>
-              <div class="header">
-                <h1>Activity Log (ICS 214)</h1>
-              </div>
-              
-              <div class="form-section">
-                <div class="field-grid">
-                  <div class="field">
-                    <span class="field-label">1. Incident Name:</span>
-                    <div class="field-line">Volunteer Service</div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label">2. Operational Period:</span>
-                    <div class="field-line"></div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label">Date From:</span>
-                    <div class="field-line"></div>
-                  </div>
-                </div>
-                <div class="field-grid">
-                  <div class="field">
-                    <span class="field-label">3. Name:</span>
-                    <div class="field-line">${currentFormData.volunteer_name}</div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label">4. ICS Position:</span>
-                    <div class="field-line">Volunteer</div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label">Date To:</span>
-                    <div class="field-line"></div>
-                  </div>
-                </div>
-                <div class="field-grid">
-                  <div class="field">
-                    <span class="field-label"></span>
-                    <div class="field-line"></div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label"></span>
-                    <div class="field-line"></div>
-                  </div>
-                  <div class="field">
-                    <span class="field-label">Time To:</span>
-                    <div class="field-line"></div>
-                  </div>
-                </div>
-                <div class="field">
-                  <span class="field-label">5. Home Agency (and Unit):</span>
-                  <div class="field-line">Virtu Community Enhancement Group</div>
-                </div>
-              </div>
-              
-              <div class="form-section">
-                <div class="section-header">6. Resources Assigned:</div>
-                <table class="resources-table">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>ICS Position</th>
-                      <th>Home Agency (and Unit)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>${currentFormData.volunteer_name}</td>
-                      <td>Volunteer</td>
-                      <td>Individual Volunteer</td>
-                    </tr>
-                    ${Array.from({length: 4}, () => '<tr><td></td><td></td><td></td></tr>').join('')}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div class="form-section">
-                <div class="section-header">7. Activity Log:</div>
-                <table class="activity-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 20%;">Date/Time</th>
-                      <th style="width: 80%;">Notable Activities</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${currentFormData.activities.map(activity => `
-                      <tr>
-                        <td style="text-align: center;">
-                          ${activity.date ? new Date(activity.date).toLocaleDateString() : ''}<br>
-                          ${activity.hours ? activity.hours + ' hrs' : ''}
-                        </td>
-                        <td>
-                          <strong>${activity.activity || ''}</strong><br>
-                          Organization: ${activity.organization || ''}<br>
-                          Location: ${activity.location || ''}<br>
-                          ${activity.description || ''}
-                        </td>
-                      </tr>
-                    `).join('')}
-                    ${Array.from({length: Math.max(0, 8 - currentFormData.activities.length)}, () => 
-                      '<tr><td style="height: 30px;"></td><td></td></tr>'
-                    ).join('')}
-                  </tbody>
-                </table>
-              </div>
-              
-              <div class="signature-section">
-                <div class="signature-box">
-                  <div class="section-header">8. Prepared by:</div>
-                  <div class="signature-line">${currentFormData.prepared_by_first} ${currentFormData.prepared_by_last}</div>
-                  <div style="font-size: 9px;">Signature</div>
-                </div>
-                <div class="signature-box">
-                  <div class="section-header">Position/Title:</div>
-                  <div class="signature-line">${currentFormData.position_title}</div>
-                  <div style="font-size: 9px;">Position/Title</div>
-                </div>
-                <div class="signature-box">
-                  <div class="section-header">Date/Time:</div>
-                  <div class="signature-line">${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                  <div style="font-size: 9px;">Date/Time</div>
-                </div>
-              </div>
-              
-              <div class="powered-by">Powered by AHTS</div>
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-      }
-    };
-
-    const handleSubmit = async () => {
-      setIsSubmitting(true);
-      try {
-        if (!formData.volunteer_name || !formData.email || !formData.prepared_by_first || !formData.prepared_by_last || !formData.position_title) {
-          alert('Please fill in all required fields (marked with *)');
-          return;
-        }
-
-        const validActivities = activities.filter(activity => 
-          activity.date && activity.activity && activity.organization && activity.description
-        );
-        
-        if (validActivities.length === 0) {
-          alert('Please add at least one complete activity with date, type, organization, and description');
-          return;
-        }
-
-        for (const activity of validActivities) {
-          if (!activity.hours || isNaN(parseFloat(activity.hours))) {
-            alert('Please enter valid hours for all activities');
-            return;
-          }
-        }
-
-        const submitData = {
-          volunteer_name: formData.volunteer_name.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone?.trim() || null,
-          student_id: formData.student_id?.trim() || null,
-          prepared_by_first: formData.prepared_by_first.trim(),
-          prepared_by_last: formData.prepared_by_last.trim(),
-          position_title: formData.position_title.trim(),
-          activities: validActivities.map(activity => ({
-            date: activity.date,
-            activity: activity.activity,
-            organization: activity.organization.trim(),
-            location: activity.location?.trim() || '',
-            hours: activity.hours,
-            description: activity.description.trim()
-          }))
-        };
-
-        const response = await fetch('/api/activity-logs', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(submitData),
-        });
-
-        if (response.ok) {
-          alert('Activity log submitted successfully!');
-          setCurrentView('landing');
-        } else {
-          const result = await response.json();
-          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
-        }
-      } catch (error) {
-        console.error('Submission error:', error);
-        alert('Error submitting form. Please check your internet connection and try again.');
-      } finally {
-        setIsSubmitting(false);
-      }
-    };
-
-    return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto p-6">
-          <div className="bg-white rounded-lg shadow-lg">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6 rounded-t-lg">
-              <h1 className="text-2xl font-bold mb-2">Activity Log (ICS 214)</h1>
-              <p className="text-green-100">Record individual volunteer activities and track service hours</p>
-            </div>
-
-            <div className="p-6">
-              {/* Volunteer Information */}
-              <div className="mb-8">
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                  <User className="w-5 h-5 mr-2" />
-                  Volunteer Information
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Volunteer Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.volunteer_name}
-                      onChange={(e) => setFormData({ ...formData, volunteer_name: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="Enter full name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="Enter email address"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone Number
-                    </label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Student ID (if applicable)
-                    </label>
-                    <input
-                      type
