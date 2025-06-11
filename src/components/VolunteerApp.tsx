@@ -84,8 +84,6 @@ const VolunteerApp = () => {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  return renderCurrentView();
-
   // Check authentication on app load
   useEffect(() => {
     if (!isAuthenticated) {
