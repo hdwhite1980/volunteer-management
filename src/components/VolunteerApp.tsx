@@ -651,27 +651,13 @@ const VolunteerApp = () => {
 
   // Partnership Form with improved UI
   const PartnershipForm = () => {
-    const [formData, setFormData] = useState({
-      first_name: '',
-      last_name: '',
-      organization: '',
-      email: '',
-      phone: '',
-      families_served: '',
-      prepared_by_first: '',
-      prepared_by_last: '',
-      position_title: ''
-    });
-    const [eventRows, setEventRows] = useState([
-      { date: '', site: '', zip: '', hours: '', volunteers: '' }
-    ]);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const addEventRow = () => {
-      if (eventRows.length < 11) {
-        setEventRows([...eventRows, { date: '', site: '', zip: '', hours: '', volunteers: '' }]);
-      }
-    };
+  return (
+    <div className="p-8 text-center">
+      <h1 className="text-2xl font-bold text-gray-800">Partnership Form Placeholder</h1>
+      <p className="text-gray-600 mt-2">The real form will be added soon.</p>
+    </div>
+  );
+};
 
     const removeEventRow = (index: number) => {
       if (eventRows.length > 1) {
