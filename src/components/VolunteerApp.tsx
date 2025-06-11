@@ -506,14 +506,14 @@ const VolunteerApp = () => {
               </div>
               <div className="flex items-center space-x-3">
 {currentUser?.role === 'admin' && (
-                  <button
-                    onClick={() => setCurrentView('admin-dashboard')}
-                    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    <span>Admin Dashboard</span>
-                  </button>
-                )}
+  <button
+    onClick={() => setCurrentView('admin-dashboard')}
+    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+  >
+    <BarChart3 className="w-4 h-4" />
+    <span>Admin Dashboard</span>
+  </button>
+)}
                 <button
                   onClick={() => setShowCreateForm(true)}
                   className="bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
@@ -522,14 +522,18 @@ const VolunteerApp = () => {
                   <span>Create User</span>
                 </button>
                 <button
-                  onClick={() => window.location.href = '/'}
-                  className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:border-blue-400 transition-colors"
-                >
-                  <Navigation className="w-4 h-4" />
-                  <span>Home</span>
-                </button>
-                <button
-                  onClick={() => setCurrentView('dashboard')
+  onClick={() => window.location.href = '/'}
+  className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:border-blue-400 transition-colors"
+>
+  <Navigation className="w-4 h-4" />
+  <span>Home</span>
+</button>
+<button
+  onClick={() => setCurrentView('dashboard')}
+  className="text-gray-600 hover:text-gray-800 font-medium"
+>
+  ← Back
+</button>}
                   className="text-blue-600 hover:text-blue-800 font-medium"
                 >
                   ← Dashboard
@@ -652,14 +656,14 @@ const VolunteerApp = () => {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-3">
 {currentUser?.role === 'admin' && (
-                  <button
-                    onClick={() => setCurrentView('admin-dashboard')}
-                    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    <span>Admin Dashboard</span>
-                  </button>
-                )}
+  <button
+    onClick={() => setCurrentView('admin-dashboard')}
+    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+  >
+    <BarChart3 className="w-4 h-4" />
+    <span>Admin Dashboard</span>
+  </button>
+)}
                             <button
                               onClick={() => startEdit(user)}
                               className="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-lg transition-colors"
@@ -946,14 +950,14 @@ const VolunteerApp = () => {
               </div>
               <div className="flex items-center space-x-3">
 {currentUser?.role === 'admin' && (
-                  <button
-                    onClick={() => setCurrentView('admin-dashboard')}
-                    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    <span>Admin Dashboard</span>
-                  </button>
-                )}
+  <button
+    onClick={() => setCurrentView('admin-dashboard')}
+    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+  >
+    <BarChart3 className="w-4 h-4" />
+    <span>Admin Dashboard</span>
+  </button>
+)}
                 {currentUser?.role === 'admin' && (
                   <button
                     onClick={() => {
@@ -2526,26 +2530,30 @@ const VolunteerApp = () => {
               </div>
               <div className="flex items-center space-x-3">
 {currentUser?.role === 'admin' && (
-                  <button
-                    onClick={() => setCurrentView('admin-dashboard')}
-                    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
-                  >
-                    <BarChart3 className="w-4 h-4" />
-                    <span>Admin Dashboard</span>
-                  </button>
-                )}
+  <button
+    onClick={() => setCurrentView('admin-dashboard')}
+    className="bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
+  >
+    <BarChart3 className="w-4 h-4" />
+    <span>Admin Dashboard</span>
+  </button>
+)}
                 <span className="text-sm text-gray-600">
                   Logged in as: {currentUser?.username}
                 </span>
                 <button
-                  onClick={() => window.location.href = '/'}
-                  className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:border-blue-400 transition-colors"
-                >
-                  <Navigation className="w-4 h-4" />
-                  <span>Home</span>
-                </button>
-                <button
-                  onClick={() => setCurrentView('dashboard')
+  onClick={() => window.location.href = '/'}
+  className="flex items-center space-x-2 px-4 py-2 text-blue-600 hover:text-blue-800 border border-blue-300 rounded-lg hover:border-blue-400 transition-colors"
+>
+  <Navigation className="w-4 h-4" />
+  <span>Home</span>
+</button>
+<button
+  onClick={() => setCurrentView('dashboard')}
+  className="text-gray-600 hover:text-gray-800 font-medium"
+>
+  ← Back
+</button>}
                   className="text-blue-600 hover:text-blue-800 font-medium"
                 >
                   ← Dashboard
