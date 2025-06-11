@@ -1103,7 +1103,7 @@ const VolunteerApp = () => {
         }
 
         const validEvents = eventRows.filter(row => row.date && row.site);
-        
+
         if (validEvents.length === 0) {
           alert('Please add at least one event with a date and site location');
           return;
@@ -1134,7 +1134,7 @@ const VolunteerApp = () => {
           setCurrentView('landing');
         } else {
           const result = await response.json();
-          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
+          alert(Error submitting form: ${result.error || 'Unknown error'});
         }
       } catch (error) {
         console.error('Submission error:', error);
@@ -1267,6 +1267,25 @@ const VolunteerApp = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                         <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                          <input
+                            type="date"
+                            value={row.date}
+                            onChange={(e) => updateEventRow(index, 'date', e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Site Location</label>
+                          <input
+                            type="text"
+                            value={row.site}
+                            onChange={(e) => updateEventRow(index, 'site', e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Event location"
+                          />
+                        </div>
+                        <div>
                           <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code</label>
                           <input
                             type="text"
@@ -1347,7 +1366,205 @@ const VolunteerApp = () => {
                     </label>
                     <input
                       type="text"
-                      value={formData.position_title}
+                      onChange={(e) => setFormData({ ...formData, position_title: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      placeholder="Job title or position"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-end">
+                <button
+                  onClick={() => setCurrentView('landing')}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Submit Log
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Upload Component
+  const UploadComponent = () => {
+    const [uploading, setUploading] = useState(false);
+    const [uploadedFiles, setUploadedFiles] = useState<string[]>([]);
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files || files.length === 0) return;
+
+      setUploading(true);
+      const formData = new FormData();
+
+      Array.from(files).forEach(file => {
+        formData.append('files', file);
+      });
+
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          credentials: 'include',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          alert(Successfully uploaded ${result.files?.length || 1} files!);
+          setUploadedFiles(prev => [...prev, ...(result.files?.map((f: any) => f.name) || ['Uploaded file'])]);
+        } else {
+          alert(Upload failed: ${result.error});
+        }
+      } catch {
+        alert('Upload failed. Please try again.');
+      } finally {
+        setUploading(false);
+        event.target.value = '';
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
+                <Upload className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-2xl font-bold text-gray-800 mb-2">File Upload</h1>
+              <p className="text-gray-600">Upload documents, images, or other files to the system</p>
+            </div>
+
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">
+              <input
+                type="file"
+                onChange={handleFileUpload}
+                multiple
+                disabled={uploading}
+                className="hidden"
+                id="file-upload"
+              />
+              <label
+                htmlFor="file-upload"
+                className={cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}}
+              >
+                <div className="flex flex-col items-center">
+                  <Upload className="w-12 h-12 text-gray-400 mb-4" />
+                  <p className="text-lg font-medium text-gray-700 mb-2">
+                    {uploading ? 'Uploading...' : 'Click to upload files'}
+                  </p>
+                  <p className="text-gray-500">
+                    Select multiple files to upload at once
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            {uploadedFiles.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">Uploaded Files</h3>
+                <div className="space-y-2">
+                  {uploadedFiles.map((fileName, index) => (
+                    <div key={index} className="flex items-center p-3 bg-green-50 rounded-lg">
+                      <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+                      <span className="text-gray-800">{fileName}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-center">
+              <button
+                onClick={() => setCurrentView('dashboard')}
+                className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+              >
+                Back to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Loading screen
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 animate-pulse">
+            <Users className="w-8 h-8 text-white" />
+          </div>
+          <div className="text-white text-lg font-medium">Loading...</div>
+          <div className="text-gray-300 text-sm mt-2">Checking authentication status</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Render current view with authentication checks
+  const renderCurrentView = () => {
+    console.log('Current view:', currentView, 'Authenticated:', isAuthenticated);
+
+    switch (currentView) {
+      case 'partnership':
+        return <PartnershipForm />;
+      case 'activity':
+        return <ActivityForm />;
+      case 'dashboard':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        return <Dashboard />;
+      case 'users':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        if (currentUser?.role !== 'admin') {
+          alert('Access denied. Admin privileges required.');
+          setCurrentView('dashboard');
+          return <Dashboard />;
+        }
+        return <UserManagement />;
+      case 'upload':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        return <UploadComponent />;
+      case 'login':
+        return <LoginPage />;
+      default:
+        return <LandingPage />;
+    }
+  };
+
+  return renderCurrentView();
+};
+
+export default VolunteerApp;
                       onChange={(e) => setFormData({ ...formData, position_title: e.target.value })}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Job title or position"
@@ -1438,7 +1655,7 @@ const VolunteerApp = () => {
         const validActivities = activities.filter(activity => 
           activity.date && activity.activity && activity.organization && activity.description
         );
-        
+
         if (validActivities.length === 0) {
           alert('Please add at least one complete activity with date, type, organization, and description');
           return;
@@ -1481,7 +1698,7 @@ const VolunteerApp = () => {
           setCurrentView('landing');
         } else {
           const result = await response.json();
-          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
+          alert(Error submitting form: ${result.error || 'Unknown error'});
         }
       } catch (error) {
         console.error('Submission error:', error);
@@ -1900,22 +2117,3 @@ const VolunteerApp = () => {
 };
 
 export default VolunteerApp;
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                          <input
-                            type="date"
-                            value={row.date}
-                            onChange={(e) => updateEventRow(index, 'date', e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Site Location</label>
-                          <input
-                            type="text"
-                            value={row.site}
-                            onChange={(e) => updateEventRow(index, 'site', e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Event location"
-                          />
-                        </div>
-                        <div>
