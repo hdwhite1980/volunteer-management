@@ -1464,6 +1464,7 @@ const VolunteerApp = () => {
     }
   };
 
+  return renderCurrentView();
 };
 
 export default VolunteerApp;
