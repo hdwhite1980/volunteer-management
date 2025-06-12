@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Clock, Users, Calendar, Star, Mail, Phone, AlertCircle, 
   CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send, User, 
-  Badge, Search, Filter, Home, Zap, Target, Fire, TrendingUp,
+  Badge, Search, Filter, Home, Zap, Target, Flame, TrendingUp,
   ChevronDown, ChevronUp, X, Plus, UserPlus, Navigation
 } from 'lucide-react';
 
@@ -254,7 +254,7 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
               {job.urgency === 'urgent' && (
                 <div className="absolute top-0 right-0 p-4">
                   <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
-                    <Fire className="w-4 h-4 animate-pulse" />
+                    <Flame className="w-4 h-4 animate-pulse" />
                     <span className="text-sm font-bold">URGENT</span>
                   </div>
                 </div>
@@ -766,7 +766,7 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
                     : 'bg-red-100 text-red-700 hover:bg-red-200'
                 }`}
               >
-                <Fire className="w-4 h-4 inline mr-1" />
+                <Flame className="w-4 h-4 inline mr-1" />
                 Urgent Jobs
               </button>
               
@@ -898,7 +898,7 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
               <div>
                 <div className="flex items-center mb-6">
                   <div className="flex items-center space-x-2 bg-red-100 text-red-800 px-4 py-2 rounded-full">
-                    <Fire className="w-5 h-5 animate-pulse" />
+                    <Flame className="w-5 h-5 animate-pulse" />
                     <span className="font-bold">URGENT OPPORTUNITIES</span>
                   </div>
                   <div className="flex-1 h-px bg-red-200 ml-4"></div>
@@ -909,7 +909,7 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
                     <div key={job.id} className="bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
                       {/* Urgent Badge */}
                       <div className="bg-red-600 text-white p-2 flex items-center justify-center">
-                        <Fire className="w-4 h-4 mr-1 animate-pulse" />
+                        <Flame className="w-4 h-4 mr-1 animate-pulse" />
                         <span className="font-bold text-sm">URGENT - IMMEDIATE NEED</span>
                       </div>
                       
