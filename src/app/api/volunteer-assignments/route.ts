@@ -1,4 +1,5 @@
 // src/app/api/volunteer-assignments/route.ts
+// Fixed version - no duplicate function definitions
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
 
@@ -53,7 +54,7 @@ interface Assignment {
   assigned_by_username?: string;
 }
 
-// Helper function to check authentication (enhanced)
+// Helper function to check authentication (simplified for now)
 async function checkAuth(request: NextRequest) {
   try {
     const sessionId = request.cookies.get('session')?.value;
@@ -94,6 +95,7 @@ async function findVolunteerByEmail(email: string) {
   }
 }
 
+// POST - Create new assignment
 export async function POST(request: NextRequest) {
   try {
     console.log('Volunteer Assignments API: Creating assignment...');
@@ -293,6 +295,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
+// GET - Fetch assignments with optional filters
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
@@ -314,25 +317,25 @@ export async function GET(request: NextRequest) {
 
     if (volunteerId) {
       paramCount++;
-      whereConditions.push(`va.volunteer_id = ${paramCount}`);
+      whereConditions.push(`va.volunteer_id = $${paramCount}`);
       params.push(parseInt(volunteerId));
     }
 
     if (jobId) {
       paramCount++;
-      whereConditions.push(`va.job_id = ${paramCount}`);
+      whereConditions.push(`va.job_id = $${paramCount}`);
       params.push(parseInt(jobId));
     }
 
     if (status) {
       paramCount++;
-      whereConditions.push(`va.status = ${paramCount}`);
+      whereConditions.push(`va.status = $${paramCount}`);
       params.push(status);
     }
 
     if (email) {
       paramCount++;
-      whereConditions.push(`vr.email = ${paramCount}`);
+      whereConditions.push(`vr.email = $${paramCount}`);
       params.push(email);
     }
 
@@ -435,6 +438,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// PUT - Update assignment status/hours
 export async function PUT(request: NextRequest) {
   try {
     const url = new URL(request.url);
@@ -458,44 +462,44 @@ export async function PUT(request: NextRequest) {
 
     if (body.status) {
       paramCount++;
-      updateFields.push(`status = ${paramCount}`);
+      updateFields.push(`status = $${paramCount}`);
       params.push(body.status);
       
       // If marking as confirmed, set confirmed_at
       if (body.status === 'confirmed') {
         paramCount++;
-        updateFields.push(`confirmed_at = ${paramCount}`);
+        updateFields.push(`confirmed_at = $${paramCount}`);
         params.push(new Date().toISOString());
       }
     }
 
     if (body.completion_notes) {
       paramCount++;
-      updateFields.push(`completion_notes = ${paramCount}`);
+      updateFields.push(`completion_notes = $${paramCount}`);
       params.push(body.completion_notes);
     }
 
     if (body.rating) {
       paramCount++;
-      updateFields.push(`rating = ${paramCount}`);
+      updateFields.push(`rating = $${paramCount}`);
       params.push(body.rating);
     }
 
     if (body.feedback) {
       paramCount++;
-      updateFields.push(`feedback = ${paramCount}`);
+      updateFields.push(`feedback = $${paramCount}`);
       params.push(body.feedback);
     }
 
     if (body.hours_logged !== undefined) {
       paramCount++;
-      updateFields.push(`hours_logged = ${paramCount}`);
+      updateFields.push(`hours_logged = $${paramCount}`);
       params.push(body.hours_logged);
     }
 
     if (body.notes) {
       paramCount++;
-      updateFields.push(`notes = ${paramCount}`);
+      updateFields.push(`notes = $${paramCount}`);
       params.push(body.notes);
     }
 
@@ -508,14 +512,14 @@ export async function PUT(request: NextRequest) {
 
     // Add updated_at and assignment ID
     paramCount++;
-    updateFields.push(`updated_at = ${paramCount}`);
+    updateFields.push(`updated_at = $${paramCount}`);
     params.push(new Date().toISOString());
 
     paramCount++;
     const updateQuery = `
       UPDATE volunteer_assignments 
       SET ${updateFields.join(', ')}
-      WHERE id = ${paramCount}
+      WHERE id = $${paramCount}
       RETURNING id, volunteer_id, job_id, status, updated_at
     `;
     params.push(parseInt(assignmentId));
@@ -570,6 +574,7 @@ export async function PUT(request: NextRequest) {
   }
 }
 
+// DELETE - Remove assignment
 export async function DELETE(request: NextRequest) {
   try {
     const url = new URL(request.url);
@@ -612,291 +617,6 @@ export async function DELETE(request: NextRequest) {
       `;
     } catch (logError) {
       console.warn('Failed to log assignment deletion:', logError);
-    }
-
-    console.log(`Volunteer Assignments API: Successfully deleted assignment ${assignmentId}`);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Assignment deleted successfully'
-    });
-
-  } catch (error) {
-    console.error('Volunteer Assignments API: Error deleting assignment:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to delete assignment',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const url = new URL(request.url);
-    const volunteerId = url.searchParams.get('volunteer_id');
-    const jobId = url.searchParams.get('job_id');
-    const status = url.searchParams.get('status');
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const limit = parseInt(url.searchParams.get('limit') || '20');
-    const offset = (page - 1) * limit;
-
-    console.log('Volunteer Assignments API: Fetching assignments with filters:', { 
-      volunteerId, jobId, status 
-    });
-
-    let whereConditions: string[] = [];
-    let params: any[] = [];
-    let paramCount = 0;
-
-    if (volunteerId) {
-      paramCount++;
-      whereConditions.push(`va.volunteer_id = $${paramCount}`);
-      params.push(parseInt(volunteerId));
-    }
-
-    if (jobId) {
-      paramCount++;
-      whereConditions.push(`va.job_id = $${paramCount}`);
-      params.push(parseInt(jobId));
-    }
-
-    if (status) {
-      paramCount++;
-      whereConditions.push(`va.status = $${paramCount}`);
-      params.push(status);
-    }
-
-    const whereClause = whereConditions.length > 0 
-      ? `WHERE ${whereConditions.join(' AND ')}`
-      : '';
-
-    const query = `
-      SELECT 
-        va.*,
-        vr.username,
-        vr.first_name,
-        vr.last_name,
-        vr.email as volunteer_email,
-        vr.phone as volunteer_phone,
-        j.title as job_title,
-        j.category as job_category,
-        j.city as job_city,
-        j.state as job_state,
-        j.start_date,
-        j.end_date,
-        ja.applied_at
-      FROM volunteer_assignments va
-      JOIN volunteer_registrations vr ON va.volunteer_id = vr.id
-      JOIN jobs j ON va.job_id = j.id
-      LEFT JOIN job_applications ja ON va.application_id = ja.id
-      ${whereClause}
-      ORDER BY va.assigned_at DESC
-      LIMIT ${limit} OFFSET ${offset}
-    `;
-
-    const assignments = await sql(query, params) as any[];
-
-    // Get total count
-    const countQuery = `
-      SELECT COUNT(*) as total
-      FROM volunteer_assignments va
-      JOIN volunteer_registrations vr ON va.volunteer_id = vr.id
-      JOIN jobs j ON va.job_id = j.id
-      ${whereClause}
-    `;
-
-    const countResult = await sql(countQuery, params) as any[];
-    const total = parseInt(countResult[0]?.total || '0');
-
-    console.log(`Volunteer Assignments API: Returning ${assignments.length} assignments out of ${total} total`);
-
-    return NextResponse.json({
-      assignments: assignments.map(assignment => ({
-        id: assignment.id,
-        volunteer: {
-          id: assignment.volunteer_id,
-          username: assignment.username,
-          name: `${assignment.first_name} ${assignment.last_name}`,
-          email: assignment.volunteer_email,
-          phone: assignment.volunteer_phone
-        },
-        job: {
-          id: assignment.job_id,
-          title: assignment.job_title,
-          category: assignment.job_category,
-          location: `${assignment.job_city}, ${assignment.job_state}`,
-          start_date: assignment.start_date,
-          end_date: assignment.end_date
-        },
-        status: assignment.status,
-        assigned_at: assignment.assigned_at,
-        confirmed_at: assignment.confirmed_at,
-        completion_notes: assignment.completion_notes,
-        rating: assignment.rating,
-        feedback: assignment.feedback,
-        hours_logged: assignment.hours_logged,
-        applied_at: assignment.applied_at,
-        created_at: assignment.created_at,
-        updated_at: assignment.updated_at
-      })),
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page * limit < total,
-        hasPrev: page > 1
-      }
-    });
-
-  } catch (error) {
-    console.error('Volunteer Assignments API: Error fetching assignments:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch assignments',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    const url = new URL(request.url);
-    const assignmentId = url.searchParams.get('id');
-    
-    if (!assignmentId) {
-      return NextResponse.json(
-        { error: 'Assignment ID is required' },
-        { status: 400 }
-      );
-    }
-
-    const body = await request.json() as AssignmentUpdate;
-    
-    console.log(`Volunteer Assignments API: Updating assignment ${assignmentId}`);
-
-    // Build update query dynamically based on provided fields
-    const updateFields: string[] = [];
-    const params: any[] = [];
-    let paramCount = 0;
-
-    if (body.status) {
-      paramCount++;
-      updateFields.push(`status = $${paramCount}`);
-      params.push(body.status);
-      
-      // If marking as confirmed, set confirmed_at
-      if (body.status === 'confirmed') {
-        paramCount++;
-        updateFields.push(`confirmed_at = $${paramCount}`);
-        params.push(new Date().toISOString());
-      }
-    }
-
-    if (body.completion_notes) {
-      paramCount++;
-      updateFields.push(`completion_notes = $${paramCount}`);
-      params.push(body.completion_notes);
-    }
-
-    if (body.rating) {
-      paramCount++;
-      updateFields.push(`rating = $${paramCount}`);
-      params.push(body.rating);
-    }
-
-    if (body.feedback) {
-      paramCount++;
-      updateFields.push(`feedback = $${paramCount}`);
-      params.push(body.feedback);
-    }
-
-    if (body.hours_logged) {
-      paramCount++;
-      updateFields.push(`hours_logged = $${paramCount}`);
-      params.push(body.hours_logged);
-    }
-
-    if (updateFields.length === 0) {
-      return NextResponse.json(
-        { error: 'No valid fields provided for update' },
-        { status: 400 }
-      );
-    }
-
-    // Add updated_at and assignment ID
-    paramCount++;
-    updateFields.push(`updated_at = $${paramCount}`);
-    params.push(new Date().toISOString());
-
-    paramCount++;
-    const updateQuery = `
-      UPDATE volunteer_assignments 
-      SET ${updateFields.join(', ')}
-      WHERE id = $${paramCount}
-      RETURNING id, volunteer_id, job_id, status, updated_at
-    `;
-    params.push(parseInt(assignmentId));
-
-    const result = await sql(updateQuery, params) as any[];
-
-    if (result.length === 0) {
-      return NextResponse.json(
-        { error: 'Assignment not found' },
-        { status: 404 }
-      );
-    }
-
-    console.log(`Volunteer Assignments API: Successfully updated assignment ${assignmentId}`);
-
-    return NextResponse.json({
-      success: true,
-      assignment: result[0],
-      message: 'Assignment updated successfully'
-    });
-
-  } catch (error) {
-    console.error('Volunteer Assignments API: Error updating assignment:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to update assignment',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const url = new URL(request.url);
-    const assignmentId = url.searchParams.get('id');
-    
-    if (!assignmentId) {
-      return NextResponse.json(
-        { error: 'Assignment ID is required' },
-        { status: 400 }
-      );
-    }
-
-    console.log(`Volunteer Assignments API: Deleting assignment ${assignmentId}`);
-
-    const result = await sql`
-      DELETE FROM volunteer_assignments 
-      WHERE id = ${parseInt(assignmentId)}
-      RETURNING id, volunteer_id, job_id
-    ` as any[];
-
-    if (result.length === 0) {
-      return NextResponse.json(
-        { error: 'Assignment not found' },
-        { status: 404 }
-      );
     }
 
     console.log(`Volunteer Assignments API: Successfully deleted assignment ${assignmentId}`);
