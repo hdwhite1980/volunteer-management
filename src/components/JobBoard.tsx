@@ -1,7 +1,5 @@
-// src/components/JobBoard.tsx
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, Users, Calendar, Star, Mail, Phone, AlertCircle, CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send } from 'lucide-react';
-import { useCategories } from '@/hooks/useCategories';
+import { MapPin, Clock, Users, Calendar, Star, Mail, Phone, AlertCircle, CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send, UserCheck, Award } from 'lucide-react';
 
 interface JobBoardProps {
   jobId?: any;
@@ -13,6 +11,7 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
   const [error, setError] = useState('');
   const [applying, setApplying] = useState(false);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const [volunteerProfile, setVolunteerProfile] = useState<any>(null);
   const [applicationData, setApplicationData] = useState({
     volunteer_name: '',
     email: '',
@@ -45,22 +44,64 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
     }
   };
 
+  const checkExistingVolunteer = async (email: string) => {
+    if (!email || email.length < 3) return;
+    
+    try {
+      const response = await fetch(`/api/volunteer-signup?email=${encodeURIComponent(email)}`, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.volunteers && data.volunteers.length > 0) {
+          const volunteer = data.volunteers[0];
+          setVolunteerProfile(volunteer);
+          
+          // Pre-fill application form with volunteer data
+          setApplicationData(prev => ({
+            ...prev,
+            volunteer_name: `${volunteer.first_name} ${volunteer.last_name}`,
+            email: volunteer.email,
+            phone: volunteer.phone || ''
+          }));
+        }
+      }
+    } catch (error) {
+      console.log('No existing volunteer registration found');
+      setVolunteerProfile(null);
+    }
+  };
+
   const handleApplicationSubmit = async (e: any) => {
     e.preventDefault();
     setApplying(true);
 
     try {
+      const applicationPayload: any = {
+        job_id: jobId,
+        volunteer_name: applicationData.volunteer_name,
+        email: applicationData.email,
+        phone: applicationData.phone,
+        cover_letter: applicationData.cover_letter,
+        experience: applicationData.experience
+      };
+
+      // If we found an existing volunteer profile, include the volunteer_id
+      if (volunteerProfile) {
+        applicationPayload.volunteer_id = volunteerProfile.id;
+      }
+
       const response = await fetch('/api/job-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          job_id: jobId,
-          ...applicationData
-        })
+        body: JSON.stringify(applicationPayload)
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        alert('Application submitted successfully!');
+        alert('Application submitted successfully! You will be contacted if selected.');
         setShowApplicationForm(false);
         setApplicationData({
           volunteer_name: '',
@@ -69,8 +110,8 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
           cover_letter: '',
           experience: ''
         });
+        setVolunteerProfile(null);
       } else {
-        const result = await response.json();
         alert(`Error: ${result.error}`);
       }
     } catch (err) {
@@ -134,7 +175,7 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                     </div>
                     <div className="flex items-center">
                       <Users className="w-4 h-4 mr-1" />
-                      {job.positions_remaining} positions available
+                      {job.positions_remaining || job.volunteers_needed} positions available
                     </div>
                   </div>
                 </div>
@@ -167,10 +208,27 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                     </div>
                   )}
 
-                  {job.experience && (
+                  {job.age_requirement && (
                     <div>
-                      <h2 className="text-xl font-semibold mb-3">Experience Required</h2>
-                      <p className="text-gray-700">{job.experience}</p>
+                      <h2 className="text-xl font-semibold mb-3">Requirements</h2>
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="flex items-center text-sm text-gray-700">
+                          <Star className="w-4 h-4 mr-2 text-gray-500" />
+                          <span>{job.age_requirement}</span>
+                        </div>
+                        {job.background_check_required && (
+                          <div className="flex items-center text-sm text-gray-700 mt-2">
+                            <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
+                            <span>Background check required</span>
+                          </div>
+                        )}
+                        {job.training_provided && (
+                          <div className="flex items-center text-sm text-gray-700 mt-2">
+                            <Award className="w-4 h-4 mr-2 text-blue-500" />
+                            <span>Training provided</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -194,10 +252,10 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                         <Users className="w-4 h-4 mr-3 text-gray-500" />
                         <span className="text-sm">{job.volunteers_needed} volunteers needed</span>
                       </div>
-                      {job.age_requirement && (
+                      {job.start_date && (
                         <div className="flex items-center">
-                          <Star className="w-4 h-4 mr-3 text-gray-500" />
-                          <span className="text-sm">{job.age_requirement}</span>
+                          <Calendar className="w-4 h-4 mr-3 text-gray-500" />
+                          <span className="text-sm">Starts {new Date(job.start_date).toLocaleDateString()}</span>
                         </div>
                       )}
                     </div>
@@ -240,12 +298,36 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
         </div>
       </div>
 
-      {/* Application Modal */}
+      {/* Enhanced Application Modal */}
       {showApplicationForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
             <div className="p-6">
-              <h2 className="text-2xl font-bold mb-6">Apply for {job.title}</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Apply for {job.title}</h2>
+                {volunteerProfile && (
+                  <div className="flex items-center text-green-600 text-sm">
+                    <UserCheck className="w-4 h-4 mr-1" />
+                    <span>Profile Found</span>
+                  </div>
+                )}
+              </div>
+
+              {volunteerProfile && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                    <span className="font-medium text-green-800">Existing volunteer profile found!</span>
+                  </div>
+                  <div className="text-sm text-green-700">
+                    <p><strong>Username:</strong> @{volunteerProfile.username}</p>
+                    <p><strong>Experience:</strong> {volunteerProfile.experience_level}</p>
+                    {volunteerProfile.skills && volunteerProfile.skills.length > 0 && (
+                      <p><strong>Skills:</strong> {volunteerProfile.skills.slice(0, 3).join(', ')}{volunteerProfile.skills.length > 3 ? '...' : ''}</p>
+                    )}
+                  </div>
+                </div>
+              )}
               
               <form onSubmit={handleApplicationSubmit} className="space-y-4">
                 <div>
@@ -269,8 +351,12 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                     type="email"
                     required
                     value={applicationData.email}
-                    onChange={(e) => setApplicationData({...applicationData, email: e.target.value})}
+                    onChange={(e) => {
+                      setApplicationData({...applicationData, email: e.target.value});
+                      checkExistingVolunteer(e.target.value);
+                    }}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter your email to check for existing profile"
                   />
                 </div>
 
@@ -312,17 +398,46 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                   />
                 </div>
 
+                {!volunteerProfile && applicationData.email && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center text-blue-800 text-sm">
+                      <AlertCircle className="w-4 h-4 mr-2" />
+                      <span>No existing volunteer profile found. A basic profile will be created for you.</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex space-x-4 pt-4">
                   <button
                     type="submit"
                     disabled={applying}
-                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
                   >
-                    {applying ? 'Submitting...' : 'Submit Application'}
+                    {applying ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Submitting...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Submit Application
+                      </>
+                    )}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowApplicationForm(false)}
+                    onClick={() => {
+                      setShowApplicationForm(false);
+                      setVolunteerProfile(null);
+                      setApplicationData({
+                        volunteer_name: '',
+                        email: '',
+                        phone: '',
+                        cover_letter: '',
+                        experience: ''
+                      });
+                    }}
                     className="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
                   >
                     Cancel
@@ -347,14 +462,29 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
     skills: '',
     search: ''
   });
-  const [selectedJob, setSelectedJob] = useState<any>(null);
-
-  // Fetch categories from database using the hook
-  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories('volunteer');
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   useEffect(() => {
+    fetchCategories();
     fetchJobs();
   }, [filters]);
+
+  const fetchCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const response = await fetch('/api/categories?type=volunteer');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCategories(data.categories || []);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
 
   const fetchJobs = async () => {
     try {
@@ -394,6 +524,10 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
     }
   };
 
+  const isJobFullyBooked = (job: any) => {
+    return (job.volunteers_assigned || 0) >= job.volunteers_needed;
+  };
+
   if (jobId) {
     return <JobDetails jobId={jobId} />;
   }
@@ -405,23 +539,59 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
         <div className="container mx-auto px-6 py-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Volunteer Opportunities</h1>
           <p className="text-gray-600">Find meaningful ways to make a difference in your community</p>
+          
+          {/* Stats Banner */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <div className="flex items-center">
+                <Users className="w-8 h-8 text-blue-600 mr-3" />
+                <div>
+                  <p className="text-sm text-blue-600 font-medium">Active Opportunities</p>
+                  <p className="text-2xl font-bold text-blue-900">{jobs.length}</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-green-50 rounded-lg p-4">
+              <div className="flex items-center">
+                <CheckCircle className="w-8 h-8 text-green-600 mr-3" />
+                <div>
+                  <p className="text-sm text-green-600 font-medium">Available Positions</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {jobs.reduce((sum, job) => sum + Math.max(0, job.volunteers_needed - (job.volunteers_assigned || 0)), 0)}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-purple-50 rounded-lg p-4">
+              <div className="flex items-center">
+                <Star className="w-8 h-8 text-purple-600 mr-3" />
+                <div>
+                  <p className="text-sm text-purple-600 font-medium">Urgent Needs</p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {jobs.filter(job => job.urgency === 'urgent').length}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Enhanced Filters */}
       <div className="bg-white border-b shadow-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-wrap gap-4">
             <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
               <select
                 value={filters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 min-w-40"
                 disabled={categoriesLoading}
               >
                 <option value="all">All Categories</option>
                 {categoriesLoading ? (
-                  <option disabled>Loading categories...</option>
+                  <option disabled>Loading...</option>
                 ) : (
                   categories.map((category) => (
                     <option 
@@ -437,35 +607,39 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
             </div>
 
             <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Location</label>
               <input
                 type="text"
                 placeholder="Enter zipcode"
                 value={filters.zipcode}
                 onChange={(e) => handleFilterChange('zipcode', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-32"
               />
             </div>
 
             <div>
+              <label className="block text-xs font-medium text-gray-500 mb-1">Distance</label>
               <select
                 value={filters.distance}
                 onChange={(e) => handleFilterChange('distance', parseInt(e.target.value))}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                disabled={!filters.zipcode}
               >
-                <option value={5}>Within 5 miles</option>
-                <option value={10}>Within 10 miles</option>
-                <option value={25}>Within 25 miles</option>
-                <option value={50}>Within 50 miles</option>
+                <option value={5}>5 miles</option>
+                <option value={10}>10 miles</option>
+                <option value={25}>25 miles</option>
+                <option value={50}>50 miles</option>
               </select>
             </div>
 
-            <div>
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
               <input
                 type="text"
-                placeholder="Search opportunities..."
+                placeholder="Search opportunities, skills, organizations..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -483,58 +657,160 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
           <div className="text-center py-12">
             <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No opportunities found</h3>
-            <p className="text-gray-600">Try adjusting your search filters</p>
+            <p className="text-gray-600">Try adjusting your search filters or check back later for new opportunities</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {jobs.map((job) => (
-              <div key={job.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${getUrgencyColor(job.urgency)}`}>
-                      {job.urgency}
-                    </div>
-                    <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 cursor-pointer transition-colors" />
-                  </div>
-
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{job.title}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{job.description}</p>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      {job.city}, {job.state}
-                      {job.distance_miles && (
-                        <span className="ml-2 text-blue-600">
-                          ({Math.round(job.distance_miles)} mi)
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Users className="w-4 h-4 mr-2" />
-                      {job.positions_remaining} positions available
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="w-4 h-4 mr-2" />
-                      {job.time_commitment}
-                    </div>
-                  </div>
-
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => window.location.href = `/jobs/${job.id}`}
-                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                    >
-                      View Details
-                    </button>
-                    <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+          <>
+            {/* Results Summary */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {jobs.length} Volunteer Opportunities
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {filters.zipcode && `Within ${filters.distance} miles of ${filters.zipcode}`}
+                  {filters.category !== 'all' && ` • ${filters.category}`}
+                </p>
               </div>
-            ))}
-          </div>
+              
+              <div className="flex items-center space-x-2 text-sm text-gray-600">
+                <span>Sort by:</span>
+                <select className="border border-gray-300 rounded px-2 py-1 text-sm">
+                  <option>Most Urgent</option>
+                  <option>Nearest</option>
+                  <option>Most Recent</option>
+                  <option>Most Positions</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Job Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {jobs.map((job) => {
+                const fullyBooked = isJobFullyBooked(job);
+                
+                return (
+                  <div 
+                    key={job.id} 
+                    className={`bg-white rounded-2xl shadow-lg border hover:shadow-xl transition-all duration-300 ${
+                      fullyBooked ? 'border-yellow-300 bg-yellow-50' : 'border-gray-100'
+                    }`}
+                  >
+                    <div className="p-6">
+                      {/* Header */}
+                      <div className="flex justify-between items-start mb-4">
+                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${getUrgencyColor(job.urgency)}`}>
+                          {job.urgency} priority
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {fullyBooked && (
+                            <span className="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded-full font-medium">
+                              FULL
+                            </span>
+                          )}
+                          <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 cursor-pointer transition-colors" />
+                        </div>
+                      </div>
+
+                      {/* Content */}
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">{job.title}</h3>
+                      <p className="text-gray-600 mb-4 line-clamp-3 text-sm">{job.description}</p>
+
+                      {/* Details */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center text-sm text-gray-500">
+                          <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                          <span>{job.city}, {job.state}</span>
+                          {job.distance_miles && (
+                            <span className="ml-2 text-blue-600 font-medium">
+                              ({Math.round(job.distance_miles)} mi)
+                            </span>
+                          )}
+                        </div>
+                        
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Users className="w-4 h-4 mr-2 flex-shrink-0" />
+                          <span>
+                            {fullyBooked ? 'Fully staffed' : `${job.positions_remaining || job.volunteers_needed} positions available`}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center text-sm text-gray-500">
+                          <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
+                          <span>{job.time_commitment || 'Flexible schedule'}</span>
+                        </div>
+
+                        {job.skills_needed && job.skills_needed.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-3">
+                            {job.skills_needed.slice(0, 2).map((skill: string, index: number) => (
+                              <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
+                                {skill}
+                              </span>
+                            ))}
+                            {job.skills_needed.length > 2 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                                +{job.skills_needed.length - 2} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div className="mb-4">
+                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                          <span>Volunteers</span>
+                          <span>{job.volunteers_assigned || 0}/{job.volunteers_needed}</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full transition-all duration-300 ${
+                              fullyBooked ? 'bg-yellow-500' : 'bg-blue-500'
+                            }`}
+                            style={{ 
+                              width: `${Math.min(((job.volunteers_assigned || 0) / job.volunteers_needed) * 100, 100)}%` 
+                            }}
+                          ></div>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => window.location.href = `/jobs/${job.id}`}
+                          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                        >
+                          View Details
+                        </button>
+                        <button 
+                          className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                          title="Save for later"
+                        >
+                          <Heart className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Call to Action */}
+            <div className="mt-12 text-center">
+              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
+                <h3 className="text-2xl font-bold mb-2">Ready to Make a Difference?</h3>
+                <p className="mb-6 opacity-90">
+                  Join our community of volunteers and help create positive change in your area.
+                </p>
+                <button 
+                  onClick={() => window.location.href = '/volunteer-signup'}
+                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+                >
+                  Register as a Volunteer
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>
