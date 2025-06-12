@@ -1,5 +1,7 @@
+// src/components/JobBoard.tsx
+// Enhanced version with volunteer ID integration
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, Users, Calendar, Star, Mail, Phone, AlertCircle, CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send, UserCheck, Award } from 'lucide-react';
+import { MapPin, Clock, Users, Calendar, Star, Mail, Phone, AlertCircle, CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send, User, Badge } from 'lucide-react';
 
 interface JobBoardProps {
   jobId?: any;
@@ -12,6 +14,7 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
   const [applying, setApplying] = useState(false);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
   const [volunteerProfile, setVolunteerProfile] = useState<any>(null);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [applicationData, setApplicationData] = useState({
     volunteer_name: '',
     email: '',
@@ -44,32 +47,46 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
     }
   };
 
+  // Enhanced volunteer profile check
   const checkExistingVolunteer = async (email: string) => {
-    if (!email || email.length < 3) return;
-    
+    if (!email || email.length < 3) {
+      setVolunteerProfile(null);
+      return;
+    }
+
+    setCheckingEmail(true);
     try {
-      const response = await fetch(`/api/volunteer-signup?email=${encodeURIComponent(email)}`, {
-        credentials: 'include'
-      });
-      
+      const response = await fetch(`/api/volunteers?email=${encodeURIComponent(email)}`);
       if (response.ok) {
         const data = await response.json();
         if (data.volunteers && data.volunteers.length > 0) {
           const volunteer = data.volunteers[0];
-          setVolunteerProfile(volunteer);
+          setVolunteerProfile({
+            id: volunteer.id,
+            username: volunteer.username,
+            name: `${volunteer.first_name} ${volunteer.last_name}`,
+            email: volunteer.email,
+            phone: volunteer.phone,
+            experience_level: volunteer.experience_level,
+            skills: volunteer.skills || [],
+            categories_interested: volunteer.categories_interested || []
+          });
           
-          // Pre-fill application form with volunteer data
+          // Auto-fill name if found
           setApplicationData(prev => ({
             ...prev,
             volunteer_name: `${volunteer.first_name} ${volunteer.last_name}`,
-            email: volunteer.email,
-            phone: volunteer.phone || ''
+            phone: volunteer.phone || prev.phone
           }));
+        } else {
+          setVolunteerProfile(null);
         }
       }
     } catch (error) {
-      console.log('No existing volunteer registration found');
+      console.error('Error checking volunteer profile:', error);
       setVolunteerProfile(null);
+    } finally {
+      setCheckingEmail(false);
     }
   };
 
@@ -78,30 +95,19 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
     setApplying(true);
 
     try {
-      const applicationPayload: any = {
-        job_id: jobId,
-        volunteer_name: applicationData.volunteer_name,
-        email: applicationData.email,
-        phone: applicationData.phone,
-        cover_letter: applicationData.cover_letter,
-        experience: applicationData.experience
-      };
-
-      // If we found an existing volunteer profile, include the volunteer_id
-      if (volunteerProfile) {
-        applicationPayload.volunteer_id = volunteerProfile.id;
-      }
-
       const response = await fetch('/api/job-applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(applicationPayload)
+        body: JSON.stringify({
+          job_id: jobId,
+          volunteer_id: volunteerProfile?.id, // Include volunteer ID if found
+          ...applicationData
+        })
       });
 
-      const result = await response.json();
-
       if (response.ok) {
-        alert('Application submitted successfully! You will be contacted if selected.');
+        const result = await response.json();
+        alert(`Application submitted successfully! ${volunteerProfile ? `Your volunteer ID: ${volunteerProfile.username}` : ''}`);
         setShowApplicationForm(false);
         setApplicationData({
           volunteer_name: '',
@@ -112,6 +118,7 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
         });
         setVolunteerProfile(null);
       } else {
+        const result = await response.json();
         alert(`Error: ${result.error}`);
       }
     } catch (err) {
@@ -175,7 +182,7 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                     </div>
                     <div className="flex items-center">
                       <Users className="w-4 h-4 mr-1" />
-                      {job.positions_remaining || job.volunteers_needed} positions available
+                      {job.positions_remaining} positions available
                     </div>
                   </div>
                 </div>
@@ -208,27 +215,10 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                     </div>
                   )}
 
-                  {job.age_requirement && (
+                  {job.experience && (
                     <div>
-                      <h2 className="text-xl font-semibold mb-3">Requirements</h2>
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <div className="flex items-center text-sm text-gray-700">
-                          <Star className="w-4 h-4 mr-2 text-gray-500" />
-                          <span>{job.age_requirement}</span>
-                        </div>
-                        {job.background_check_required && (
-                          <div className="flex items-center text-sm text-gray-700 mt-2">
-                            <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                            <span>Background check required</span>
-                          </div>
-                        )}
-                        {job.training_provided && (
-                          <div className="flex items-center text-sm text-gray-700 mt-2">
-                            <Award className="w-4 h-4 mr-2 text-blue-500" />
-                            <span>Training provided</span>
-                          </div>
-                        )}
-                      </div>
+                      <h2 className="text-xl font-semibold mb-3">Experience Required</h2>
+                      <p className="text-gray-700">{job.experience}</p>
                     </div>
                   )}
                 </div>
@@ -252,10 +242,10 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                         <Users className="w-4 h-4 mr-3 text-gray-500" />
                         <span className="text-sm">{job.volunteers_needed} volunteers needed</span>
                       </div>
-                      {job.start_date && (
+                      {job.age_requirement && (
                         <div className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-3 text-gray-500" />
-                          <span className="text-sm">Starts {new Date(job.start_date).toLocaleDateString()}</span>
+                          <Star className="w-4 h-4 mr-3 text-gray-500" />
+                          <span className="text-sm">{job.age_requirement}</span>
                         </div>
                       )}
                     </div>
@@ -303,27 +293,26 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Apply for {job.title}</h2>
-                {volunteerProfile && (
-                  <div className="flex items-center text-green-600 text-sm">
-                    <UserCheck className="w-4 h-4 mr-1" />
-                    <span>Profile Found</span>
-                  </div>
-                )}
-              </div>
-
+              <h2 className="text-2xl font-bold mb-6">Apply for {job.title}</h2>
+              
+              {/* Volunteer Profile Display */}
               {volunteerProfile && (
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center mb-2">
                     <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
-                    <span className="font-medium text-green-800">Existing volunteer profile found!</span>
+                    <span className="font-semibold text-green-800">Volunteer Profile Found!</span>
                   </div>
-                  <div className="text-sm text-green-700">
-                    <p><strong>Username:</strong> @{volunteerProfile.username}</p>
-                    <p><strong>Experience:</strong> {volunteerProfile.experience_level}</p>
-                    {volunteerProfile.skills && volunteerProfile.skills.length > 0 && (
-                      <p><strong>Skills:</strong> {volunteerProfile.skills.slice(0, 3).join(', ')}{volunteerProfile.skills.length > 3 ? '...' : ''}</p>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">ID:</span> {volunteerProfile.username}
+                    </div>
+                    <div>
+                      <span className="font-medium">Experience:</span> {volunteerProfile.experience_level}
+                    </div>
+                    {volunteerProfile.skills.length > 0 && (
+                      <div className="col-span-2">
+                        <span className="font-medium">Skills:</span> {volunteerProfile.skills.join(', ')}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -346,6 +335,7 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Email Address *
+                    {checkingEmail && <span className="ml-2 text-sm text-blue-600">Checking...</span>}
                   </label>
                   <input
                     type="email"
@@ -356,8 +346,12 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                       checkExistingVolunteer(e.target.value);
                     }}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter your email to check for existing profile"
                   />
+                  {!volunteerProfile && applicationData.email && !checkingEmail && (
+                    <p className="text-sm text-orange-600 mt-1">
+                      No volunteer profile found. Consider registering as a volunteer first for faster future applications.
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -398,45 +392,19 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                   />
                 </div>
 
-                {!volunteerProfile && applicationData.email && (
-                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center text-blue-800 text-sm">
-                      <AlertCircle className="w-4 h-4 mr-2" />
-                      <span>No existing volunteer profile found. A basic profile will be created for you.</span>
-                    </div>
-                  </div>
-                )}
-
                 <div className="flex space-x-4 pt-4">
                   <button
                     type="submit"
                     disabled={applying}
-                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center"
+                    className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
-                    {applying ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        Submitting...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="w-4 h-4 mr-2" />
-                        Submit Application
-                      </>
-                    )}
+                    {applying ? 'Submitting...' : 'Submit Application'}
                   </button>
                   <button
                     type="button"
                     onClick={() => {
                       setShowApplicationForm(false);
                       setVolunteerProfile(null);
-                      setApplicationData({
-                        volunteer_name: '',
-                        email: '',
-                        phone: '',
-                        cover_letter: '',
-                        experience: ''
-                      });
                     }}
                     className="flex-1 bg-gray-300 text-gray-700 py-3 px-6 rounded-lg font-semibold hover:bg-gray-400 transition-colors"
                   >
@@ -462,29 +430,10 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
     skills: '',
     search: ''
   });
-  const [categories, setCategories] = useState<any[]>([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
 
   useEffect(() => {
-    fetchCategories();
     fetchJobs();
   }, [filters]);
-
-  const fetchCategories = async () => {
-    try {
-      setCategoriesLoading(true);
-      const response = await fetch('/api/categories?type=volunteer');
-      
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data.categories || []);
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    } finally {
-      setCategoriesLoading(false);
-    }
-  };
 
   const fetchJobs = async () => {
     try {
@@ -524,10 +473,6 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
     }
   };
 
-  const isJobFullyBooked = (job: any) => {
-    return (job.volunteers_assigned || 0) >= job.volunteers_needed;
-  };
-
   if (jobId) {
     return <JobDetails jobId={jobId} />;
   }
@@ -539,107 +484,58 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
         <div className="container mx-auto px-6 py-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Volunteer Opportunities</h1>
           <p className="text-gray-600">Find meaningful ways to make a difference in your community</p>
-          
-          {/* Stats Banner */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <Users className="w-8 h-8 text-blue-600 mr-3" />
-                <div>
-                  <p className="text-sm text-blue-600 font-medium">Active Opportunities</p>
-                  <p className="text-2xl font-bold text-blue-900">{jobs.length}</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-green-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <CheckCircle className="w-8 h-8 text-green-600 mr-3" />
-                <div>
-                  <p className="text-sm text-green-600 font-medium">Available Positions</p>
-                  <p className="text-2xl font-bold text-green-900">
-                    {jobs.reduce((sum, job) => sum + Math.max(0, job.volunteers_needed - (job.volunteers_assigned || 0)), 0)}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-purple-50 rounded-lg p-4">
-              <div className="flex items-center">
-                <Star className="w-8 h-8 text-purple-600 mr-3" />
-                <div>
-                  <p className="text-sm text-purple-600 font-medium">Urgent Needs</p>
-                  <p className="text-2xl font-bold text-purple-900">
-                    {jobs.filter(job => job.urgency === 'urgent').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Enhanced Filters */}
+      {/* Filters */}
       <div className="bg-white border-b shadow-sm">
         <div className="container mx-auto px-6 py-4">
           <div className="flex flex-wrap gap-4">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Category</label>
               <select
                 value={filters.category}
                 onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 min-w-40"
-                disabled={categoriesLoading}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Categories</option>
-                {categoriesLoading ? (
-                  <option disabled>Loading...</option>
-                ) : (
-                  categories.map((category) => (
-                    <option 
-                      key={category.id} 
-                      value={category.category_name}
-                      title={category.description || ''}
-                    >
-                      {category.category_name}
-                    </option>
-                  ))
-                )}
+                <option value="Environment">Environment</option>
+                <option value="Education">Education</option>
+                <option value="Human Services">Human Services</option>
+                <option value="Health">Health</option>
+                <option value="Community">Community</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Location</label>
               <input
                 type="text"
                 placeholder="Enter zipcode"
                 value={filters.zipcode}
                 onChange={(e) => handleFilterChange('zipcode', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 w-32"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Distance</label>
               <select
                 value={filters.distance}
                 onChange={(e) => handleFilterChange('distance', parseInt(e.target.value))}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                disabled={!filters.zipcode}
               >
-                <option value={5}>5 miles</option>
-                <option value={10}>10 miles</option>
-                <option value={25}>25 miles</option>
-                <option value={50}>50 miles</option>
+                <option value={5}>Within 5 miles</option>
+                <option value={10}>Within 10 miles</option>
+                <option value={25}>Within 25 miles</option>
+                <option value={50}>Within 50 miles</option>
               </select>
             </div>
 
-            <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-500 mb-1">Search</label>
+            <div>
               <input
                 type="text"
-                placeholder="Search opportunities, skills, organizations..."
+                placeholder="Search opportunities..."
                 value={filters.search}
                 onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -657,160 +553,58 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
           <div className="text-center py-12">
             <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No opportunities found</h3>
-            <p className="text-gray-600">Try adjusting your search filters or check back later for new opportunities</p>
+            <p className="text-gray-600">Try adjusting your search filters</p>
           </div>
         ) : (
-          <>
-            {/* Results Summary */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {jobs.length} Volunteer Opportunities
-                </h2>
-                <p className="text-sm text-gray-600">
-                  {filters.zipcode && `Within ${filters.distance} miles of ${filters.zipcode}`}
-                  {filters.category !== 'all' && ` • ${filters.category}`}
-                </p>
-              </div>
-              
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <span>Sort by:</span>
-                <select className="border border-gray-300 rounded px-2 py-1 text-sm">
-                  <option>Most Urgent</option>
-                  <option>Nearest</option>
-                  <option>Most Recent</option>
-                  <option>Most Positions</option>
-                </select>
-              </div>
-            </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {jobs.map((job) => (
+              <div key={job.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                <div className="p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${getUrgencyColor(job.urgency)}`}>
+                      {job.urgency}
+                    </div>
+                    <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 cursor-pointer transition-colors" />
+                  </div>
 
-            {/* Job Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {jobs.map((job) => {
-                const fullyBooked = isJobFullyBooked(job);
-                
-                return (
-                  <div 
-                    key={job.id} 
-                    className={`bg-white rounded-2xl shadow-lg border hover:shadow-xl transition-all duration-300 ${
-                      fullyBooked ? 'border-yellow-300 bg-yellow-50' : 'border-gray-100'
-                    }`}
-                  >
-                    <div className="p-6">
-                      {/* Header */}
-                      <div className="flex justify-between items-start mb-4">
-                        <div className={`px-3 py-1 rounded-full text-xs font-medium ${getUrgencyColor(job.urgency)}`}>
-                          {job.urgency} priority
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {fullyBooked && (
-                            <span className="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded-full font-medium">
-                              FULL
-                            </span>
-                          )}
-                          <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 cursor-pointer transition-colors" />
-                        </div>
-                      </div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{job.title}</h3>
+                  <p className="text-gray-600 mb-4 line-clamp-3">{job.description}</p>
 
-                      {/* Content */}
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">{job.title}</h3>
-                      <p className="text-gray-600 mb-4 line-clamp-3 text-sm">{job.description}</p>
-
-                      {/* Details */}
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center text-sm text-gray-500">
-                          <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span>{job.city}, {job.state}</span>
-                          {job.distance_miles && (
-                            <span className="ml-2 text-blue-600 font-medium">
-                              ({Math.round(job.distance_miles)} mi)
-                            </span>
-                          )}
-                        </div>
-                        
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Users className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span>
-                            {fullyBooked ? 'Fully staffed' : `${job.positions_remaining || job.volunteers_needed} positions available`}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center text-sm text-gray-500">
-                          <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span>{job.time_commitment || 'Flexible schedule'}</span>
-                        </div>
-
-                        {job.skills_needed && job.skills_needed.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-3">
-                            {job.skills_needed.slice(0, 2).map((skill: string, index: number) => (
-                              <span key={index} className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">
-                                {skill}
-                              </span>
-                            ))}
-                            {job.skills_needed.length > 2 && (
-                              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                                +{job.skills_needed.length - 2} more
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div className="mb-4">
-                        <div className="flex justify-between text-xs text-gray-500 mb-1">
-                          <span>Volunteers</span>
-                          <span>{job.volunteers_assigned || 0}/{job.volunteers_needed}</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full transition-all duration-300 ${
-                              fullyBooked ? 'bg-yellow-500' : 'bg-blue-500'
-                            }`}
-                            style={{ 
-                              width: `${Math.min(((job.volunteers_assigned || 0) / job.volunteers_needed) * 100, 100)}%` 
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => window.location.href = `/jobs/${job.id}`}
-                          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                        >
-                          View Details
-                        </button>
-                        <button 
-                          className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                          title="Save for later"
-                        >
-                          <Heart className="w-4 h-4" />
-                        </button>
-                      </div>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center text-sm text-gray-500">
+                      <MapPin className="w-4 h-4 mr-2" />
+                      {job.city}, {job.state}
+                      {job.distance_miles && (
+                        <span className="ml-2 text-blue-600">
+                          ({Math.round(job.distance_miles)} mi)
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Users className="w-4 h-4 mr-2" />
+                      {job.positions_remaining} positions available
+                    </div>
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Clock className="w-4 h-4 mr-2" />
+                      {job.time_commitment}
                     </div>
                   </div>
-                );
-              })}
-            </div>
 
-            {/* Call to Action */}
-            <div className="mt-12 text-center">
-              <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white">
-                <h3 className="text-2xl font-bold mb-2">Ready to Make a Difference?</h3>
-                <p className="mb-6 opacity-90">
-                  Join our community of volunteers and help create positive change in your area.
-                </p>
-                <button 
-                  onClick={() => window.location.href = '/volunteer-signup'}
-                  className="bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-                >
-                  Register as a Volunteer
-                </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => window.location.href = `/jobs/${job.id}`}
+                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    >
+                      View Details
+                    </button>
+                    <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          </>
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -5,24 +5,41 @@ import { neon } from '@neondatabase/serverless';
 const sql = neon(process.env.DATABASE_URL!);
 
 interface AssignmentData {
-  volunteer_registration_id: number;
+  volunteer_id?: number;
+  volunteer_email?: string;
   job_id: number;
+  application_id?: number;
+  assigned_by?: number;
+  status?: string;
   notes?: string;
-  assigned_by: number;
+}
+
+interface AssignmentUpdate {
+  status?: string;
+  completion_notes?: string;
+  rating?: number;
+  feedback?: string;
+  hours_logged?: number;
+  notes?: string;
 }
 
 interface Assignment {
   id: number;
-  volunteer_registration_id: number;
+  volunteer_id: number;
   job_id: number;
-  assignment_date: string;
+  application_id?: number;
   status: string;
-  hours_logged: number;
-  notes?: string;
-  assigned_by: number;
+  assigned_at: string;
+  confirmed_at?: string;
+  completion_notes?: string;
+  rating?: number;
+  feedback?: string;
+  hours_logged?: number;
+  assigned_by?: number;
   created_at: string;
   updated_at: string;
   // Joined fields
+  volunteer_username?: string;
   volunteer_first_name?: string;
   volunteer_last_name?: string;
   volunteer_email?: string;
@@ -31,10 +48,12 @@ interface Assignment {
   job_category?: string;
   job_city?: string;
   job_state?: string;
+  job_start_date?: string;
+  job_end_date?: string;
   assigned_by_username?: string;
 }
 
-// Helper function to check authentication
+// Helper function to check authentication (enhanced)
 async function checkAuth(request: NextRequest) {
   try {
     const sessionId = request.cookies.get('session')?.value;
@@ -45,12 +64,11 @@ async function checkAuth(request: NextRequest) {
 
     const sessions = await sql`
       SELECT 
-        u.id, u.username, u.email, u.role
+        u.id, u.username, u.email, u.role, u.full_name
       FROM sessions s
       JOIN users u ON s.user_id = u.id
       WHERE s.id = ${sessionId}
         AND s.expires_at > CURRENT_TIMESTAMP
-        AND u.is_active = true
     `;
     
     return sessions.length > 0 ? sessions[0] : null;
@@ -60,112 +78,341 @@ async function checkAuth(request: NextRequest) {
   }
 }
 
-// GET - Fetch assignments with optional filters
-export async function GET(request: NextRequest) {
+// Helper function to find volunteer by email
+async function findVolunteerByEmail(email: string) {
   try {
-    const currentUser = await checkAuth(request);
+    const volunteers = await sql`
+      SELECT id, username, first_name, last_name, email, phone, status
+      FROM volunteer_registrations 
+      WHERE email = ${email} AND status = 'active'
+    ` as any[];
     
-    if (!currentUser) {
+    return volunteers.length > 0 ? volunteers[0] : null;
+  } catch (error) {
+    console.error('Error finding volunteer by email:', error);
+    return null;
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    console.log('Volunteer Assignments API: Creating assignment...');
+    
+    const body = await request.json() as AssignmentData;
+    
+    // Validate required fields
+    if (!body.job_id) {
       return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
+        { error: 'Job ID is required' },
+        { status: 400 }
       );
     }
 
+    if (!body.volunteer_id && !body.volunteer_email) {
+      return NextResponse.json(
+        { error: 'Either volunteer_id or volunteer_email is required' },
+        { status: 400 }
+      );
+    }
+
+    let volunteerId = body.volunteer_id;
+    let volunteerInfo: any = null;
+
+    // If email provided, find volunteer by email
+    if (body.volunteer_email && !volunteerId) {
+      console.log('Volunteer Assignments API: Looking up volunteer by email...');
+      volunteerInfo = await findVolunteerByEmail(body.volunteer_email);
+      
+      if (!volunteerInfo) {
+        return NextResponse.json(
+          { error: 'Volunteer not found with provided email' },
+          { status: 404 }
+        );
+      }
+
+      volunteerId = volunteerInfo.id;
+    } else if (volunteerId) {
+      // Get volunteer info by ID
+      const volunteers = await sql`
+        SELECT id, username, first_name, last_name, email, phone, status
+        FROM volunteer_registrations 
+        WHERE id = ${volunteerId} AND status = 'active'
+      ` as any[];
+
+      if (volunteers.length === 0) {
+        return NextResponse.json(
+          { error: 'Volunteer not found' },
+          { status: 404 }
+        );
+      }
+
+      volunteerInfo = volunteers[0];
+    }
+
+    // Check if job exists and has available spots
+    console.log('Volunteer Assignments API: Checking job availability...');
+    const jobs = await sql`
+      SELECT 
+        j.*,
+        (j.volunteers_needed - 
+         COALESCE((SELECT COUNT(*) FROM volunteer_assignments 
+                   WHERE job_id = j.id AND status IN ('assigned', 'confirmed', 'completed')), 0)
+        ) as spots_remaining
+      FROM jobs j 
+      WHERE j.id = ${body.job_id} AND j.status = 'active'
+    ` as any[];
+
+    if (jobs.length === 0) {
+      return NextResponse.json(
+        { error: 'Job not found or inactive' },
+        { status: 404 }
+      );
+    }
+
+    const job = jobs[0];
+    if (job.spots_remaining <= 0) {
+      return NextResponse.json(
+        { error: 'No available spots for this job' },
+        { status: 400 }
+      );
+    }
+
+    // Check if job has expired
+    if (job.expires_at && new Date(job.expires_at) < new Date()) {
+      return NextResponse.json(
+        { error: 'Job has expired' },
+        { status: 400 }
+      );
+    }
+
+    // Check for existing assignment
+    console.log('Volunteer Assignments API: Checking for existing assignment...');
+    const existingAssignments = await sql`
+      SELECT id, status FROM volunteer_assignments 
+      WHERE volunteer_id = ${volunteerId} AND job_id = ${body.job_id}
+    ` as any[];
+
+    if (existingAssignments.length > 0) {
+      const existing = existingAssignments[0];
+      return NextResponse.json(
+        { 
+          error: 'Volunteer is already assigned to this job',
+          existing_assignment: {
+            id: existing.id,
+            status: existing.status
+          }
+        },
+        { status: 409 }
+      );
+    }
+
+    // Create assignment
+    console.log('Volunteer Assignments API: Creating assignment...');
+    const result = await sql`
+      INSERT INTO volunteer_assignments (
+        volunteer_id, job_id, application_id, assigned_by, status, notes
+      ) VALUES (
+        ${volunteerId}, ${body.job_id}, ${body.application_id || null}, 
+        ${body.assigned_by || null}, ${body.status || 'assigned'}, ${body.notes || ''}
+      )
+      RETURNING id, volunteer_id, job_id, status, assigned_at, created_at
+    ` as any[];
+
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: 'Failed to create assignment' },
+        { status: 500 }
+      );
+    }
+
+    const assignment = result[0];
+    console.log(`Volunteer Assignments API: Successfully created assignment ${assignment.id}`);
+
+    // If this assignment is from an accepted application, update the application status
+    if (body.application_id) {
+      try {
+        await sql`
+          UPDATE job_applications 
+          SET status = 'accepted', updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${body.application_id}
+        `;
+      } catch (error) {
+        console.warn('Failed to update application status:', error);
+      }
+    }
+
+    // Log the assignment creation
+    try {
+      await sql`
+        INSERT INTO activity_logs (
+          user_type, user_id, action, details, timestamp
+        ) VALUES (
+          'volunteer', ${volunteerId}, 'job_assigned',
+          ${JSON.stringify({
+            job_id: body.job_id,
+            job_title: job.title,
+            assigned_by: body.assigned_by,
+            assignment_id: assignment.id
+          })}, CURRENT_TIMESTAMP
+        )
+      `;
+    } catch (logError) {
+      console.warn('Failed to log assignment creation:', logError);
+    }
+
+    return NextResponse.json({
+      success: true,
+      assignment: {
+        id: assignment.id,
+        volunteer: {
+          id: volunteerInfo.id,
+          username: volunteerInfo.username,
+          name: `${volunteerInfo.first_name} ${volunteerInfo.last_name}`,
+          email: volunteerInfo.email
+        },
+        job: {
+          id: job.id,
+          title: job.title,
+          category: job.category
+        },
+        status: assignment.status,
+        assigned_at: assignment.assigned_at
+      },
+      message: 'Volunteer successfully assigned to job!'
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error('Volunteer Assignments API: Error creating assignment:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to create assignment',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
     const url = new URL(request.url);
     const volunteerId = url.searchParams.get('volunteer_id');
     const jobId = url.searchParams.get('job_id');
-    const status = url.searchParams.get('status') || 'assigned';
+    const status = url.searchParams.get('status');
+    const email = url.searchParams.get('email');
     const page = parseInt(url.searchParams.get('page') || '1');
     const limit = parseInt(url.searchParams.get('limit') || '20');
     const offset = (page - 1) * limit;
 
-    console.log('Volunteer Assignments API: Fetching assignments with filters:', { volunteerId, jobId, status });
+    console.log('Volunteer Assignments API: Fetching assignments with filters:', { 
+      volunteerId, jobId, status, email 
+    });
 
-    let query = `
-      SELECT 
-        va.*,
-        vr.first_name as volunteer_first_name, 
-        vr.last_name as volunteer_last_name, 
-        vr.email as volunteer_email, 
-        vr.phone as volunteer_phone,
-        vr.username as volunteer_username,
-        j.title as job_title, 
-        j.category as job_category, 
-        j.city as job_city, 
-        j.state as job_state,
-        j.start_date as job_start_date,
-        j.end_date as job_end_date,
-        u.username as assigned_by_username
-      FROM volunteer_assignments va
-      JOIN volunteer_registrations vr ON va.volunteer_registration_id = vr.id
-      JOIN jobs j ON va.job_id = j.id
-      LEFT JOIN users u ON va.assigned_by = u.id
-      WHERE 1=1
-    `;
-    
-    const params: any[] = [];
+    let whereConditions: string[] = [];
+    let params: any[] = [];
     let paramCount = 0;
 
     if (volunteerId) {
       paramCount++;
-      query += ` AND va.volunteer_registration_id = $${paramCount}`;
+      whereConditions.push(`va.volunteer_id = ${paramCount}`);
       params.push(parseInt(volunteerId));
     }
 
     if (jobId) {
       paramCount++;
-      query += ` AND va.job_id = $${paramCount}`;
+      whereConditions.push(`va.job_id = ${paramCount}`);
       params.push(parseInt(jobId));
     }
 
     if (status) {
       paramCount++;
-      query += ` AND va.status = $${paramCount}`;
+      whereConditions.push(`va.status = ${paramCount}`);
       params.push(status);
     }
 
-    query += ` ORDER BY va.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+    if (email) {
+      paramCount++;
+      whereConditions.push(`vr.email = ${paramCount}`);
+      params.push(email);
+    }
+
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(' AND ')}`
+      : '';
+
+    const query = `
+      SELECT 
+        va.*,
+        vr.username as volunteer_username,
+        vr.first_name as volunteer_first_name,
+        vr.last_name as volunteer_last_name,
+        vr.email as volunteer_email,
+        vr.phone as volunteer_phone,
+        j.title as job_title,
+        j.category as job_category,
+        j.city as job_city,
+        j.state as job_state,
+        j.start_date as job_start_date,
+        j.end_date as job_end_date,
+        ja.applied_at,
+        u.username as assigned_by_username
+      FROM volunteer_assignments va
+      JOIN volunteer_registrations vr ON va.volunteer_id = vr.id
+      JOIN jobs j ON va.job_id = j.id
+      LEFT JOIN job_applications ja ON va.application_id = ja.id
+      LEFT JOIN users u ON va.assigned_by = u.id
+      ${whereClause}
+      ORDER BY va.assigned_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
 
     const assignments = await sql(query, params) as Assignment[];
 
-    // Get total count for pagination
-    let countQuery = `
+    // Get total count
+    const countQuery = `
       SELECT COUNT(*) as total
       FROM volunteer_assignments va
-      JOIN volunteer_registrations vr ON va.volunteer_registration_id = vr.id
+      JOIN volunteer_registrations vr ON va.volunteer_id = vr.id
       JOIN jobs j ON va.job_id = j.id
-      WHERE 1=1
+      ${whereClause}
     `;
 
-    let countParams: any[] = [];
-    let countParamCount = 0;
-
-    if (volunteerId) {
-      countParamCount++;
-      countQuery += ` AND va.volunteer_registration_id = $${countParamCount}`;
-      countParams.push(parseInt(volunteerId));
-    }
-
-    if (jobId) {
-      countParamCount++;
-      countQuery += ` AND va.job_id = $${countParamCount}`;
-      countParams.push(parseInt(jobId));
-    }
-
-    if (status) {
-      countParamCount++;
-      countQuery += ` AND va.status = $${countParamCount}`;
-      countParams.push(status);
-    }
-
-    const countResult = await sql(countQuery, countParams) as any[];
+    const countResult = await sql(countQuery, params) as any[];
     const total = parseInt(countResult[0]?.total || '0');
 
     console.log(`Volunteer Assignments API: Returning ${assignments.length} assignments out of ${total} total`);
 
     return NextResponse.json({
-      assignments,
+      assignments: assignments.map(assignment => ({
+        id: assignment.id,
+        volunteer: {
+          id: assignment.volunteer_id,
+          username: assignment.volunteer_username,
+          name: `${assignment.volunteer_first_name} ${assignment.volunteer_last_name}`,
+          email: assignment.volunteer_email,
+          phone: assignment.volunteer_phone
+        },
+        job: {
+          id: assignment.job_id,
+          title: assignment.job_title,
+          category: assignment.job_category,
+          location: `${assignment.job_city}, ${assignment.job_state}`,
+          start_date: assignment.job_start_date,
+          end_date: assignment.job_end_date
+        },
+        status: assignment.status,
+        assigned_at: assignment.assigned_at,
+        confirmed_at: assignment.confirmed_at,
+        completion_notes: assignment.completion_notes,
+        rating: assignment.rating,
+        feedback: assignment.feedback,
+        hours_logged: assignment.hours_logged,
+        notes: assignment.notes,
+        applied_at: assignment.applied_at,
+        assigned_by: assignment.assigned_by_username,
+        created_at: assignment.created_at,
+        updated_at: assignment.updated_at
+      })),
       pagination: {
         page,
         limit,
@@ -188,163 +435,8 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Create new assignment
-export async function POST(request: NextRequest) {
-  try {
-    const currentUser = await checkAuth(request);
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    console.log(`Volunteer Assignments API: User ${currentUser.username} creating new assignment`);
-
-    const body = await request.json() as AssignmentData;
-    
-    // Validate required fields
-    if (!body.volunteer_registration_id || !body.job_id) {
-      return NextResponse.json(
-        { error: 'volunteer_registration_id and job_id are required' },
-        { status: 400 }
-      );
-    }
-
-    // Check if volunteer exists and is active
-    const volunteers = await sql`
-      SELECT id, first_name, last_name, email, status 
-      FROM volunteer_registrations 
-      WHERE id = ${body.volunteer_registration_id}
-    ` as any[];
-
-    if (volunteers.length === 0) {
-      return NextResponse.json(
-        { error: 'Volunteer not found' },
-        { status: 404 }
-      );
-    }
-
-    const volunteer = volunteers[0];
-    if (volunteer.status !== 'active') {
-      return NextResponse.json(
-        { error: 'Volunteer is not active' },
-        { status: 400 }
-      );
-    }
-
-    // Check if job exists and is active
-    const jobs = await sql`
-      SELECT id, title, status, volunteers_needed, expires_at,
-        (SELECT COUNT(*) FROM volunteer_assignments WHERE job_id = jobs.id AND status = 'assigned') as current_assignments
-      FROM jobs 
-      WHERE id = ${body.job_id}
-    ` as any[];
-
-    if (jobs.length === 0) {
-      return NextResponse.json(
-        { error: 'Job not found' },
-        { status: 404 }
-      );
-    }
-
-    const job = jobs[0];
-    if (job.status !== 'active') {
-      return NextResponse.json(
-        { error: 'Job is not active' },
-        { status: 400 }
-      );
-    }
-
-    if (new Date(job.expires_at) < new Date()) {
-      return NextResponse.json(
-        { error: 'Job has expired' },
-        { status: 400 }
-      );
-    }
-
-    // Check if job is already full
-    if (job.current_assignments >= job.volunteers_needed) {
-      return NextResponse.json(
-        { error: 'Job is already fully assigned' },
-        { status: 400 }
-      );
-    }
-
-    // Check if volunteer is already assigned to this job
-    const existingAssignments = await sql`
-      SELECT id FROM volunteer_assignments 
-      WHERE volunteer_registration_id = ${body.volunteer_registration_id} 
-        AND job_id = ${body.job_id} 
-        AND status = 'assigned'
-    ` as any[];
-
-    if (existingAssignments.length > 0) {
-      return NextResponse.json(
-        { error: 'Volunteer is already assigned to this job' },
-        { status: 409 }
-      );
-    }
-
-    // Create assignment
-    console.log('Volunteer Assignments API: Creating assignment...');
-    const result = await sql`
-      INSERT INTO volunteer_assignments (
-        volunteer_registration_id, job_id, notes, assigned_by, status
-      ) VALUES (
-        ${body.volunteer_registration_id}, ${body.job_id}, 
-        ${body.notes || ''}, ${currentUser.id}, 'assigned'
-      )
-      RETURNING id, assignment_date, created_at
-    ` as any[];
-
-    if (result.length === 0) {
-      return NextResponse.json(
-        { error: 'Failed to create assignment' },
-        { status: 500 }
-      );
-    }
-
-    const assignment = result[0];
-    console.log(`Volunteer Assignments API: Successfully created assignment ${assignment.id}`);
-
-    return NextResponse.json({
-      success: true,
-      assignment: {
-        id: assignment.id,
-        volunteer_name: `${volunteer.first_name} ${volunteer.last_name}`,
-        job_title: job.title,
-        assignment_date: assignment.assignment_date,
-        created_at: assignment.created_at
-      },
-      message: `Successfully assigned ${volunteer.first_name} ${volunteer.last_name} to ${job.title}`
-    }, { status: 201 });
-
-  } catch (error) {
-    console.error('Volunteer Assignments API: Error creating assignment:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to create assignment',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// PUT - Update assignment status/hours
 export async function PUT(request: NextRequest) {
   try {
-    const currentUser = await checkAuth(request);
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const url = new URL(request.url);
     const assignmentId = url.searchParams.get('id');
     
@@ -355,37 +447,80 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { status: newStatus, hours_logged, notes } = body;
-
-    // Validate status if provided
-    if (newStatus && !['assigned', 'completed', 'cancelled', 'no_show'].includes(newStatus)) {
-      return NextResponse.json(
-        { error: 'Valid status is required (assigned, completed, cancelled, no_show)' },
-        { status: 400 }
-      );
-    }
-
-    // Validate hours if provided
-    if (hours_logged !== undefined && (isNaN(hours_logged) || hours_logged < 0)) {
-      return NextResponse.json(
-        { error: 'Hours logged must be a non-negative number' },
-        { status: 400 }
-      );
-    }
-
+    const body = await request.json() as AssignmentUpdate;
+    
     console.log(`Volunteer Assignments API: Updating assignment ${assignmentId}`);
 
-    // Update assignment
-    const result = await sql`
+    // Build update query dynamically based on provided fields
+    const updateFields: string[] = [];
+    const params: any[] = [];
+    let paramCount = 0;
+
+    if (body.status) {
+      paramCount++;
+      updateFields.push(`status = ${paramCount}`);
+      params.push(body.status);
+      
+      // If marking as confirmed, set confirmed_at
+      if (body.status === 'confirmed') {
+        paramCount++;
+        updateFields.push(`confirmed_at = ${paramCount}`);
+        params.push(new Date().toISOString());
+      }
+    }
+
+    if (body.completion_notes) {
+      paramCount++;
+      updateFields.push(`completion_notes = ${paramCount}`);
+      params.push(body.completion_notes);
+    }
+
+    if (body.rating) {
+      paramCount++;
+      updateFields.push(`rating = ${paramCount}`);
+      params.push(body.rating);
+    }
+
+    if (body.feedback) {
+      paramCount++;
+      updateFields.push(`feedback = ${paramCount}`);
+      params.push(body.feedback);
+    }
+
+    if (body.hours_logged !== undefined) {
+      paramCount++;
+      updateFields.push(`hours_logged = ${paramCount}`);
+      params.push(body.hours_logged);
+    }
+
+    if (body.notes) {
+      paramCount++;
+      updateFields.push(`notes = ${paramCount}`);
+      params.push(body.notes);
+    }
+
+    if (updateFields.length === 0) {
+      return NextResponse.json(
+        { error: 'No valid fields provided for update' },
+        { status: 400 }
+      );
+    }
+
+    // Add updated_at and assignment ID
+    paramCount++;
+    updateFields.push(`updated_at = ${paramCount}`);
+    params.push(new Date().toISOString());
+
+    paramCount++;
+    const updateQuery = `
       UPDATE volunteer_assignments 
-      SET status = COALESCE(${newStatus}, status), 
-          hours_logged = COALESCE(${hours_logged || null}, hours_logged),
-          notes = COALESCE(${notes || null}, notes),
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${parseInt(assignmentId)}
-      RETURNING id, volunteer_registration_id, job_id, status, hours_logged
-    ` as any[];
+      SET ${updateFields.join(', ')}
+      WHERE id = ${paramCount}
+      RETURNING id, volunteer_id, job_id, status, updated_at
+    `;
+    params.push(parseInt(assignmentId));
+
+    const result = await sql(updateQuery, params) as any[];
 
     if (result.length === 0) {
       return NextResponse.json(
@@ -394,12 +529,33 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Log the status change
+    if (body.status) {
+      try {
+        await sql`
+          INSERT INTO activity_logs (
+            user_type, user_id, action, details, timestamp
+          ) VALUES (
+            'volunteer', ${result[0].volunteer_id}, 'assignment_status_changed',
+            ${JSON.stringify({
+              assignment_id: result[0].id,
+              job_id: result[0].job_id,
+              new_status: body.status,
+              hours_logged: body.hours_logged
+            })}, CURRENT_TIMESTAMP
+          )
+        `;
+      } catch (logError) {
+        console.warn('Failed to log status change:', logError);
+      }
+    }
+
     console.log(`Volunteer Assignments API: Successfully updated assignment ${assignmentId}`);
 
     return NextResponse.json({
       success: true,
       assignment: result[0],
-      message: `Assignment updated successfully`
+      message: 'Assignment updated successfully'
     });
 
   } catch (error) {
@@ -414,18 +570,8 @@ export async function PUT(request: NextRequest) {
   }
 }
 
-// DELETE - Remove assignment
 export async function DELETE(request: NextRequest) {
   try {
-    const currentUser = await checkAuth(request);
-    
-    if (!currentUser) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
     const url = new URL(request.url);
     const assignmentId = url.searchParams.get('id');
     
@@ -438,13 +584,10 @@ export async function DELETE(request: NextRequest) {
 
     console.log(`Volunteer Assignments API: Deleting assignment ${assignmentId}`);
 
-    // Delete assignment (or mark as cancelled)
     const result = await sql`
-      UPDATE volunteer_assignments 
-      SET status = 'cancelled',
-          updated_at = CURRENT_TIMESTAMP
+      DELETE FROM volunteer_assignments 
       WHERE id = ${parseInt(assignmentId)}
-      RETURNING id, volunteer_registration_id, job_id
+      RETURNING id, volunteer_id, job_id
     ` as any[];
 
     if (result.length === 0) {
@@ -454,11 +597,313 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log(`Volunteer Assignments API: Successfully cancelled assignment ${assignmentId}`);
+    // Log the deletion
+    try {
+      await sql`
+        INSERT INTO activity_logs (
+          user_type, user_id, action, details, timestamp
+        ) VALUES (
+          'volunteer', ${result[0].volunteer_id}, 'assignment_deleted',
+          ${JSON.stringify({
+            assignment_id: result[0].id,
+            job_id: result[0].job_id
+          })}, CURRENT_TIMESTAMP
+        )
+      `;
+    } catch (logError) {
+      console.warn('Failed to log assignment deletion:', logError);
+    }
+
+    console.log(`Volunteer Assignments API: Successfully deleted assignment ${assignmentId}`);
 
     return NextResponse.json({
       success: true,
-      message: 'Assignment cancelled successfully'
+      message: 'Assignment deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Volunteer Assignments API: Error deleting assignment:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to delete assignment',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const volunteerId = url.searchParams.get('volunteer_id');
+    const jobId = url.searchParams.get('job_id');
+    const status = url.searchParams.get('status');
+    const page = parseInt(url.searchParams.get('page') || '1');
+    const limit = parseInt(url.searchParams.get('limit') || '20');
+    const offset = (page - 1) * limit;
+
+    console.log('Volunteer Assignments API: Fetching assignments with filters:', { 
+      volunteerId, jobId, status 
+    });
+
+    let whereConditions: string[] = [];
+    let params: any[] = [];
+    let paramCount = 0;
+
+    if (volunteerId) {
+      paramCount++;
+      whereConditions.push(`va.volunteer_id = $${paramCount}`);
+      params.push(parseInt(volunteerId));
+    }
+
+    if (jobId) {
+      paramCount++;
+      whereConditions.push(`va.job_id = $${paramCount}`);
+      params.push(parseInt(jobId));
+    }
+
+    if (status) {
+      paramCount++;
+      whereConditions.push(`va.status = $${paramCount}`);
+      params.push(status);
+    }
+
+    const whereClause = whereConditions.length > 0 
+      ? `WHERE ${whereConditions.join(' AND ')}`
+      : '';
+
+    const query = `
+      SELECT 
+        va.*,
+        vr.username,
+        vr.first_name,
+        vr.last_name,
+        vr.email as volunteer_email,
+        vr.phone as volunteer_phone,
+        j.title as job_title,
+        j.category as job_category,
+        j.city as job_city,
+        j.state as job_state,
+        j.start_date,
+        j.end_date,
+        ja.applied_at
+      FROM volunteer_assignments va
+      JOIN volunteer_registrations vr ON va.volunteer_id = vr.id
+      JOIN jobs j ON va.job_id = j.id
+      LEFT JOIN job_applications ja ON va.application_id = ja.id
+      ${whereClause}
+      ORDER BY va.assigned_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const assignments = await sql(query, params) as any[];
+
+    // Get total count
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM volunteer_assignments va
+      JOIN volunteer_registrations vr ON va.volunteer_id = vr.id
+      JOIN jobs j ON va.job_id = j.id
+      ${whereClause}
+    `;
+
+    const countResult = await sql(countQuery, params) as any[];
+    const total = parseInt(countResult[0]?.total || '0');
+
+    console.log(`Volunteer Assignments API: Returning ${assignments.length} assignments out of ${total} total`);
+
+    return NextResponse.json({
+      assignments: assignments.map(assignment => ({
+        id: assignment.id,
+        volunteer: {
+          id: assignment.volunteer_id,
+          username: assignment.username,
+          name: `${assignment.first_name} ${assignment.last_name}`,
+          email: assignment.volunteer_email,
+          phone: assignment.volunteer_phone
+        },
+        job: {
+          id: assignment.job_id,
+          title: assignment.job_title,
+          category: assignment.job_category,
+          location: `${assignment.job_city}, ${assignment.job_state}`,
+          start_date: assignment.start_date,
+          end_date: assignment.end_date
+        },
+        status: assignment.status,
+        assigned_at: assignment.assigned_at,
+        confirmed_at: assignment.confirmed_at,
+        completion_notes: assignment.completion_notes,
+        rating: assignment.rating,
+        feedback: assignment.feedback,
+        hours_logged: assignment.hours_logged,
+        applied_at: assignment.applied_at,
+        created_at: assignment.created_at,
+        updated_at: assignment.updated_at
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1
+      }
+    });
+
+  } catch (error) {
+    console.error('Volunteer Assignments API: Error fetching assignments:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to fetch assignments',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const assignmentId = url.searchParams.get('id');
+    
+    if (!assignmentId) {
+      return NextResponse.json(
+        { error: 'Assignment ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const body = await request.json() as AssignmentUpdate;
+    
+    console.log(`Volunteer Assignments API: Updating assignment ${assignmentId}`);
+
+    // Build update query dynamically based on provided fields
+    const updateFields: string[] = [];
+    const params: any[] = [];
+    let paramCount = 0;
+
+    if (body.status) {
+      paramCount++;
+      updateFields.push(`status = $${paramCount}`);
+      params.push(body.status);
+      
+      // If marking as confirmed, set confirmed_at
+      if (body.status === 'confirmed') {
+        paramCount++;
+        updateFields.push(`confirmed_at = $${paramCount}`);
+        params.push(new Date().toISOString());
+      }
+    }
+
+    if (body.completion_notes) {
+      paramCount++;
+      updateFields.push(`completion_notes = $${paramCount}`);
+      params.push(body.completion_notes);
+    }
+
+    if (body.rating) {
+      paramCount++;
+      updateFields.push(`rating = $${paramCount}`);
+      params.push(body.rating);
+    }
+
+    if (body.feedback) {
+      paramCount++;
+      updateFields.push(`feedback = $${paramCount}`);
+      params.push(body.feedback);
+    }
+
+    if (body.hours_logged) {
+      paramCount++;
+      updateFields.push(`hours_logged = $${paramCount}`);
+      params.push(body.hours_logged);
+    }
+
+    if (updateFields.length === 0) {
+      return NextResponse.json(
+        { error: 'No valid fields provided for update' },
+        { status: 400 }
+      );
+    }
+
+    // Add updated_at and assignment ID
+    paramCount++;
+    updateFields.push(`updated_at = $${paramCount}`);
+    params.push(new Date().toISOString());
+
+    paramCount++;
+    const updateQuery = `
+      UPDATE volunteer_assignments 
+      SET ${updateFields.join(', ')}
+      WHERE id = $${paramCount}
+      RETURNING id, volunteer_id, job_id, status, updated_at
+    `;
+    params.push(parseInt(assignmentId));
+
+    const result = await sql(updateQuery, params) as any[];
+
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: 'Assignment not found' },
+        { status: 404 }
+      );
+    }
+
+    console.log(`Volunteer Assignments API: Successfully updated assignment ${assignmentId}`);
+
+    return NextResponse.json({
+      success: true,
+      assignment: result[0],
+      message: 'Assignment updated successfully'
+    });
+
+  } catch (error) {
+    console.error('Volunteer Assignments API: Error updating assignment:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to update assignment',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const assignmentId = url.searchParams.get('id');
+    
+    if (!assignmentId) {
+      return NextResponse.json(
+        { error: 'Assignment ID is required' },
+        { status: 400 }
+      );
+    }
+
+    console.log(`Volunteer Assignments API: Deleting assignment ${assignmentId}`);
+
+    const result = await sql`
+      DELETE FROM volunteer_assignments 
+      WHERE id = ${parseInt(assignmentId)}
+      RETURNING id, volunteer_id, job_id
+    ` as any[];
+
+    if (result.length === 0) {
+      return NextResponse.json(
+        { error: 'Assignment not found' },
+        { status: 404 }
+      );
+    }
+
+    console.log(`Volunteer Assignments API: Successfully deleted assignment ${assignmentId}`);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Assignment deleted successfully'
     });
 
   } catch (error) {
