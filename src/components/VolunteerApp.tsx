@@ -1435,7 +1435,7 @@ const VolunteerApp = () => {
           alert(`Successfully uploaded ${result.files?.length || 1} files!`);
           setUploadedFiles(prev => [...prev, ...(result.files?.map((f: any) => f.name) || ['Uploaded file'])]);
         } else {
-          alert(Upload failed: ${result.error});
+          alert(`Upload failed: ${result.error}`);
         }
       } catch {
         alert('Upload failed. Please try again.');
