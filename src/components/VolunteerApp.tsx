@@ -1134,7 +1134,7 @@ const VolunteerApp = () => {
           setCurrentView('landing');
         } else {
           const result = await response.json();
-          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
+          alert(Error submitting form: ${result.error || 'Unknown error'});
         }
       } catch (error) {
         console.error('Submission error:', error);
@@ -1432,7 +1432,7 @@ const VolunteerApp = () => {
         const result = await response.json();
 
         if (response.ok) {
-          alert(Successfully uploaded ${result.files?.length || 1} files!);
+          alert(`Successfully uploaded ${result.files?.length || 1} files!`);
           setUploadedFiles(prev => [...prev, ...(result.files?.map((f: any) => f.name) || ['Uploaded file'])]);
         } else {
           alert(Upload failed: ${result.error});
@@ -1698,7 +1698,7 @@ export default VolunteerApp;
           setCurrentView('landing');
         } else {
           const result = await response.json();
-          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
+          alert(Error submitting form: ${result.error || 'Unknown error'});
         }
       } catch (error) {
         console.error('Submission error:', error);
