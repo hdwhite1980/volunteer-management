@@ -5,8 +5,15 @@ import {
   CheckCircle, X, User, Building2, Tag, Settings, RefreshCw,
   ChevronDown, ChevronUp, ExternalLink, MessageSquare, Briefcase,
   UserPlus, Activity, BarChart3, Navigation, Award, BookOpen,
-  Send, FileText, UserMinus
+  Send, FileText, UserMinus, Home
 } from 'lucide-react';
+import { 
+  VolunteerCard, 
+  JobCard, 
+  ApplicationCard, 
+  DetailModal, 
+  ApplicationDetailsModal 
+} from './AdminDashboardComponents';
 
 interface VolunteerRegistration {
   id: number;
@@ -88,19 +95,13 @@ interface Job {
 const VolunteerManagementAdminDashboard = () => {
   const [activeTab, setActiveTab] = useState<'registrations' | 'database' | 'jobs' | 'applications'>('registrations');
   
-  // Volunteer Registration State
+  // Data State
   const [volunteers, setVolunteers] = useState<VolunteerRegistration[]>([]);
   const [filteredVolunteers, setFilteredVolunteers] = useState<VolunteerRegistration[]>([]);
-  
-  // Volunteer Database State
   const [volunteerLogs, setVolunteerLogs] = useState<VolunteerLogEntry[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<VolunteerLogEntry[]>([]);
-  
-  // Jobs State
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
-  
-  // Job Applications State
   const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<JobApplication[]>([]);
   
@@ -152,6 +153,7 @@ const VolunteerManagementAdminDashboard = () => {
     }
   }, [volunteers, volunteerLogs, jobs, jobApplications, searchTerm, selectedSkills, selectedCategories, experienceFilter, statusFilter, applicationStatusFilter, locationFilter, sortBy, sortOrder, activeTab]);
 
+  // Data Loading Functions
   const loadAllData = async () => {
     try {
       setLoading(true);
@@ -238,7 +240,7 @@ const VolunteerManagementAdminDashboard = () => {
       });
 
       if (response.ok) {
-        await loadJobApplications(); // Reload applications
+        await loadJobApplications();
         alert(`Application ${newStatus} successfully!`);
       } else {
         alert('Error updating application status');
@@ -248,6 +250,7 @@ const VolunteerManagementAdminDashboard = () => {
     }
   };
 
+  // Filter Functions
   const filterVolunteers = () => {
     let filtered = [...volunteers];
 
@@ -364,6 +367,39 @@ const VolunteerManagementAdminDashboard = () => {
     setFilteredApplications(filtered);
   };
 
+  const exportToPDF = () => {
+    const currentData = activeTab === 'registrations' ? filteredVolunteers : 
+                      activeTab === 'database' ? filteredLogs : 
+                      activeTab === 'jobs' ? filteredJobs : filteredApplications;
+    
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>VCEG Volunteer Management Report - ${activeTab.toUpperCase()}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; color: #374151; }
+              .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #3b82f6; }
+              .header h1 { color: #1f2937; font-size: 28px; margin-bottom: 10px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>🎯 VCEG Volunteer Management Report</h1>
+              <h2>${activeTab.toUpperCase()} DATA</h2>
+              <p>Generated on: ${new Date().toLocaleDateString()}</p>
+              <p>Total Records: ${Array.isArray(currentData) ? currentData.length : 0}</p>
+            </div>
+            <p>Exported data from ${activeTab} tab</p>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
   const TabButton = ({ tab, label, icon: Icon, count }: { tab: string; label: string; icon: any; count?: number }) => (
     <button
       onClick={() => setActiveTab(tab as any)}
@@ -385,206 +421,6 @@ const VolunteerManagementAdminDashboard = () => {
     </button>
   );
 
-  const ApplicationCard = ({ application }: { application: JobApplication }) => {
-    const getStatusColor = (status: string) => {
-      switch (status) {
-        case 'accepted': return 'bg-green-100 text-green-800 border-green-200';
-        case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
-        case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-        case 'withdrawn': return 'bg-gray-100 text-gray-800 border-gray-200';
-        default: return 'bg-gray-100 text-gray-800 border-gray-200';
-      }
-    };
-
-    return (
-      <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-200">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center">
-              <FileText className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 text-lg">
-                {application.first_name} {application.last_name}
-              </h3>
-              <p className="text-sm text-gray-600">{application.email}</p>
-              <p className="text-xs text-blue-600 font-medium">{application.job_title}</p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(application.status)}`}>
-              {application.status}
-            </span>
-            <button
-              onClick={() => {
-                setSelectedApplication(application);
-                setShowApplicationDetails(true);
-              }}
-              className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-            >
-              <Eye className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center text-sm text-gray-600">
-            <Briefcase className="w-4 h-4 mr-2 text-gray-400" />
-            <span>{application.job_category} • {application.job_city}, {application.job_state}</span>
-          </div>
-          
-          {application.phone && (
-            <div className="flex items-center text-sm text-gray-600">
-              <Phone className="w-4 h-4 mr-2 text-gray-400" />
-              <span>{application.phone}</span>
-            </div>
-          )}
-
-          <div className="flex items-center text-sm text-gray-600">
-            <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-            <span>Applied {new Date(application.applied_at).toLocaleDateString()}</span>
-          </div>
-
-          {application.message && (
-            <div className="bg-gray-50 rounded-lg p-3">
-              <p className="text-sm text-gray-700 line-clamp-2">{application.message}</p>
-            </div>
-          )}
-        </div>
-
-        {application.status === 'pending' && (
-          <div className="flex items-center space-x-2 mt-4 pt-4 border-t border-gray-100">
-            <button
-              onClick={() => updateApplicationStatus(application.id, 'accepted')}
-              className="flex-1 bg-green-600 text-white py-2 px-3 rounded-lg hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center"
-            >
-              <CheckCircle className="w-4 h-4 mr-1" />
-              Accept
-            </button>
-            <button
-              onClick={() => updateApplicationStatus(application.id, 'rejected')}
-              className="flex-1 bg-red-600 text-white py-2 px-3 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center justify-center"
-            >
-              <X className="w-4 h-4 mr-1" />
-              Reject
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const ApplicationDetailsModal = () => {
-    if (!selectedApplication) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-xl flex items-center justify-center">
-                  <FileText className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {selectedApplication.first_name} {selectedApplication.last_name}
-                  </h2>
-                  <p className="text-gray-600">{selectedApplication.email}</p>
-                  <p className="text-blue-600 font-medium">{selectedApplication.job_title}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowApplicationDetails(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-
-          <div className="p-6 space-y-6">
-            {/* Application Details */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Details</h3>
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700">Status:</span>
-                  <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                    selectedApplication.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                    selectedApplication.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                    selectedApplication.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {selectedApplication.status}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Applied:</span>
-                  <p className="text-gray-900">{new Date(selectedApplication.applied_at).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Phone:</span>
-                  <p className="text-gray-900">{selectedApplication.phone || 'Not provided'}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Job Category:</span>
-                  <p className="text-gray-900">{selectedApplication.job_category}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Cover Letter */}
-            {selectedApplication.message && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Cover Letter</h3>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-gray-700 whitespace-pre-wrap">{selectedApplication.message}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Feedback */}
-            {selectedApplication.feedback && (
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Admin Feedback</h3>
-                <div className="bg-blue-50 rounded-lg p-4">
-                  <p className="text-blue-800">{selectedApplication.feedback}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            {selectedApplication.status === 'pending' && (
-              <div className="flex space-x-4 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => {
-                    updateApplicationStatus(selectedApplication.id, 'accepted');
-                    setShowApplicationDetails(false);
-                  }}
-                  className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center"
-                >
-                  <CheckCircle className="w-5 h-5 mr-2" />
-                  Accept Application
-                </button>
-                <button
-                  onClick={() => {
-                    updateApplicationStatus(selectedApplication.id, 'rejected');
-                    setShowApplicationDetails(false);
-                  }}
-                  className="flex-1 bg-red-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-red-700 transition-colors flex items-center justify-center"
-                >
-                  <X className="w-5 h-5 mr-2" />
-                  Reject Application
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -604,6 +440,13 @@ const VolunteerManagementAdminDashboard = () => {
             </div>
             <div className="flex items-center space-x-3">
               <button
+                onClick={() => window.location.href = '/'}
+                className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
+              >
+                <Home className="w-4 h-4" />
+                <span>Home</span>
+              </button>
+              <button
                 onClick={loadAllData}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
               >
@@ -611,6 +454,7 @@ const VolunteerManagementAdminDashboard = () => {
                 <span>Refresh</span>
               </button>
               <button
+                onClick={exportToPDF}
                 className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 <Download className="w-4 h-4" />
@@ -650,44 +494,30 @@ const VolunteerManagementAdminDashboard = () => {
           />
         </div>
 
-        {/* Stats Cards for Applications Tab */}
-        {activeTab === 'applications' && (
+        {/* Stats Cards for each tab */}
+        {activeTab === 'registrations' && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                  <MessageSquare className="w-6 h-6 text-purple-600" />
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                  <Users className="w-6 h-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Applications</p>
-                  <p className="text-2xl font-bold text-gray-900">{jobApplications.length}</p>
+                  <p className="text-sm font-medium text-gray-600">Total Volunteers</p>
+                  <p className="text-2xl font-bold text-gray-900">{volunteers.length}</p>
                 </div>
               </div>
             </div>
             
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
-                  <Clock className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Pending Review</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {jobApplications.filter(app => app.status === 'pending').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
                 <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
                   <CheckCircle className="w-6 h-6 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Accepted</p>
+                  <p className="text-sm font-medium text-gray-600">Active Status</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {jobApplications.filter(app => app.status === 'accepted').length}
+                    {volunteers.filter(v => v.status === 'active').length}
                   </p>
                 </div>
               </div>
@@ -695,13 +525,27 @@ const VolunteerManagementAdminDashboard = () => {
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
               <div className="flex items-center">
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
-                  <UserMinus className="w-6 h-6 text-red-600" />
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                  <UserCheck className="w-6 h-6 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Rejected</p>
+                  <p className="text-sm font-medium text-gray-600">Background Checks</p>
                   <p className="text-2xl font-bold text-gray-900">
-                    {jobApplications.filter(app => app.status === 'rejected').length}
+                    {volunteers.filter(v => v.background_check_consent).length}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="flex items-center">
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
+                  <MapPin className="w-6 h-6 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Zip Codes</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {new Set(volunteers.map(v => v.zipcode)).size}
                   </p>
                 </div>
               </div>
@@ -709,7 +553,8 @@ const VolunteerManagementAdminDashboard = () => {
           </div>
         )}
 
-        {/* Search and Filters */}
+        {/* Continue with other stats cards and content sections... */}
+        {/* Search and Filters Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
           <div className="p-6">
             <div className="flex flex-col lg:flex-row gap-4">
@@ -734,6 +579,40 @@ const VolunteerManagementAdminDashboard = () => {
 
               {/* Quick Filters */}
               <div className="flex gap-3">
+                {activeTab === 'registrations' && (
+                  <>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                      <option value="pending">Pending</option>
+                    </select>
+
+                    <select
+                      value={experienceFilter}
+                      onChange={(e) => setExperienceFilter(e.target.value)}
+                      className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Experience</option>
+                      <option value="beginner">Beginner</option>
+                      <option value="some">Some Experience</option>
+                      <option value="experienced">Experienced</option>
+                      <option value="expert">Expert</option>
+                    </select>
+
+                    <button
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="flex items-center space-x-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <Filter className="w-4 h-4" />
+                      <span>More Filters</span>
+                      {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                  </>
+                )}
                 {activeTab === 'applications' && (
                   <select
                     value={applicationStatusFilter}
@@ -749,6 +628,111 @@ const VolunteerManagementAdminDashboard = () => {
                 )}
               </div>
             </div>
+
+            {/* Advanced Filters for Registrations */}
+            {showFilters && activeTab === 'registrations' && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Skills Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Skills</label>
+                    <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3">
+                      {availableSkills.map(skill => (
+                        <label key={skill} className="flex items-center space-x-2 mb-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedSkills.includes(skill)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedSkills([...selectedSkills, skill]);
+                              } else {
+                                setSelectedSkills(selectedSkills.filter(s => s !== skill));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">{skill}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Categories Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Categories</label>
+                    <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3">
+                      {availableCategories.map(category => (
+                        <label key={category} className="flex items-center space-x-2 mb-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedCategories.includes(category)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedCategories([...selectedCategories, category]);
+                              } else {
+                                setSelectedCategories(selectedCategories.filter(c => c !== category));
+                              }
+                            }}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-sm text-gray-700">{category}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Location & Sort */}
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                      <input
+                        type="text"
+                        placeholder="City, State, or Zip"
+                        value={locationFilter}
+                        onChange={(e) => setLocationFilter(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                      <div className="flex space-x-2">
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'location')}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <option value="date">Registration Date</option>
+                          <option value="name">Name</option>
+                          <option value="location">Location</option>
+                        </select>
+                        <button
+                          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                          className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                        >
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedSkills([]);
+                        setSelectedCategories([]);
+                        setExperienceFilter('all');
+                        setLocationFilter('');
+                        setSortBy('date');
+                        setSortOrder('desc');
+                      }}
+                      className="w-full px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Clear All Filters
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -788,7 +772,105 @@ const VolunteerManagementAdminDashboard = () => {
               </div>
             </div>
 
-            {/* Job Applications Content */}
+            {/* Content based on active tab */}
+            {activeTab === 'registrations' && (
+              filteredVolunteers.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <Users className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No volunteers found</h3>
+                  <p className="text-gray-600">Try adjusting your search criteria or filters.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredVolunteers.map(volunteer => (
+                    <VolunteerCard 
+                      key={volunteer.id} 
+                      volunteer={volunteer}
+                      onViewDetails={(vol) => {
+                        setSelectedVolunteer(vol);
+                        setShowDetails(true);
+                      }}
+                    />
+                  ))}
+                </div>
+              )
+            )}
+
+            {activeTab === 'database' && (
+              filteredLogs.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <Activity className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No volunteer records found</h3>
+                  <p className="text-gray-600">Try adjusting your search criteria.</p>
+                </div>
+              ) : (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Organization</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Hours</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-200">
+                        {filteredLogs.map((log, index) => (
+                          <tr key={index} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="font-medium text-gray-900">{log.name}</div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.email}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.organization}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className="font-semibold text-gray-900">{Math.round(log.total_hours || 0)}</span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                                log.log_type === 'partnership' 
+                                  ? 'bg-blue-100 text-blue-800' 
+                                  : 'bg-green-100 text-green-800'
+                              }`}>
+                                {log.log_type}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                              {new Date(log.created_at).toLocaleDateString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )
+            )}
+
+            {activeTab === 'jobs' && (
+              filteredJobs.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                    <Briefcase className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
+                  <p className="text-gray-600">Try adjusting your search criteria.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {filteredJobs.map(job => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </div>
+              )
+            )}
+
             {activeTab === 'applications' && (
               filteredApplications.length === 0 ? (
                 <div className="text-center py-12">
@@ -801,28 +883,41 @@ const VolunteerManagementAdminDashboard = () => {
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredApplications.map(application => (
-                    <ApplicationCard key={application.id} application={application} />
+                    <ApplicationCard 
+                      key={application.id} 
+                      application={application}
+                      onViewDetails={(app) => {
+                        setSelectedApplication(app);
+                        setShowApplicationDetails(true);
+                      }}
+                      onUpdateStatus={updateApplicationStatus}
+                    />
                   ))}
                 </div>
               )
-            )}
-
-            {/* Placeholder for other tabs - you can add the existing content here */}
-            {activeTab !== 'applications' && (
-              <div className="text-center py-12">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                  <Building2 className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Tab Content</h3>
-                <p className="text-gray-600">Add the existing content for {activeTab} tab here.</p>
-              </div>
             )}
           </>
         )}
       </div>
 
-      {/* Application Details Modal */}
-      {showApplicationDetails && <ApplicationDetailsModal />}
+      {/* Detail Modals */}
+      {showDetails && (
+        <DetailModal 
+          volunteer={selectedVolunteer}
+          onClose={() => setShowDetails(false)}
+        />
+      )}
+      
+      {showApplicationDetails && (
+        <ApplicationDetailsModal 
+          application={selectedApplication}
+          onClose={() => setShowApplicationDetails(false)}
+          onUpdateStatus={(id, status, feedback) => {
+            updateApplicationStatus(id, status, feedback);
+            setShowApplicationDetails(false);
+          }}
+        />
+      )}
     </div>
   );
 };
