@@ -99,7 +99,7 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
   const [volunteerProfile, setVolunteerProfile] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showApplication, setShowApplication] = useState(false);
-  const [jobDetails, setJobDetails] = useState(null);
+  const [jobDetails, setJobDetails] = useState<any>(null);
   const [loadingJobDetails, setLoadingJobDetails] = useState(false);
   const [filters, setFilters] = useState({
     category: 'all',
