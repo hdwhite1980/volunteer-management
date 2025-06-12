@@ -36,6 +36,7 @@ interface Assignment {
   rating?: number;
   feedback?: string;
   hours_logged?: number;
+  notes?: string;
   assigned_by?: number;
   created_at: string;
   updated_at: string;
