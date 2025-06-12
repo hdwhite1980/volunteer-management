@@ -1,28 +1,62 @@
-// src/components/AdminDashboardAssignments.tsx
-// Enhanced Admin Dashboard with Job Assignment Features
-import React, { useState, useEffect } from 'react';
+// src/components/AdminDashboardComponents.tsx
+import React, { useState } from 'react';
 import { 
-  Users, Briefcase, Calendar, CheckCircle, Clock, AlertCircle, 
-  UserPlus, Send, Eye, Edit, Trash2, Plus, Search, Filter,
-  MapPin, Star, Badge, User, Phone, Mail
+  MapPin, Clock, Phone, Mail, Calendar, Star, Eye, Edit, Trash2, 
+  UserCheck, AlertCircle, CheckCircle, X, User, Building2, Tag,
+  Users, Briefcase, Send, MessageSquare, Award, ExternalLink
 } from 'lucide-react';
 
-interface Volunteer {
+// Interfaces
+interface VolunteerRegistration {
   id: number;
-  username: string;
   first_name: string;
   last_name: string;
   email: string;
   phone?: string;
+  birth_date?: string;
+  address: string;
   city: string;
   state: string;
-  experience_level: string;
-  categories_interested: string[];
+  zipcode: string;
+  latitude?: number;
+  longitude?: number;
   skills: string[];
-  total_assignments?: number;
-  completed_assignments?: number;
-  total_hours?: number;
-  average_rating?: number;
+  categories_interested: string[];
+  experience_level: string;
+  availability: any;
+  max_distance?: number;
+  transportation: string;
+  emergency_contact_name: string;
+  emergency_contact_phone: string;
+  emergency_contact_relationship: string;
+  background_check_consent: boolean;
+  email_notifications: boolean;
+  sms_notifications: boolean;
+  notes?: string;
+  status: string;
+  created_at: string;
+  updated_at?: string;
+  username?: string;
+}
+
+interface JobApplication {
+  id: number;
+  job_id: number;
+  volunteer_id: number;
+  status: string;
+  message: string;
+  applied_at: string;
+  updated_at?: string;
+  feedback?: string;
+  job_title: string;
+  job_category: string;
+  job_city: string;
+  job_state: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone?: string;
+  volunteer_name?: string;
 }
 
 interface Job {
@@ -31,809 +65,746 @@ interface Job {
   category: string;
   city: string;
   state: string;
+  zipcode: string;
   volunteers_needed: number;
-  status: string;
+  volunteers_assigned: number;
+  description: string;
   start_date: string;
   end_date: string;
-  total_assigned: number;
-  spots_remaining: number;
-  assigned_volunteers: any[];
-}
-
-interface Assignment {
-  id: number;
-  volunteer: {
-    id: number;
-    username: string;
-    name: string;
-    email: string;
-    phone?: string;
-  };
-  job: {
-    id: number;
-    title: string;
-    category: string;
-    location: string;
-  };
   status: string;
-  assigned_at: string;
+  created_at: string;
 }
 
-const AdminDashboardAssignments = () => {
-  const [activeTab, setActiveTab] = useState('volunteers');
-  const [volunteers, setVolunteers] = useState<Volunteer[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [applications, setApplications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  
-  // Modal states
-  const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  
-  // Search and filter states
-  const [volunteerSearch, setVolunteerSearch] = useState('');
-  const [jobSearch, setJobSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      await Promise.all([
-        fetchVolunteers(),
-        fetchJobs(),
-        fetchAssignments(),
-        fetchApplications()
-      ]);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
+// VolunteerCard Component
+export const VolunteerCard: React.FC<{
+  volunteer: VolunteerRegistration;
+  onViewDetails: (volunteer: VolunteerRegistration) => void;
+}> = ({ volunteer, onViewDetails }) => {
+  const getExperienceBadgeColor = (level: string) => {
+    switch (level) {
+      case 'expert': return 'bg-purple-100 text-purple-800';
+      case 'experienced': return 'bg-blue-100 text-blue-800';
+      case 'some': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-green-100 text-green-800';
     }
   };
-
-  const fetchVolunteers = async () => {
-    try {
-      const response = await fetch('/api/volunteer-signup');
-      if (response.ok) {
-        const data = await response.json();
-        setVolunteers(data.volunteers || []);
-      }
-    } catch (error) {
-      console.error('Error fetching volunteers:', error);
-    }
-  };
-
-  const fetchJobs = async () => {
-    try {
-      const response = await fetch('/api/jobs');
-      if (response.ok) {
-        const data = await response.json();
-        setJobs(data.jobs || []);
-      }
-    } catch (error) {
-      console.error('Error fetching jobs:', error);
-    }
-  };
-
-  const fetchAssignments = async () => {
-    try {
-      const response = await fetch('/api/volunteer-assignments');
-      if (response.ok) {
-        const data = await response.json();
-        setAssignments(data.assignments || []);
-      }
-    } catch (error) {
-      console.error('Error fetching assignments:', error);
-    }
-  };
-
-  const fetchApplications = async () => {
-    try {
-      const response = await fetch('/api/job-applications');
-      if (response.ok) {
-        const data = await response.json();
-        setApplications(data.applications || []);
-      }
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-    }
-  };
-
-  const handleAssignVolunteer = async (volunteerId: number, jobId: number) => {
-    try {
-      const response = await fetch('/api/volunteer-assignments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          volunteer_id: volunteerId,
-          job_id: jobId,
-          assigned_by: 1 // Replace with actual admin user ID
-        })
-      });
-
-      if (response.ok) {
-        alert('Volunteer assigned successfully!');
-        fetchData(); // Refresh data
-        setShowAssignModal(false);
-      } else {
-        const result = await response.json();
-        alert(`Error: ${result.error}`);
-      }
-    } catch (error) {
-      alert('Error assigning volunteer');
-    }
-  };
-
-  const handleAcceptApplication = async (applicationId: number, jobId: number, volunteerEmail: string) => {
-    try {
-      // First update application status
-      await fetch(`/api/job-applications?id=${applicationId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'accepted' })
-      });
-
-      // Then create assignment
-      const response = await fetch('/api/volunteer-assignments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          volunteer_email: volunteerEmail,
-          job_id: jobId,
-          application_id: applicationId,
-          assigned_by: 1 // Replace with actual admin user ID
-        })
-      });
-
-      if (response.ok) {
-        alert('Application accepted and volunteer assigned!');
-        fetchData();
-      } else {
-        const result = await response.json();
-        alert(`Error: ${result.error}`);
-      }
-    } catch (error) {
-      alert('Error accepting application');
-    }
-  };
-
-  const updateAssignmentStatus = async (assignmentId: number, status: string) => {
-    try {
-      const response = await fetch(`/api/volunteer-assignments?id=${assignmentId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      });
-
-      if (response.ok) {
-        alert(`Assignment status updated to ${status}`);
-        fetchAssignments();
-      } else {
-        const result = await response.json();
-        alert(`Error: ${result.error}`);
-      }
-    } catch (error) {
-      alert('Error updating assignment status');
-    }
-  };
-
-  const filteredVolunteers = volunteers.filter(volunteer =>
-    volunteer.first_name.toLowerCase().includes(volunteerSearch.toLowerCase()) ||
-    volunteer.last_name.toLowerCase().includes(volunteerSearch.toLowerCase()) ||
-    volunteer.email.toLowerCase().includes(volunteerSearch.toLowerCase()) ||
-    volunteer.username.toLowerCase().includes(volunteerSearch.toLowerCase())
-  );
-
-  const filteredJobs = jobs.filter(job =>
-    job.title.toLowerCase().includes(jobSearch.toLowerCase()) ||
-    job.category.toLowerCase().includes(jobSearch.toLowerCase())
-  );
-
-  const filteredAssignments = assignments.filter(assignment =>
-    statusFilter === 'all' || assignment.status === statusFilter
-  );
-
-  const pendingApplications = applications.filter(app => app.status === 'pending');
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-6 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard - Volunteer Management</h1>
-          <p className="text-gray-600">Manage volunteers, jobs, and assignments</p>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Users className="w-8 h-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Volunteers</p>
-                <p className="text-2xl font-bold text-gray-900">{volunteers.length}</p>
-              </div>
-            </div>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <div className="flex items-center space-x-3 mb-2">
+            <h3 className="font-semibold text-gray-900 text-lg">
+              {volunteer.first_name} {volunteer.last_name}
+            </h3>
+            {volunteer.username && (
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
+                ID: {volunteer.username}
+              </span>
+            )}
           </div>
           
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Briefcase className="w-8 h-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Jobs</p>
-                <p className="text-2xl font-bold text-gray-900">{jobs.filter(j => j.status === 'active').length}</p>
-              </div>
+          <div className="space-y-2">
+            <div className="flex items-center text-sm text-gray-600">
+              <Mail className="w-4 h-4 mr-2" />
+              {volunteer.email}
             </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <CheckCircle className="w-8 h-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Assignments</p>
-                <p className="text-2xl font-bold text-gray-900">{assignments.length}</p>
+            {volunteer.phone && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Phone className="w-4 h-4 mr-2" />
+                {volunteer.phone}
               </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <Clock className="w-8 h-8 text-orange-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending Applications</p>
-                <p className="text-2xl font-bold text-gray-900">{pendingApplications.length}</p>
-              </div>
+            )}
+            <div className="flex items-center text-sm text-gray-600">
+              <MapPin className="w-4 h-4 mr-2" />
+              {volunteer.city}, {volunteer.state} {volunteer.zipcode}
             </div>
           </div>
         </div>
-
-        {/* Tab Navigation */}
-        <div className="bg-white rounded-lg shadow mb-6">
-          <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 px-6">
-              {[
-                { key: 'volunteers', label: 'Volunteers', icon: Users },
-                { key: 'jobs', label: 'Jobs', icon: Briefcase },
-                { key: 'assignments', label: 'Assignments', icon: CheckCircle },
-                { key: 'applications', label: 'Applications', icon: Clock }
-              ].map(({ key, label, icon: Icon }) => (
-                <button
-                  key={key}
-                  onClick={() => setActiveTab(key)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    activeTab === key
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  <Icon className="w-4 h-4 inline mr-2" />
-                  {label}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          <div className="p-6">
-            {/* Volunteers Tab */}
-            {activeTab === 'volunteers' && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <div className="flex items-center space-x-4">
-                    <div className="relative">
-                      <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Search volunteers..."
-                        value={volunteerSearch}
-                        onChange={(e) => setVolunteerSearch(e.target.value)}
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowAssignModal(true)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <UserPlus className="w-4 h-4 inline mr-2" />
-                    Assign to Job
-                  </button>
-                </div>
-
-                <div className="grid gap-4">
-                  {filteredVolunteers.map((volunteer) => (
-                    <div key={volunteer.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">
-                              {volunteer.first_name} {volunteer.last_name}
-                            </h3>
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                              ID: {volunteer.username}
-                            </span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              volunteer.experience_level === 'expert' ? 'bg-purple-100 text-purple-800' :
-                              volunteer.experience_level === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-green-100 text-green-800'
-                            }`}>
-                              {volunteer.experience_level}
-                            </span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                            <div className="flex items-center">
-                              <Mail className="w-4 h-4 mr-1" />
-                              {volunteer.email}
-                            </div>
-                            {volunteer.phone && (
-                              <div className="flex items-center">
-                                <Phone className="w-4 h-4 mr-1" />
-                                {volunteer.phone}
-                              </div>
-                            )}
-                            <div className="flex items-center">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              {volunteer.city}, {volunteer.state}
-                            </div>
-                            <div className="flex items-center">
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              {volunteer.total_assignments || 0} assignments
-                            </div>
-                          </div>
-
-                          {volunteer.categories_interested && volunteer.categories_interested.length > 0 && (
-                            <div className="mt-2">
-                              <span className="text-sm text-gray-500">Categories: </span>
-                              {volunteer.categories_interested.map((cat, index) => (
-                                <span key={index} className="inline-block px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded mr-1">
-                                  {cat}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => {
-                              setSelectedVolunteer(volunteer);
-                              setShowAssignModal(true);
-                            }}
-                            className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                          >
-                            <UserPlus className="w-4 h-4" />
-                          </button>
-                          <button className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700">
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Jobs Tab */}
-            {activeTab === 'jobs' && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <div className="relative">
-                    <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search jobs..."
-                      value={jobSearch}
-                      onChange={(e) => setJobSearch(e.target.value)}
-                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid gap-4">
-                  {filteredJobs.map((job) => (
-                    <div key={job.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">{job.title}</h3>
-                            <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                              {job.category}
-                            </span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              job.spots_remaining > 0 ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
-                            }`}>
-                              {job.spots_remaining} spots left
-                            </span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
-                            <div className="flex items-center">
-                              <MapPin className="w-4 h-4 mr-1" />
-                              {job.city}, {job.state}
-                            </div>
-                            <div className="flex items-center">
-                              <Users className="w-4 h-4 mr-1" />
-                              {job.volunteers_needed} needed
-                            </div>
-                            <div className="flex items-center">
-                              <CheckCircle className="w-4 h-4 mr-1" />
-                              {job.total_assigned} assigned
-                            </div>
-                            <div className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1" />
-                              {new Date(job.start_date).toLocaleDateString()}
-                            </div>
-                          </div>
-
-                          {job.assigned_volunteers && job.assigned_volunteers.length > 0 && (
-                            <div className="mb-2">
-                              <span className="text-sm text-gray-500">Assigned volunteers: </span>
-                              {job.assigned_volunteers.slice(0, 3).map((vol, index) => (
-                                <span key={index} className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded mr-1">
-                                  {vol.username}
-                                </span>
-                              ))}
-                              {job.assigned_volunteers.length > 3 && (
-                                <span className="text-xs text-gray-500">+{job.assigned_volunteers.length - 3} more</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => {
-                              setSelectedJob(job);
-                              setShowAssignModal(true);
-                            }}
-                            className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                          >
-                            <UserPlus className="w-4 h-4" />
-                          </button>
-                          <button className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700">
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Assignments Tab */}
-            {activeTab === 'assignments' && (
-              <div>
-                <div className="flex justify-between items-center mb-6">
-                  <div className="flex items-center space-x-4">
-                    <select
-                      value={statusFilter}
-                      onChange={(e) => setStatusFilter(e.target.value)}
-                      className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="all">All Statuses</option>
-                      <option value="assigned">Assigned</option>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid gap-4">
-                  {filteredAssignments.map((assignment) => (
-                    <div key={assignment.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">{assignment.volunteer.name}</h3>
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                              {assignment.volunteer.username}
-                            </span>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
-                              assignment.status === 'completed' ? 'bg-green-100 text-green-800' :
-                              assignment.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
-                              assignment.status === 'assigned' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-red-100 text-red-800'
-                            }`}>
-                              {assignment.status}
-                            </span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-3">
-                            <div>
-                              <span className="font-medium">Job:</span> {assignment.job.title}
-                            </div>
-                            <div>
-                              <span className="font-medium">Category:</span> {assignment.job.category}
-                            </div>
-                            <div>
-                              <span className="font-medium">Location:</span> {assignment.job.location}
-                            </div>
-                            <div>
-                              <span className="font-medium">Assigned:</span> {new Date(assignment.assigned_at).toLocaleDateString()}
-                            </div>
-                            <div>
-                              <span className="font-medium">Email:</span> {assignment.volunteer.email}
-                            </div>
-                            {assignment.volunteer.phone && (
-                              <div>
-                                <span className="font-medium">Phone:</span> {assignment.volunteer.phone}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          {assignment.status === 'assigned' && (
-                            <button
-                              onClick={() => updateAssignmentStatus(assignment.id, 'confirmed')}
-                              className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-                            >
-                              Confirm
-                            </button>
-                          )}
-                          {assignment.status === 'confirmed' && (
-                            <button
-                              onClick={() => updateAssignmentStatus(assignment.id, 'completed')}
-                              className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                            >
-                              Complete
-                            </button>
-                          )}
-                          <button
-                            onClick={() => updateAssignmentStatus(assignment.id, 'cancelled')}
-                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Applications Tab */}
-            {activeTab === 'applications' && (
-              <div>
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Pending Applications</h3>
-                </div>
-
-                <div className="grid gap-4">
-                  {pendingApplications.map((application) => (
-                    <div key={application.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <h3 className="font-semibold text-gray-900">{application.volunteer_name}</h3>
-                            <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">
-                              Pending Review
-                            </span>
-                          </div>
-                          
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm text-gray-600 mb-3">
-                            <div>
-                              <span className="font-medium">Job:</span> {application.job_title}
-                            </div>
-                            <div>
-                              <span className="font-medium">Category:</span> {application.job_category}
-                            </div>
-                            <div>
-                              <span className="font-medium">Location:</span> {application.job_city}, {application.job_state}
-                            </div>
-                            <div>
-                              <span className="font-medium">Applied:</span> {new Date(application.applied_at).toLocaleDateString()}
-                            </div>
-                            <div>
-                              <span className="font-medium">Email:</span> {application.email}
-                            </div>
-                            {application.phone && (
-                              <div>
-                                <span className="font-medium">Phone:</span> {application.phone}
-                              </div>
-                            )}
-                          </div>
-
-                          {application.cover_letter && (
-                            <div className="mb-3">
-                              <span className="font-medium text-sm text-gray-600">Cover Letter:</span>
-                              <p className="text-sm text-gray-700 mt-1">{application.cover_letter}</p>
-                            </div>
-                          )}
-
-                          {application.experience && (
-                            <div className="mb-3">
-                              <span className="font-medium text-sm text-gray-600">Experience:</span>
-                              <p className="text-sm text-gray-700 mt-1">{application.experience}</p>
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => handleAcceptApplication(application.id, application.job_id, application.email)}
-                            className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
-                          >
-                            Accept & Assign
-                          </button>
-                          <button
-                            onClick={async () => {
-                              try {
-                                await fetch(`/api/job-applications?id=${application.id}`, {
-                                  method: 'PUT',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({ status: 'rejected' })
-                                });
-                                alert('Application rejected');
-                                fetchApplications();
-                              } catch (error) {
-                                alert('Error rejecting application');
-                              }
-                            }}
-                            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
-                          >
-                            Reject
-                          </button>
-                          <button className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700">
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {pendingApplications.length === 0 && (
-                  <div className="text-center py-8">
-                    <CheckCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Applications</h3>
-                    <p className="text-gray-600">All applications have been processed</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+        
+        <div className="flex flex-col items-end space-y-2">
+          <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+            volunteer.status === 'active' ? 'bg-green-100 text-green-800' :
+            volunteer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-gray-100 text-gray-600'
+          }`}>
+            {volunteer.status}
+          </span>
+          
+          <span className={`px-3 py-1 text-xs rounded-full font-medium ${getExperienceBadgeColor(volunteer.experience_level)}`}>
+            {volunteer.experience_level}
+          </span>
         </div>
       </div>
 
-      {/* Assignment Modal */}
-      {showAssignModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold mb-6">
-                {selectedVolunteer ? `Assign ${selectedVolunteer.first_name} ${selectedVolunteer.last_name} to Job` : 
-                 selectedJob ? `Assign Volunteer to ${selectedJob.title}` : 
-                 'Create New Assignment'}
-              </h2>
-              
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Volunteer Selection */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">
-                    {selectedVolunteer ? 'Selected Volunteer' : 'Choose Volunteer'}
-                  </h3>
-                  
-                  {selectedVolunteer ? (
-                    <div className="border border-gray-200 rounded-lg p-4 bg-blue-50">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h4 className="font-semibold">{selectedVolunteer.first_name} {selectedVolunteer.last_name}</h4>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                          {selectedVolunteer.username}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">{selectedVolunteer.email}</p>
-                      <p className="text-sm text-gray-600">{selectedVolunteer.city}, {selectedVolunteer.state}</p>
-                      <p className="text-sm text-gray-600">Experience: {selectedVolunteer.experience_level}</p>
-                    </div>
-                  ) : (
-                    <div className="max-h-64 overflow-y-auto space-y-2">
-                      {volunteers.map((volunteer) => (
-                        <button
-                          key={volunteer.id}
-                          onClick={() => setSelectedVolunteer(volunteer)}
-                          className="w-full text-left border border-gray-200 rounded-lg p-3 hover:bg-blue-50 hover:border-blue-300 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium">{volunteer.first_name} {volunteer.last_name}</h4>
-                              <p className="text-sm text-gray-600">{volunteer.username} • {volunteer.experience_level}</p>
-                            </div>
-                            <Plus className="w-4 h-4 text-gray-400" />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Job Selection */}
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">
-                    {selectedJob ? 'Selected Job' : 'Choose Job'}
-                  </h3>
-                  
-                  {selectedJob ? (
-                    <div className="border border-gray-200 rounded-lg p-4 bg-green-50">
-                      <div className="flex items-center space-x-3 mb-2">
-                        <h4 className="font-semibold">{selectedJob.title}</h4>
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                          {selectedJob.category}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">{selectedJob.city}, {selectedJob.state}</p>
-                      <p className="text-sm text-gray-600">{selectedJob.spots_remaining} spots remaining</p>
-                      <p className="text-sm text-gray-600">Start: {new Date(selectedJob.start_date).toLocaleDateString()}</p>
-                    </div>
-                  ) : (
-                    <div className="max-h-64 overflow-y-auto space-y-2">
-                      {jobs.filter(job => job.spots_remaining > 0).map((job) => (
-                        <button
-                          key={job.id}
-                          onClick={() => setSelectedJob(job)}
-                          className="w-full text-left border border-gray-200 rounded-lg p-3 hover:bg-green-50 hover:border-green-300 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium">{job.title}</h4>
-                              <p className="text-sm text-gray-600">{job.category} • {job.spots_remaining} spots left</p>
-                            </div>
-                            <Plus className="w-4 h-4 text-gray-400" />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-4 mt-6 pt-6 border-t">
-                <button
-                  onClick={() => {
-                    setShowAssignModal(false);
-                    setSelectedVolunteer(null);
-                    setSelectedJob(null);
-                  }}
-                  className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    if (selectedVolunteer && selectedJob) {
-                      handleAssignVolunteer(selectedVolunteer.id, selectedJob.id);
-                    }
-                  }}
-                  disabled={!selectedVolunteer || !selectedJob}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Create Assignment
-                </button>
-              </div>
+      {/* Skills & Categories */}
+      <div className="mb-4">
+        {volunteer.skills && volunteer.skills.length > 0 && (
+          <div className="mb-2">
+            <span className="text-sm font-medium text-gray-700">Skills: </span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {volunteer.skills.slice(0, 3).map((skill, index) => (
+                <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
+                  {skill}
+                </span>
+              ))}
+              {volunteer.skills.length > 3 && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                  +{volunteer.skills.length - 3} more
+                </span>
+              )}
             </div>
           </div>
+        )}
+        
+        {volunteer.categories_interested && volunteer.categories_interested.length > 0 && (
+          <div>
+            <span className="text-sm font-medium text-gray-700">Interested in: </span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {volunteer.categories_interested.slice(0, 2).map((category, index) => (
+                <span key={index} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded">
+                  {category}
+                </span>
+              ))}
+              {volunteer.categories_interested.length > 2 && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                  +{volunteer.categories_interested.length - 2} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Additional Info */}
+      <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+        <div>
+          <span className="font-medium text-gray-700">Max Distance:</span>
+          <p className="text-gray-600">{volunteer.max_distance || 25} miles</p>
         </div>
-      )}
+        <div>
+          <span className="font-medium text-gray-700">Transportation:</span>
+          <p className="text-gray-600">{volunteer.transportation || 'Own'}</p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Background Check:</span>
+          <p className={volunteer.background_check_consent ? 'text-green-600' : 'text-red-600'}>
+            {volunteer.background_check_consent ? 'Consented' : 'Not Consented'}
+          </p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Registered:</span>
+          <p className="text-gray-600">{new Date(volunteer.created_at).toLocaleDateString()}</p>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+        <div className="flex items-center space-x-2">
+          {volunteer.email_notifications && (
+            <Mail className="w-4 h-4 text-blue-600" title="Email notifications enabled" />
+          )}
+          {volunteer.sms_notifications && (
+            <MessageSquare className="w-4 h-4 text-green-600" title="SMS notifications enabled" />
+          )}
+          {volunteer.background_check_consent && (
+            <UserCheck className="w-4 h-4 text-purple-600" title="Background check consented" />
+          )}
+        </div>
+        
+        <button
+          onClick={() => onViewDetails(volunteer)}
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Eye className="w-4 h-4" />
+          <span>View Details</span>
+        </button>
+      </div>
     </div>
   );
 };
 
-export default AdminDashboardAssignments;
+// JobCard Component
+export const JobCard: React.FC<{ job: Job }> = ({ job }) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'filled': return 'bg-blue-100 text-blue-800';
+      case 'expired': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const spotsRemaining = job.volunteers_needed - job.volunteers_assigned;
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-900 text-lg mb-2">{job.title}</h3>
+          <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+            <div className="flex items-center">
+              <Tag className="w-4 h-4 mr-1" />
+              {job.category}
+            </div>
+            <div className="flex items-center">
+              <MapPin className="w-4 h-4 mr-1" />
+              {job.city}, {job.state}
+            </div>
+          </div>
+        </div>
+        
+        <span className={`px-3 py-1 text-xs rounded-full font-medium ${getStatusColor(job.status)}`}>
+          {job.status}
+        </span>
+      </div>
+
+      <div className="mb-4">
+        <p className="text-gray-700 text-sm line-clamp-3">{job.description}</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+        <div>
+          <span className="font-medium text-gray-700">Volunteers Needed:</span>
+          <p className="text-gray-900 font-semibold">{job.volunteers_needed}</p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Currently Assigned:</span>
+          <p className="text-gray-900 font-semibold">{job.volunteers_assigned}</p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Spots Remaining:</span>
+          <p className={`font-semibold ${spotsRemaining > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {spotsRemaining}
+          </p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Start Date:</span>
+          <p className="text-gray-600">{new Date(job.start_date).toLocaleDateString()}</p>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+        <div className="text-xs text-gray-500">
+          Created {new Date(job.created_at).toLocaleDateString()}
+        </div>
+        
+        <div className="flex space-x-2">
+          <button className="flex items-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <Eye className="w-4 h-4" />
+            <span>View</span>
+          </button>
+          <button className="flex items-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+            <Edit className="w-4 h-4" />
+            <span>Edit</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ApplicationCard Component
+export const ApplicationCard: React.FC<{
+  application: JobApplication;
+  onViewDetails: (application: JobApplication) => void;
+  onUpdateStatus: (id: number, status: string, feedback?: string) => void;
+}> = ({ application, onViewDetails, onUpdateStatus }) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'accepted': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'withdrawn': return 'bg-gray-100 text-gray-600';
+      default: return 'bg-blue-100 text-blue-800';
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <h3 className="font-semibold text-gray-900 text-lg mb-1">
+            {application.volunteer_name || `${application.first_name} ${application.last_name}`}
+          </h3>
+          <p className="text-blue-600 font-medium mb-2">{application.job_title}</p>
+          
+          <div className="space-y-1 text-sm text-gray-600">
+            <div className="flex items-center">
+              <Mail className="w-4 h-4 mr-2" />
+              {application.email}
+            </div>
+            {application.phone && (
+              <div className="flex items-center">
+                <Phone className="w-4 h-4 mr-2" />
+                {application.phone}
+              </div>
+            )}
+            <div className="flex items-center">
+              <MapPin className="w-4 h-4 mr-2" />
+              {application.job_city}, {application.job_state}
+            </div>
+            <div className="flex items-center">
+              <Tag className="w-4 h-4 mr-2" />
+              {application.job_category}
+            </div>
+          </div>
+        </div>
+        
+        <span className={`px-3 py-1 text-xs rounded-full font-medium ${getStatusColor(application.status)}`}>
+          {application.status}
+        </span>
+      </div>
+
+      {application.message && (
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <p className="text-sm text-gray-700 line-clamp-3">{application.message}</p>
+        </div>
+      )}
+
+      <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
+        <span>Applied {new Date(application.applied_at).toLocaleDateString()}</span>
+        {application.updated_at && (
+          <span>Updated {new Date(application.updated_at).toLocaleDateString()}</span>
+        )}
+      </div>
+
+      {application.feedback && (
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+          <span className="text-sm font-medium text-blue-800">Feedback:</span>
+          <p className="text-sm text-blue-700 mt-1">{application.feedback}</p>
+        </div>
+      )}
+
+      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+        <button
+          onClick={() => onViewDetails(application)}
+          className="flex items-center space-x-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        >
+          <Eye className="w-4 h-4" />
+          <span>View Details</span>
+        </button>
+        
+        {application.status === 'pending' && (
+          <div className="flex space-x-2">
+            <button
+              onClick={() => onUpdateStatus(application.id, 'accepted')}
+              className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <CheckCircle className="w-4 h-4" />
+              <span>Accept</span>
+            </button>
+            <button
+              onClick={() => onUpdateStatus(application.id, 'rejected')}
+              className="flex items-center space-x-1 px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+            >
+              <X className="w-4 h-4" />
+              <span>Reject</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// DetailModal Component
+export const DetailModal: React.FC<{
+  volunteer: VolunteerRegistration | null;
+  onClose: () => void;
+}> = ({ volunteer, onClose }) => {
+  if (!volunteer) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {volunteer.first_name} {volunteer.last_name}
+              </h2>
+              {volunteer.username && (
+                <p className="text-blue-600 font-medium">Volunteer ID: {volunteer.username}</p>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Personal Information */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <p className="text-gray-900">{volunteer.email}</p>
+                </div>
+                {volunteer.phone && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <p className="text-gray-900">{volunteer.phone}</p>
+                  </div>
+                )}
+                {volunteer.birth_date && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Birth Date</label>
+                    <p className="text-gray-900">{new Date(volunteer.birth_date).toLocaleDateString()}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Address</label>
+                  <p className="text-gray-900">
+                    {volunteer.address}<br />
+                    {volunteer.city}, {volunteer.state} {volunteer.zipcode}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Experience Level</label>
+                  <p className="text-gray-900 capitalize">{volunteer.experience_level}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Transportation</label>
+                  <p className="text-gray-900 capitalize">{volunteer.transportation}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Max Distance</label>
+                  <p className="text-gray-900">{volunteer.max_distance || 25} miles</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Emergency Contact & Preferences */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Emergency Contact</h3>
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Name</label>
+                  <p className="text-gray-900">{volunteer.emergency_contact_name}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Phone</label>
+                  <p className="text-gray-900">{volunteer.emergency_contact_phone}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Relationship</label>
+                  <p className="text-gray-900">{volunteer.emergency_contact_relationship}</p>
+                </div>
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Preferences</h3>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className={`w-5 h-5 ${volunteer.email_notifications ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className="text-gray-900">Email Notifications</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className={`w-5 h-5 ${volunteer.sms_notifications ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className="text-gray-900">SMS Notifications</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className={`w-5 h-5 ${volunteer.background_check_consent ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className="text-gray-900">Background Check Consent</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Skills & Categories */}
+          <div className="mt-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              {volunteer.skills && volunteer.skills.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteer.skills.map((skill, index) => (
+                      <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {volunteer.categories_interested && volunteer.categories_interested.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Categories of Interest</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteer.categories_interested.map((category, index) => (
+                      <span key={index} className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full">
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Availability */}
+          {volunteer.availability && (
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Availability</h3>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {JSON.stringify(volunteer.availability, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          {volunteer.notes && (
+            <div className="mt-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes</h3>
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-gray-700">{volunteer.notes}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Registration Info */}
+          <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="grid md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <span className="font-medium text-gray-700">Status:</span>
+                <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                  volunteer.status === 'active' ? 'bg-green-100 text-green-800' :
+                  volunteer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {volunteer.status}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Registered:</span>
+                <span className="ml-2 text-gray-600">{new Date(volunteer.created_at).toLocaleDateString()}</span>
+              </div>
+              {volunteer.updated_at && (
+                <div>
+                  <span className="font-medium text-gray-700">Last Updated:</span>
+                  <span className="ml-2 text-gray-600">{new Date(volunteer.updated_at).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Close
+            </button>
+            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              Edit Volunteer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ApplicationDetailsModal Component
+export const ApplicationDetailsModal: React.FC<{
+  application: JobApplication | null;
+  onClose: () => void;
+  onUpdateStatus: (id: number, status: string, feedback?: string) => void;
+}> = ({ application, onClose, onUpdateStatus }) => {
+  const [feedback, setFeedback] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  if (!application) return null;
+
+  const handleStatusUpdate = async (status: string) => {
+    setIsUpdating(true);
+    try {
+      await onUpdateStatus(application.id, status, feedback);
+      onClose();
+    } catch (error) {
+      console.error('Error updating status:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Details</h2>
+              <p className="text-gray-600">
+                {application.volunteer_name || `${application.first_name} ${application.last_name}`} • {application.job_title}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="space-y-6">
+            {/* Application Info */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Information</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Applicant</label>
+                  <p className="text-gray-900">{application.volunteer_name || `${application.first_name} ${application.last_name}`}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <p className="text-gray-900">{application.email}</p>
+                </div>
+                {application.phone && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Phone</label>
+                    <p className="text-gray-900">{application.phone}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <span className={`inline-flex px-3 py-1 text-sm rounded-full font-medium ${
+                    application.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                    application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                    application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>
+                    {application.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Job Information */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Job Information</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Job Title</label>
+                  <p className="text-gray-900">{application.job_title}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Category</label>
+                  <p className="text-gray-900">{application.job_category}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Location</label>
+                  <p className="text-gray-900">{application.job_city}, {application.job_state}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Applied Date</label>
+                  <p className="text-gray-900">{new Date(application.applied_at).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Application Message */}
+            {application.message && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Cover Letter / Message</h3>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <p className="text-gray-700 whitespace-pre-wrap">{application.message}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Current Feedback */}
+            {application.feedback && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Current Feedback</h3>
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <p className="text-blue-700">{application.feedback}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Status Update Section */}
+            {application.status === 'pending' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Update Application Status</h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Feedback (optional)
+                    </label>
+                    <textarea
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Add feedback for the applicant..."
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => handleStatusUpdate('accepted')}
+                      disabled={isUpdating}
+                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      <span>{isUpdating ? 'Updating...' : 'Accept Application'}</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => handleStatusUpdate('rejected')}
+                      disabled={isUpdating}
+                      className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>{isUpdating ? 'Updating...' : 'Reject Application'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Timestamps */}
+            <div className="pt-6 border-t border-gray-200">
+              <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+                <div>
+                  <span className="font-medium">Applied:</span>
+                  <span className="ml-2">{new Date(application.applied_at).toLocaleString()}</span>
+                </div>
+                {application.updated_at && (
+                  <div>
+                    <span className="font-medium">Last Updated:</span>
+                    <span className="ml-2">{new Date(application.updated_at).toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+              <button
+                onClick={onClose}
+                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Close
+              </button>
+              
+              {application.status !== 'pending' && (
+                <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                  Contact Applicant
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
