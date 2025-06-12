@@ -1134,7 +1134,7 @@ const VolunteerApp = () => {
           setCurrentView('landing');
         } else {
           const result = await response.json();
-          alert(Error submitting form: ${result.error || 'Unknown error'});
+          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
         }
       } catch (error) {
         console.error('Submission error:', error);
@@ -1698,7 +1698,7 @@ export default VolunteerApp;
           setCurrentView('landing');
         } else {
           const result = await response.json();
-          alert(Error submitting form: ${result.error || 'Unknown error'});
+          alert(`Error submitting form: ${result.error || 'Unknown error'}`);
         }
       } catch (error) {
         console.error('Submission error:', error);
