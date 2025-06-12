@@ -2111,9 +2111,9 @@ export default VolunteerApp;
       default:
         return <LandingPage />;
     }
-  };
+  ;
 
   return renderCurrentView();
-};
+;
 
 export default VolunteerApp;
