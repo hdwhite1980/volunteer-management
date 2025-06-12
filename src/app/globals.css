@@ -1253,7 +1253,166 @@ table th {
     page-break-inside: avoid;
   }
 }
+/* ADD THESE TO THE TOP OF YOUR EXISTING paste.txt FILE (after the existing :root if any) */
 
+/* CSS Variables for gradients */
+:root {
+  --tw-gradient-from: transparent;
+  --tw-gradient-via: transparent;  
+  --tw-gradient-to: transparent;
+}
+
+/* ADD THESE MISSING UTILITY CLASSES TO YOUR EXISTING FILE */
+
+/* Missing text overflow utility */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Missing backdrop blur utilities */
+.backdrop-blur-md { 
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Missing border radius */
+.rounded-3xl { border-radius: 1.5rem; }
+
+/* Additional shadow utilities for cards */
+.shadow-red-500\/25 { box-shadow: 0 25px 50px -12px rgba(239, 68, 68, 0.25); }
+.shadow-orange-500\/25 { box-shadow: 0 25px 50px -12px rgba(249, 115, 22, 0.25); }
+.shadow-blue-500\/25 { box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.25); }
+.shadow-green-500\/25 { box-shadow: 0 25px 50px -12px rgba(34, 197, 94, 0.25); }
+
+/* Missing gradient combinations used in JobBoard */
+.from-purple-900.to-indigo-900 { --tw-gradient-from: #581c87; --tw-gradient-to: #312e81; }
+.from-blue-600.via-indigo-700.to-purple-700 { --tw-gradient-from: #2563eb; --tw-gradient-via: #4338ca; --tw-gradient-to: #7c3aed; }
+.from-red-600.to-orange-600 { --tw-gradient-from: #dc2626; --tw-gradient-to: #ea580c; }
+.from-green-500.to-emerald-600 { --tw-gradient-from: #22c55e; --tw-gradient-to: #059669; }
+.from-blue-500.to-purple-500 { --tw-gradient-from: #3b82f6; --tw-gradient-to: #a855f7; }
+.from-red-500.to-pink-500 { --tw-gradient-from: #ef4444; --tw-gradient-to: #ec4899; }
+.from-orange-500.to-yellow-500 { --tw-gradient-from: #f97316; --tw-gradient-to: #eab308; }
+.from-green-500.to-teal-500 { --tw-gradient-from: #22c55e; --tw-gradient-to: #14b8a6; }
+.from-red-500.to-orange-500 { --tw-gradient-from: #ef4444; --tw-gradient-to: #f97316; }
+.from-green-500.to-blue-500 { --tw-gradient-from: #22c55e; --tw-gradient-to: #3b82f6; }
+.from-yellow-400.to-orange-500 { --tw-gradient-from: #facc15; --tw-gradient-to: #f97316; }
+.from-yellow-500.to-orange-600 { --tw-gradient-from: #eab308; --tw-gradient-to: #ea580c; }
+.from-red-600.to-red-700 { --tw-gradient-from: #dc2626; --tw-gradient-to: #b91c1c; }
+.from-orange-600.to-orange-700 { --tw-gradient-from: #ea580c; --tw-gradient-to: #c2410c; }
+.from-green-600.to-blue-600 { --tw-gradient-from: #16a34a; --tw-gradient-to: #2563eb; }
+
+/* Missing indigo color scale */
+.bg-indigo-900 { background-color: #312e81; }
+.from-indigo-700 { --tw-gradient-from: #4338ca; }
+.to-indigo-900 { --tw-gradient-to: #312e81; }
+
+/* Missing emerald color scale */
+.bg-emerald-600 { background-color: #059669; }
+.text-emerald-600 { color: #059669; }
+
+/* Missing teal color scale */
+.to-teal-500 { --tw-gradient-to: #14b8a6; }
+
+/* Missing pink color scale */
+.to-pink-500 { --tw-gradient-to: #ec4899; }
+
+/* Missing yellow color extensions */
+.text-yellow-400 { color: #facc15; }
+.from-yellow-400 { --tw-gradient-from: #facc15; }
+.from-yellow-500 { --tw-gradient-from: #eab308; }
+.to-yellow-500 { --tw-gradient-to: #eab308; }
+
+/* Missing orange color extensions */
+.text-orange-600 { color: #ea580c; }
+.text-orange-700 { color: #c2410c; }
+.from-orange-600 { --tw-gradient-from: #ea580c; }
+.to-orange-600 { --tw-gradient-to: #ea580c; }
+.to-orange-700 { --tw-gradient-to: #c2410c; }
+
+/* Additional text colors for badges */
+.text-red-800 { color: #991b1b; }
+.text-orange-800 { color: #9a3412; }
+.text-blue-800 { color: #1e40af; }
+.text-green-100 { color: #dcfce7; }
+.text-blue-100 { color: #dbeafe; }
+
+/* Additional background colors for badges */
+.bg-red-100 { background-color: #fee2e2; }
+.bg-red-800 { background-color: #991b1b; }
+.bg-orange-100 { background-color: #ffedd5; }
+.bg-orange-800 { color: #9a3412; }
+.bg-blue-300 { background-color: #93c5fd; }
+
+/* Missing max-height utilities */
+.max-h-\[90vh\] { max-height: 90vh; }
+
+/* Animation keyframes for blob effect */
+@keyframes blob {
+  0% {
+    transform: translate(0px, 0px) scale(1);
+  }
+  33% {
+    transform: translate(30px, -50px) scale(1.1);
+  }
+  66% {
+    transform: translate(-20px, 20px) scale(0.9);
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
+
+/* Missing hover opacity utilities */
+.hover\:opacity-90:hover { opacity: 0.9; }
+
+/* Ensure proper body reset for gradients */
+body {
+  background: transparent !important;
+  margin: 0;
+  padding: 0;
+}
+
+/* Missing border colors with opacity */
+.border-red-200 { border-color: #fecaca; }
+.border-orange-200 { border-color: #fed7aa; }
+.border-yellow-200 { border-color: #fef08a; }
+.border-yellow-300 { border-color: #fde047; }
+.border-yellow-500 { border-color: #eab308; }
+
+/* Fix for backdrop blur on older browsers */
+.backdrop-blur-sm { 
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Missing disabled hover states */
+.hover\:from-red-700:hover { --tw-gradient-from: #b91c1c; }
+.hover\:to-orange-700:hover { --tw-gradient-to: #c2410c; }
+.hover\:from-green-600:hover { --tw-gradient-from: #16a34a; }
+.hover\:to-blue-600:hover { --tw-gradient-to: #2563eb; }
+.hover\:from-blue-600:hover { --tw-gradient-from: #2563eb; }
+.hover\:to-purple-600:hover { --tw-gradient-to: #9333ea; }
 /* Dark Mode Support (if needed in future) */
 @media (prefers-color-scheme: dark) {
   .dark\:bg-gray-800 { background-color: #1f2937; }
