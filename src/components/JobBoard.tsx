@@ -275,10 +275,10 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                     <div className="flex items-center">
                       <Users className="w-4 h-4 mr-1" />
                       <span className={`font-bold ${
-                        job.positions_remaining === 0 ? 'text-red-200' : 
-                        job.positions_remaining <= 2 ? 'text-yellow-200' : 'text-green-200'
+                        (job.positions_remaining || 0) === 0 ? 'text-red-200' : 
+                        (job.positions_remaining || 0) <= 2 ? 'text-yellow-200' : 'text-green-200'
                       }`}>
-                        {job.positions_remaining} of {job.volunteers_needed} spots available
+                        {job.positions_remaining || 0} of {job.volunteers_needed} spots available
                       </span>
                     </div>
                   </div>
@@ -294,17 +294,17 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Position Availability</span>
                   <span className="text-sm">
-                    {job.volunteers_needed - job.positions_remaining} filled • {job.positions_remaining} remaining
+                    {job.volunteers_needed - (job.positions_remaining || 0)} filled • {job.positions_remaining || 0} remaining
                   </span>
                 </div>
                 <div className="w-full bg-white/20 rounded-full h-2">
                   <div 
                     className={`h-2 rounded-full transition-all duration-300 ${
-                      job.positions_remaining === 0 ? 'bg-red-400' :
-                      job.positions_remaining <= 2 ? 'bg-yellow-400' : 'bg-green-400'
+                      (job.positions_remaining || 0) === 0 ? 'bg-red-400' :
+                      (job.positions_remaining || 0) <= 2 ? 'bg-yellow-400' : 'bg-green-400'
                     }`}
                     style={{ 
-                      width: `${((job.volunteers_needed - job.positions_remaining) / job.volunteers_needed) * 100}%` 
+                      width: `${((job.volunteers_needed - (job.positions_remaining || 0)) / job.volunteers_needed) * 100}%` 
                     }}
                   ></div>
                 </div>
@@ -396,16 +396,16 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                   {/* Apply Button */}
                   <button
                     onClick={() => setShowApplicationForm(true)}
-                    disabled={job.positions_remaining === 0}
+                    disabled={(job.positions_remaining || 0) === 0}
                     className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl ${
-                      job.positions_remaining === 0 
+                      (job.positions_remaining || 0) === 0 
                         ? 'bg-gray-400 text-white cursor-not-allowed'
                         : job.urgency === 'urgent'
                         ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white hover:from-red-700 hover:to-orange-700'
                         : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
                     }`}
                   >
-                    {job.positions_remaining === 0 ? 'Position Filled' : 'Apply Now'}
+                    {(job.positions_remaining || 0) === 0 ? 'Position Filled' : 'Apply Now'}
                   </button>
                 </div>
               </div>
@@ -647,11 +647,11 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
     // Availability filter
     if (filters.availability !== 'all') {
       if (filters.availability === 'available') {
-        filtered = filtered.filter(job => job.positions_remaining > 0);
+        filtered = filtered.filter(job => (job.positions_remaining || 0) > 0);
       } else if (filters.availability === 'urgent') {
-        filtered = filtered.filter(job => job.positions_remaining <= 2 && job.positions_remaining > 0);
+        filtered = filtered.filter(job => (job.positions_remaining || 0) <= 2 && (job.positions_remaining || 0) > 0);
       } else if (filters.availability === 'filled') {
-        filtered = filtered.filter(job => job.positions_remaining === 0);
+        filtered = filtered.filter(job => (job.positions_remaining || 0) === 0);
       }
     }
 
@@ -662,8 +662,8 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
       if (b.urgency === 'urgent' && a.urgency !== 'urgent') return 1;
       
       // Then by positions remaining (fewer spots = higher priority)
-      if (a.positions_remaining !== b.positions_remaining) {
-        return a.positions_remaining - b.positions_remaining;
+      if ((a.positions_remaining || 0) !== (b.positions_remaining || 0)) {
+        return (a.positions_remaining || 0) - (b.positions_remaining || 0);
       }
       
       // Finally by creation date (newer first)
@@ -698,10 +698,11 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
     }
   };
 
-  const getAvailabilityStatus = (remaining: number, total: number) => {
-    if (remaining === 0) return { text: 'Filled', color: 'text-red-600 bg-red-100' };
-    if (remaining <= 2) return { text: `Only ${remaining} left!`, color: 'text-orange-600 bg-orange-100' };
-    return { text: `${remaining} available`, color: 'text-green-600 bg-green-100' };
+  const getAvailabilityStatus = (remaining: number | undefined, total: number) => {
+    const remainingCount = remaining || 0;
+    if (remainingCount === 0) return { text: 'Filled', color: 'text-red-600 bg-red-100' };
+    if (remainingCount <= 2) return { text: `Only ${remainingCount} left!`, color: 'text-orange-600 bg-orange-100' };
+    return { text: `${remainingCount} available`, color: 'text-green-600 bg-green-100' };
   };
 
   if (jobId) {
@@ -709,8 +710,8 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
   }
 
   // Separate urgent jobs for special display
-  const urgentJobs = filteredJobs.filter(job => job.urgency === 'urgent' && job.positions_remaining > 0);
-  const regularJobs = filteredJobs.filter(job => job.urgency !== 'urgent' || job.positions_remaining === 0);
+  const urgentJobs = filteredJobs.filter(job => job.urgency === 'urgent' && (job.positions_remaining || 0) > 0);
+  const regularJobs = filteredJobs.filter(job => job.urgency !== 'urgent' || (job.positions_remaining || 0) === 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -940,7 +941,7 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
                           <div className="flex items-center text-sm">
                             <Users className="w-4 h-4 mr-2 text-red-600" />
                             <span className="font-bold text-red-600">
-                              {job.positions_remaining} of {job.volunteers_needed} spots left!
+                              {job.positions_remaining || 0} of {job.volunteers_needed} spots left!
                             </span>
                           </div>
                           
@@ -953,14 +954,14 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
                         {/* Availability Progress Bar */}
                         <div className="mb-4">
                           <div className="flex justify-between text-xs text-gray-600 mb-1">
-                            <span>Filled: {job.volunteers_needed - job.positions_remaining}</span>
-                            <span>Remaining: {job.positions_remaining}</span>
+                            <span>Filled: {job.volunteers_needed - (job.positions_remaining || 0)}</span>
+                            <span>Remaining: {job.positions_remaining || 0}</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div 
                               className="bg-red-500 h-2 rounded-full transition-all duration-300"
                               style={{ 
-                                width: `${((job.volunteers_needed - job.positions_remaining) / job.volunteers_needed) * 100}%` 
+                                width: `${((job.volunteers_needed - (job.positions_remaining || 0)) / job.volunteers_needed) * 100}%` 
                               }}
                             ></div>
                           </div>
@@ -1034,10 +1035,10 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
                             <div className="flex items-center text-sm">
                               <Users className="w-4 h-4 mr-2" />
                               <span className={`font-medium ${
-                                job.positions_remaining === 0 ? 'text-red-600' :
-                                job.positions_remaining <= 2 ? 'text-orange-600' : 'text-green-600'
+                                (job.positions_remaining || 0) === 0 ? 'text-red-600' :
+                                (job.positions_remaining || 0) <= 2 ? 'text-orange-600' : 'text-green-600'
                               }`}>
-                                {job.positions_remaining} of {job.volunteers_needed} spots available
+                                {job.positions_remaining || 0} of {job.volunteers_needed} spots available
                               </span>
                             </div>
                             
@@ -1052,11 +1053,11 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
                             <div className="w-full bg-gray-200 rounded-full h-2">
                               <div 
                                 className={`h-2 rounded-full transition-all duration-300 ${
-                                  job.positions_remaining === 0 ? 'bg-red-500' :
-                                  job.positions_remaining <= 2 ? 'bg-orange-500' : 'bg-green-500'
+                                  (job.positions_remaining || 0) === 0 ? 'bg-red-500' :
+                                  (job.positions_remaining || 0) <= 2 ? 'bg-orange-500' : 'bg-green-500'
                                 }`}
                                 style={{ 
-                                  width: `${((job.volunteers_needed - job.positions_remaining) / job.volunteers_needed) * 100}%` 
+                                  width: `${((job.volunteers_needed - (job.positions_remaining || 0)) / job.volunteers_needed) * 100}%` 
                                 }}
                               ></div>
                             </div>
@@ -1065,14 +1066,14 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
                           <div className="flex space-x-2">
                             <button
                               onClick={() => window.location.href = `/jobs/${job.id}`}
-                              disabled={job.positions_remaining === 0}
+                              disabled={(job.positions_remaining || 0) === 0}
                               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
-                                job.positions_remaining === 0
+                                (job.positions_remaining || 0) === 0
                                   ? 'bg-gray-400 text-white cursor-not-allowed'
                                   : 'bg-blue-600 text-white hover:bg-blue-700'
                               }`}
                             >
-                              {job.positions_remaining === 0 ? 'Filled' : 'View Details'}
+                              {(job.positions_remaining || 0) === 0 ? 'Filled' : 'View Details'}
                             </button>
                             <button 
                               onClick={() => window.location.href = `/jobs/${job.id}`}
