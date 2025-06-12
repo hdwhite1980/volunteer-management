@@ -11,8 +11,47 @@ interface JobBoardProps {
   jobId?: string | number;
 }
 
+interface Job {
+  id: number;
+  title: string;
+  category: string;
+  description: string;
+  city: string;
+  state: string;
+  zipcode: string;
+  volunteers_needed: number;
+  volunteers_assigned: number;
+  urgency: string;
+  start_date: string;
+  end_date: string;
+  time_commitment: string;
+  duration_hours: number;
+  skills_needed: string[];
+  experience_level: string;
+  age_requirement: string;
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  positions_remaining: number;
+}
+
+interface VolunteerProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  experience: string;
+  skills: string[];
+  verified: boolean;
+  hours_completed: number;
+  rating: number;
+}
+
 const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
-  const [jobs] = useState([
+  const [jobs] = useState<Job[]>([
     {
       id: 1,
       title: "🚨 Emergency Food Distribution",
@@ -93,13 +132,13 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
     }
   ]);
 
-  const [filteredJobs, setFilteredJobs] = useState(jobs);
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>(jobs);
   const [showVolunteerIdLogin, setShowVolunteerIdLogin] = useState(false);
   const [volunteerId, setVolunteerId] = useState('');
-  const [volunteerProfile, setVolunteerProfile] = useState(null);
-  const [selectedJob, setSelectedJob] = useState(null);
+  const [volunteerProfile, setVolunteerProfile] = useState<VolunteerProfile | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showApplication, setShowApplication] = useState(false);
-  const [jobDetails, setJobDetails] = useState<any>(null);
+  const [jobDetails, setJobDetails] = useState<Job | null>(null);
   const [loadingJobDetails, setLoadingJobDetails] = useState(false);
   const [filters, setFilters] = useState({
     category: 'all',
@@ -152,8 +191,8 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
     return 'text-red-600';
   };
 
-  const mockVolunteerLookup = (id: string) => {
-    const mockProfiles: any = {
+  const mockVolunteerLookup = (id: string): VolunteerProfile | null => {
+    const mockProfiles: Record<string, VolunteerProfile> = {
       'jd2024': {
         id: 'jd2024',
         name: 'John Doe',
@@ -400,36 +439,38 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-4 -right-4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-8 -left-4 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+      {/* Animated Background Elements - More Subtle */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-4 -right-4 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-15 animate-blob"></div>
+        <div className="absolute -bottom-8 -left-4 w-96 h-96 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-15 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-15 animate-blob animation-delay-4000"></div>
       </div>
 
-      <div className="relative z-10">
-        {/* Header with Volunteer ID Login */}
-        <div className="bg-white/10 backdrop-blur-md border-b border-white/20">
-          <div className="container mx-auto px-6 py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold text-white mb-2 flex items-center">
-                  <Rocket className="w-8 h-8 mr-3 text-yellow-400" />
+      <div className="relative z-20">
+        {/* Header with Volunteer ID Login - Professional Vibrant */}
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-700 to-purple-700 shadow-xl">
+          <div className="container mx-auto px-6 py-8">
+            <div className="flex flex-col lg:flex-row items-center justify-between space-y-6 lg:space-y-0">
+              <div className="text-center lg:text-left">
+                <h1 className="text-4xl lg:text-5xl font-bold text-white mb-3 flex items-center justify-center lg:justify-start">
+                  <Rocket className="w-10 h-10 mr-3 text-blue-300" />
                   Volunteer Opportunities
                 </h1>
-                <p className="text-purple-100 text-lg">Make a difference in your community today!</p>
+                <p className="text-lg text-blue-100 font-medium">Make a meaningful difference in your community</p>
               </div>
               
-              <div className="flex items-center space-x-4">
-                {/* Volunteer ID Quick Login */}
-                <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
-                  <div className="flex items-center space-x-3">
-                    <CreditCard className="w-6 h-6 text-yellow-400" />
+              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                {/* Volunteer ID Quick Login - Professional but Prominent */}
+                <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-5 border border-blue-200 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <div className="flex items-center space-x-4">
+                    <div className="bg-blue-100 p-3 rounded-xl">
+                      <CreditCard className="w-6 h-6 text-blue-600" />
+                    </div>
                     <div>
-                      <div className="text-white font-medium">Have a Volunteer ID?</div>
+                      <div className="text-gray-800 font-semibold text-base">Have a Volunteer ID?</div>
                       <button
                         onClick={() => setShowVolunteerIdLogin(true)}
-                        className="text-yellow-400 hover:text-yellow-300 text-sm font-medium"
+                        className="text-blue-600 hover:text-blue-800 text-sm font-semibold bg-blue-50 px-3 py-1 rounded-lg hover:bg-blue-100 transition-all duration-200"
                       >
                         Login for faster applications →
                       </button>
@@ -439,7 +480,7 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
                 
                 <button
                   onClick={() => window.location.href = '/'}
-                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+                  className="bg-white text-blue-700 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-all duration-300 shadow-md hover:shadow-lg border border-blue-200"
                 >
                   <Home className="w-5 h-5 mr-2 inline" />
                   Home
@@ -451,16 +492,16 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
 
         {/* Volunteer Profile Display */}
         {volunteerProfile && (
-          <div className="bg-gradient-to-r from-green-400 to-blue-500 text-white">
-            <div className="container mx-auto px-6 py-4">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-lg">
+            <div className="container mx-auto px-6 py-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="bg-white/20 rounded-full p-3">
+                  <div className="bg-white/20 rounded-xl p-3">
                     <UserCheck className="w-6 h-6" />
                   </div>
                   <div>
-                    <div className="font-bold text-lg">Welcome back, {volunteerProfile.name}!</div>
-                    <div className="text-green-100 text-sm">
+                    <div className="font-bold text-xl">Welcome back, {volunteerProfile.name}!</div>
+                    <div className="text-green-100 text-sm font-medium">
                       ID: {volunteerProfile.id} • {volunteerProfile.hours_completed} hours completed • ⭐ {volunteerProfile.rating} rating
                     </div>
                   </div>
@@ -470,7 +511,7 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
                     setVolunteerProfile(null);
                     setVolunteerId('');
                   }}
-                  className="text-green-100 hover:text-white"
+                  className="text-green-100 hover:text-white bg-white/20 p-2 rounded-lg hover:bg-white/30 transition-all duration-200"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -480,17 +521,17 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
         )}
 
         {/* Search Section */}
-        <div className="bg-white/10 backdrop-blur-md border-b border-white/20">
+        <div className="bg-white shadow-md border-b border-gray-200">
           <div className="container mx-auto px-6 py-6">
             <div className="max-w-4xl mx-auto">
               <div className="relative">
-                <Search className="w-6 h-6 absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-300" />
+                <Search className="w-6 h-6 absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search opportunities by title, location, or skills..."
                   value={filters.search}
                   onChange={(e) => setFilters({...filters, search: e.target.value})}
-                  className="w-full pl-12 pr-6 py-4 bg-white/20 backdrop-blur-sm border border-white/30 rounded-2xl text-white placeholder-purple-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-lg"
+                  className="w-full pl-12 pr-6 py-4 bg-white border-2 border-gray-200 rounded-xl text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg shadow-sm"
                 />
               </div>
             </div>
@@ -498,15 +539,15 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
         </div>
 
         {/* Main Content */}
-        <div className="container mx-auto px-6 py-8">
+        <div className="container mx-auto px-6 py-10">
           {/* Urgent Jobs Section */}
           {urgentJobs.length > 0 && (
             <div className="mb-12">
-              <div className="flex items-center mb-8">
-                <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-8 py-4 rounded-2xl flex items-center space-x-3 shadow-lg">
-                  <Flame className="w-6 h-6 animate-pulse" />
+              <div className="flex items-center justify-center mb-10">
+                <div className="bg-gradient-to-r from-red-600 to-orange-600 text-white px-8 py-4 rounded-2xl flex items-center space-x-3 shadow-lg">
+                  <Flame className="w-6 h-6" />
                   <span className="text-xl font-bold">🚨 URGENT OPPORTUNITIES</span>
-                  <Sparkles className="w-6 h-6 animate-pulse" />
+                  <Sparkles className="w-6 h-6" />
                 </div>
               </div>
               
@@ -514,9 +555,9 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
                 {urgentJobs.map((job) => {
                   const urgencyStyles = getUrgencyStyles(job.urgency);
                   return (
-                    <div key={job.id} className={`bg-white rounded-3xl shadow-2xl ${urgencyStyles.glow} hover:shadow-3xl transition-all duration-300 transform hover:scale-105 overflow-hidden border-2 border-red-200`}>
+                    <div key={job.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 overflow-hidden border-2 border-red-200">
                       {/* Urgent Banner */}
-                      <div className={`${urgencyStyles.bg} text-white p-4 text-center ${urgencyStyles.pulse}`}>
+                      <div className={`${urgencyStyles.bg} text-white p-4 text-center`}>
                         <div className="flex items-center justify-center space-x-2">
                           <Flame className="w-5 h-5" />
                           <span className="font-bold text-lg">URGENT - APPLY NOW!</span>
@@ -539,32 +580,38 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
 
                         <div className="space-y-3 mb-6">
                           <div className="flex items-center text-gray-700">
-                            <MapPin className="w-5 h-5 mr-3 text-blue-500" />
+                            <div className="bg-blue-100 p-2 rounded-lg mr-3">
+                              <MapPin className="w-4 h-4 text-blue-600" />
+                            </div>
                             <span className="font-medium">{job.city}, {job.state}</span>
                           </div>
                           
                           <div className="flex items-center text-gray-700">
-                            <Users className="w-5 h-5 mr-3 text-green-500" />
+                            <div className="bg-red-100 p-2 rounded-lg mr-3">
+                              <Users className="w-4 h-4 text-red-600" />
+                            </div>
                             <span className="font-bold text-red-600">
                               Only {job.positions_remaining} of {job.volunteers_needed} spots left!
                             </span>
                           </div>
                           
                           <div className="flex items-center text-gray-700">
-                            <Clock className="w-5 h-5 mr-3 text-purple-500" />
-                            <span>{job.time_commitment}</span>
+                            <div className="bg-purple-100 p-2 rounded-lg mr-3">
+                              <Clock className="w-4 h-4 text-purple-600" />
+                            </div>
+                            <span className="font-medium">{job.time_commitment}</span>
                           </div>
                         </div>
 
                         {/* Progress Bar */}
                         <div className="mb-6">
-                          <div className="flex justify-between text-sm text-gray-600 mb-2">
+                          <div className="flex justify-between text-sm font-medium text-gray-600 mb-2">
                             <span>Filled: {job.volunteers_needed - job.positions_remaining}</span>
                             <span>Remaining: {job.positions_remaining}</span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-3">
                             <div 
-                              className="bg-gradient-to-r from-red-500 to-pink-500 h-3 rounded-full transition-all duration-300"
+                              className="bg-gradient-to-r from-red-500 to-orange-500 h-3 rounded-full transition-all duration-300"
                               style={{ width: `${((job.volunteers_needed - job.positions_remaining) / job.volunteers_needed) * 100}%` }}
                             ></div>
                           </div>
@@ -576,7 +623,7 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
                               setSelectedJob(job);
                               setShowApplication(true);
                             }}
-                            className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white py-3 px-6 rounded-xl font-semibold hover:from-red-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl"
+                            className="flex-1 bg-gradient-to-r from-red-600 to-orange-600 text-white py-3 px-6 rounded-xl font-bold hover:from-red-700 hover:to-orange-700 transition-all duration-300 shadow-md hover:shadow-lg"
                           >
                             Apply Now
                           </button>
