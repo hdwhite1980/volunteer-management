@@ -12,7 +12,7 @@ interface JobBoardProps {
 }
 
 const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
-  const [jobs, setJobs] = useState([
+  const [jobs] = useState([
     {
       id: 1,
       title: "🚨 Emergency Food Distribution",
@@ -107,6 +107,7 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
     search: ''
   });
 
+  // Helper functions
   const getUrgencyStyles = (urgency: string) => {
     switch (urgency) {
       case 'urgent':
@@ -151,7 +152,47 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
     return 'text-red-600';
   };
 
-  // If jobId is provided, load job details
+  const mockVolunteerLookup = (id: string) => {
+    const mockProfiles: any = {
+      'jd2024': {
+        id: 'jd2024',
+        name: 'John Doe',
+        email: 'john.doe@email.com',
+        phone: '(757) 555-1234',
+        experience: 'experienced',
+        skills: ['Emergency Response', 'First Aid', 'Leadership'],
+        verified: true,
+        hours_completed: 156,
+        rating: 4.9
+      },
+      'sm2023': {
+        id: 'sm2023',
+        name: 'Sarah Miller',
+        email: 'sarah.m@email.com',
+        phone: '(757) 555-5678',
+        experience: 'expert',
+        skills: ['Medical Support', 'Training', 'Coordination'],
+        verified: true,
+        hours_completed: 284,
+        rating: 5.0
+      }
+    };
+    
+    return mockProfiles[id.toLowerCase()] || null;
+  };
+
+  const handleVolunteerIdSubmit = () => {
+    if (volunteerId.trim()) {
+      const profile = mockVolunteerLookup(volunteerId.trim());
+      setVolunteerProfile(profile);
+      setShowVolunteerIdLogin(false);
+      if (!profile) {
+        alert('Volunteer ID not found. You can still apply, but consider registering for faster applications!');
+      }
+    }
+  };
+
+  // Load job details if jobId is provided
   useEffect(() => {
     if (jobId) {
       loadJobDetails();
@@ -163,7 +204,6 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
     
     setLoadingJobDetails(true);
     try {
-      // In a real app, this would be an API call
       const job = jobs.find(j => j.id === parseInt(jobId.toString()));
       setJobDetails(job || null);
     } catch (error) {
@@ -226,7 +266,7 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
                         <div className="mb-6">
                           <h3 className="text-xl font-semibold text-gray-800 mb-3">Skills Needed</h3>
                           <div className="flex flex-wrap gap-3">
-                            {jobDetails.skills_needed.map((skill, index) => (
+                            {jobDetails.skills_needed.map((skill: string, index: number) => (
                               <span key={index} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-medium">
                                 {skill}
                               </span>
@@ -277,7 +317,7 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
           </div>
         </div>
 
-        {/* Application Modal */}
+        {/* Application Modal for Job Details View */}
         {showApplication && selectedJob && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
             <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
@@ -303,6 +343,7 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
                       <input
                         type="text"
+                        defaultValue={volunteerProfile?.name || ''}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
                         placeholder="Enter your full name"
                       />
@@ -311,6 +352,7 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
                       <input
                         type="email"
+                        defaultValue={volunteerProfile?.email || ''}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
                         placeholder="Enter your email"
                       />
@@ -352,89 +394,7 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
     );
   }
 
-  const mockVolunteerLookup = (id) => {
-    const mockProfiles = {
-      'jd2024': {
-        id: 'jd2024',
-        name: 'John Doe',
-        email: 'john.doe@email.com',
-        phone: '(757) 555-1234',
-        experience: 'experienced',
-        skills: ['Emergency Response', 'First Aid', 'Leadership'],
-        verified: true,
-        hours_completed: 156,
-        rating: 4.9
-      },
-      'sm2023': {
-        id: 'sm2023',
-        name: 'Sarah Miller',
-        email: 'sarah.m@email.com',
-        phone: '(757) 555-5678',
-        experience: 'expert',
-        skills: ['Medical Support', 'Training', 'Coordination'],
-        verified: true,
-        hours_completed: 284,
-        rating: 5.0
-      }
-    };
-    
-    return mockProfiles[id.toLowerCase()] || null;
-  };
-
-  const handleVolunteerIdSubmit = () => {
-    if (volunteerId.trim()) {
-      const profile = mockVolunteerLookup(volunteerId.trim());
-      setVolunteerProfile(profile);
-      if (!profile) {
-        alert('Volunteer ID not found. You can still apply, but consider registering for faster applications!');
-      }
-    }
-  };
-
-  const getUrgencyStyles = (urgency) => {
-    switch (urgency) {
-      case 'urgent':
-        return {
-          bg: 'bg-gradient-to-r from-red-500 to-pink-500',
-          text: 'text-red-700',
-          badge: 'bg-red-100 text-red-800 border-red-200',
-          glow: 'shadow-red-500/25',
-          pulse: 'animate-pulse'
-        };
-      case 'high':
-        return {
-          bg: 'bg-gradient-to-r from-orange-500 to-yellow-500',
-          text: 'text-orange-700',
-          badge: 'bg-orange-100 text-orange-800 border-orange-200',
-          glow: 'shadow-orange-500/25',
-          pulse: ''
-        };
-      case 'medium':
-        return {
-          bg: 'bg-gradient-to-r from-blue-500 to-purple-500',
-          text: 'text-blue-700',
-          badge: 'bg-blue-100 text-blue-800 border-blue-200',
-          glow: 'shadow-blue-500/25',
-          pulse: ''
-        };
-      default:
-        return {
-          bg: 'bg-gradient-to-r from-green-500 to-teal-500',
-          text: 'text-green-700',
-          badge: 'bg-green-100 text-green-800 border-green-200',
-          glow: 'shadow-green-500/25',
-          pulse: ''
-        };
-    }
-  };
-
-  const getAvailabilityColor = (remaining, total) => {
-    const percentage = (remaining / total) * 100;
-    if (percentage > 50) return 'text-green-600';
-    if (percentage > 20) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
+  // Derived data
   const urgentJobs = filteredJobs.filter(job => job.urgency === 'urgent' && job.positions_remaining > 0);
   const regularJobs = filteredJobs.filter(job => job.urgency !== 'urgent');
 
@@ -987,8 +947,8 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
                   <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
                     <h4 className="font-semibold text-blue-800 mb-3">Skills Match Analysis</h4>
                     <div className="space-y-2">
-                      {selectedJob.skills_needed.map((skill, index) => {
-                        const hasSkill = volunteerProfile.skills.some(userSkill => 
+                      {selectedJob.skills_needed.map((skill: string, index: number) => {
+                        const hasSkill = volunteerProfile.skills.some((userSkill: string) => 
                           userSkill.toLowerCase().includes(skill.toLowerCase()) || 
                           skill.toLowerCase().includes(userSkill.toLowerCase())
                         );
