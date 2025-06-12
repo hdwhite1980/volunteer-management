@@ -155,8 +155,12 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           job_id: jobId,
-          volunteer_id: volunteerProfile?.id,
-          ...applicationData
+          volunteer_id: volunteerProfile?.id || applicationData.volunteer_id,
+          volunteer_name: applicationData.volunteer_name,
+          email: applicationData.email,
+          phone: applicationData.phone,
+          cover_letter: applicationData.cover_letter,
+          experience: applicationData.experience
         })
       });
 
