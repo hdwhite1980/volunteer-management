@@ -4,10 +4,14 @@ import {
   CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send, User, 
   Badge, Search, Filter, Home, Zap, Target, Flame, TrendingUp,
   ChevronDown, ChevronUp, X, Plus, UserPlus, Navigation, Sparkles,
-  Award, Shield, Rocket, Globe, UserCheck, IdCard
+  Award, Shield, Rocket, Globe, UserCheck, CreditCard
 } from 'lucide-react';
 
-const JobBoard = () => {
+interface JobBoardProps {
+  jobId?: string | number;
+}
+
+const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
   const [jobs, setJobs] = useState([
     {
       id: 1,
@@ -95,11 +99,212 @@ const JobBoard = () => {
   const [volunteerProfile, setVolunteerProfile] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
   const [showApplication, setShowApplication] = useState(false);
+  const [jobDetails, setJobDetails] = useState(null);
+  const [loadingJobDetails, setLoadingJobDetails] = useState(false);
   const [filters, setFilters] = useState({
     category: 'all',
     urgency: 'all',
     search: ''
   });
+
+  // If jobId is provided, load job details
+  useEffect(() => {
+    if (jobId) {
+      loadJobDetails();
+    }
+  }, [jobId]);
+
+  const loadJobDetails = async () => {
+    setLoadingJobDetails(true);
+    try {
+      // In a real app, this would be an API call
+      const job = jobs.find(j => j.id === parseInt(jobId.toString()));
+      setJobDetails(job);
+    } catch (error) {
+      console.error('Error loading job details:', error);
+    } finally {
+      setLoadingJobDetails(false);
+    }
+  };
+
+  // If jobId is provided and we have job details, show job details view
+  if (jobId && jobDetails) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+        <div className="relative z-10">
+          <div className="bg-white/10 backdrop-blur-md border-b border-white/20">
+            <div className="container mx-auto px-6 py-6">
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => window.history.back()}
+                  className="flex items-center text-white hover:text-yellow-400 transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  Back to Job Board
+                </button>
+                <button
+                  onClick={() => window.location.href = '/'}
+                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-yellow-500 hover:to-orange-600 transition-all duration-300"
+                >
+                  <Home className="w-5 h-5 mr-2 inline" />
+                  Home
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="container mx-auto px-6 py-8">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+                <div className={`p-8 ${getUrgencyStyles(jobDetails.urgency).bg} text-white`}>
+                  <h1 className="text-4xl font-bold mb-4">{jobDetails.title}</h1>
+                  <div className="flex items-center space-x-6 text-lg">
+                    <div className="flex items-center">
+                      <MapPin className="w-5 h-5 mr-2" />
+                      {jobDetails.city}, {jobDetails.state}
+                    </div>
+                    <div className="flex items-center">
+                      <Users className="w-5 h-5 mr-2" />
+                      {jobDetails.positions_remaining} of {jobDetails.volunteers_needed} spots available
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-8">
+                  <div className="grid md:grid-cols-3 gap-8">
+                    <div className="md:col-span-2">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-4">Description</h2>
+                      <p className="text-gray-700 text-lg leading-relaxed mb-6">{jobDetails.description}</p>
+
+                      {jobDetails.skills_needed && (
+                        <div className="mb-6">
+                          <h3 className="text-xl font-semibold text-gray-800 mb-3">Skills Needed</h3>
+                          <div className="flex flex-wrap gap-3">
+                            {jobDetails.skills_needed.map((skill, index) => (
+                              <span key={index} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-medium">
+                                {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="bg-gray-50 rounded-2xl p-6">
+                        <h3 className="font-bold text-gray-800 mb-4">Opportunity Details</h3>
+                        <div className="space-y-4">
+                          <div className="flex items-center">
+                            <Clock className="w-5 h-5 mr-3 text-blue-600" />
+                            <span>{jobDetails.time_commitment}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Calendar className="w-5 h-5 mr-3 text-green-600" />
+                            <span>{jobDetails.experience_level}</span>
+                          </div>
+                          <div className="flex items-center">
+                            <Star className="w-5 h-5 mr-3 text-yellow-600" />
+                            <span>{jobDetails.age_requirement}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          setSelectedJob(jobDetails);
+                          setShowApplication(true);
+                        }}
+                        disabled={jobDetails.positions_remaining === 0}
+                        className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl ${
+                          jobDetails.positions_remaining === 0
+                            ? 'bg-gray-400 text-white cursor-not-allowed'
+                            : `${getUrgencyStyles(jobDetails.urgency).bg} text-white hover:opacity-90`
+                        }`}
+                      >
+                        {jobDetails.positions_remaining === 0 ? 'Position Filled' : 'Apply Now'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Application Modal */}
+        {showApplication && selectedJob && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="bg-gradient-to-r from-green-500 to-blue-500 text-white p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold">Apply for {selectedJob.title}</h2>
+                    <p className="text-green-100">Complete your application below</p>
+                  </div>
+                  <button
+                    onClick={() => setShowApplication(false)}
+                    className="text-green-100 hover:text-white"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <form className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
+                      <input
+                        type="text"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
+                      <input
+                        type="email"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
+                        placeholder="Enter your email"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Why are you interested in this opportunity?
+                    </label>
+                    <textarea
+                      rows={4}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
+                      placeholder="Tell us about your motivation..."
+                    />
+                  </div>
+
+                  <div className="flex space-x-4">
+                    <button
+                      type="submit"
+                      className="flex-1 bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 px-8 rounded-xl font-bold hover:from-green-600 hover:to-blue-600 transition-all duration-300"
+                    >
+                      Submit Application
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowApplication(false)}
+                      className="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const mockVolunteerLookup = (id) => {
     const mockProfiles = {
@@ -213,7 +418,7 @@ const JobBoard = () => {
                 {/* Volunteer ID Quick Login */}
                 <div className="bg-white/20 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
                   <div className="flex items-center space-x-3">
-                    <IdCard className="w-6 h-6 text-yellow-400" />
+                    <CreditCard className="w-6 h-6 text-yellow-400" />
                     <div>
                       <div className="text-white font-medium">Have a Volunteer ID?</div>
                       <button
@@ -494,7 +699,7 @@ const JobBoard = () => {
             <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <IdCard className="w-8 h-8" />
+                  <CreditCard className="w-8 h-8" />
                   <div>
                     <h2 className="text-2xl font-bold">Volunteer Login</h2>
                     <p className="text-blue-100">Enter your Volunteer ID for faster applications</p>
@@ -628,7 +833,7 @@ const JobBoard = () => {
               ) : (
                 <div className="mb-6 p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl">
                   <div className="flex items-center space-x-3 mb-3">
-                    <IdCard className="w-6 h-6 text-yellow-600" />
+                    <CreditCard className="w-6 h-6 text-yellow-600" />
                     <div>
                       <h3 className="font-bold text-yellow-800">Quick Login Available</h3>
                       <p className="text-yellow-700 text-sm">Enter your Volunteer ID to auto-fill this form</p>
