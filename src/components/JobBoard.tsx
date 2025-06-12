@@ -115,11 +115,13 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
   }, [jobId]);
 
   const loadJobDetails = async () => {
+    if (!jobId) return;
+    
     setLoadingJobDetails(true);
     try {
       // In a real app, this would be an API call
       const job = jobs.find(j => j.id === parseInt(jobId.toString()));
-      setJobDetails(job);
+      setJobDetails(job || null);
     } catch (error) {
       console.error('Error loading job details:', error);
     } finally {
