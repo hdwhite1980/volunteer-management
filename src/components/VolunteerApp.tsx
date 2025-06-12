@@ -1,9 +1,10 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Users, Building2, Clock, Search, Plus, Lock } from 'lucide-react';
+import { Users, Building2, Clock, Search, Plus, Lock, Navigation, BarChart3 } from 'lucide-react';
 import PartnershipForm from './PartnershipForm';
 import ActivityForm from './ActivityForm';
 import Dashboard from './Dashboard';
+import VolunteerManagementAdminDashboard from './VolunteerManagementAdminDashboard';
 
 interface AuthUser {
   id: number;
@@ -322,6 +323,22 @@ const VolunteerApp = () => {
               <Search className="w-5 h-5 inline mr-3" />
               View Database
             </button>
+            
+            <button
+              onClick={() => {
+                console.log('Admin Dashboard clicked, authenticated:', isAuthenticated);
+                if (isAuthenticated) {
+                  setCurrentView('admin-dashboard');
+                } else {
+                  setCurrentView('login');
+                }
+              }}
+              className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <BarChart3 className="w-5 h-5 inline mr-3" />
+              Admin Dashboard
+            </button>
+            
             <button
               onClick={() => window.location.href = '/post-job'}
               className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
@@ -354,7 +371,7 @@ const VolunteerApp = () => {
         </div>
       </div>
     );
-  }
+  };
 
   // Render current view with authentication checks
   const renderCurrentView = () => {
@@ -376,6 +393,11 @@ const VolunteerApp = () => {
             onNavigate={setCurrentView}
           />
         );
+      case 'admin-dashboard':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        return <VolunteerManagementAdminDashboard />;
       case 'login':
         return <LoginPage />;
       default:
