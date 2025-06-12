@@ -1,6 +1,9 @@
 'use client';
 import React, { useState } from 'react';
-import { Clock, User, Edit, Plus, Trash2, CheckCircle } from 'lucide-react';
+import { 
+  Clock, User, Edit, Plus, Trash2, CheckCircle, 
+  FileText, Home, Eye, Download 
+} from 'lucide-react';
 
 // Volunteer Categories
 const VOLUNTEER_CATEGORIES = [
@@ -28,9 +31,10 @@ const VOLUNTEER_CATEGORIES = [
 
 interface ActivityFormProps {
   onBack: () => void;
+  onHome?: () => void;
 }
 
-const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
+const ActivityForm: React.FC<ActivityFormProps> = ({ onBack, onHome }) => {
   const [formData, setFormData] = useState({
     volunteer_name: '',
     email: '',
@@ -66,6 +70,197 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
     return activities.reduce((total, activity) => {
       return total + (parseFloat(activity.hours) || 0);
     }, 0);
+  };
+
+  const generatePreviewPDF = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Activity Log - Preview</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                margin: 20px; 
+                color: #374151; 
+                line-height: 1.6;
+              }
+              .header { 
+                text-align: center; 
+                margin-bottom: 30px; 
+                padding-bottom: 20px; 
+                border-bottom: 3px solid #059669; 
+              }
+              .header h1 { 
+                color: #1f2937; 
+                font-size: 24px; 
+                margin-bottom: 5px; 
+              }
+              .info-section {
+                margin: 20px 0;
+                padding: 15px;
+                background: #f9fafb;
+                border-radius: 8px;
+              }
+              .info-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                margin-top: 10px;
+              }
+              .info-item {
+                padding: 8px;
+              }
+              .info-label {
+                font-weight: bold;
+                color: #374151;
+                display: block;
+                margin-bottom: 3px;
+              }
+              .info-value {
+                color: #6b7280;
+              }
+              .activities-section {
+                margin: 30px 0;
+              }
+              .activity-item {
+                margin: 20px 0;
+                padding: 15px;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                background: white;
+              }
+              .activity-header {
+                font-size: 16px;
+                font-weight: bold;
+                color: #059669;
+                margin-bottom: 10px;
+              }
+              .activity-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                margin-bottom: 10px;
+              }
+              .total-hours {
+                background: #d1fae5;
+                padding: 15px;
+                border-radius: 8px;
+                text-align: center;
+                font-size: 18px;
+                font-weight: bold;
+                color: #059669;
+                margin: 20px 0;
+              }
+              .prepared-by {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 2px solid #e5e7eb;
+              }
+              .footer {
+                margin-top: 40px;
+                text-align: center;
+                font-size: 12px;
+                color: #6b7280;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>📋 Activity Log (ICS 214)</h1>
+              <p>Volunteer Community Engagement Group</p>
+              <p>Generated on: ${new Date().toLocaleDateString()}</p>
+            </div>
+
+            <div class="info-section">
+              <h3>Volunteer Information</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Name:</span>
+                  <span class="info-value">${formData.volunteer_name || '[Not specified]'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Email:</span>
+                  <span class="info-value">${formData.email || '[Not specified]'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Phone:</span>
+                  <span class="info-value">${formData.phone || '[Not specified]'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Student ID:</span>
+                  <span class="info-value">${formData.student_id || '[Not specified]'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="activities-section">
+              <h3>Activities</h3>
+              ${activities.map((activity, index) => `
+                <div class="activity-item">
+                  <div class="activity-header">Activity ${index + 1}</div>
+                  <div class="activity-grid">
+                    <div>
+                      <span class="info-label">Date:</span>
+                      <span class="info-value">${activity.date || '[Not specified]'}</span>
+                    </div>
+                    <div>
+                      <span class="info-label">Activity:</span>
+                      <span class="info-value">${activity.activity || '[Not specified]'}</span>
+                    </div>
+                    <div>
+                      <span class="info-label">Hours:</span>
+                      <span class="info-value">${activity.hours || '0'}</span>
+                    </div>
+                    <div>
+                      <span class="info-label">Organization:</span>
+                      <span class="info-value">${activity.organization || '[Not specified]'}</span>
+                    </div>
+                    <div>
+                      <span class="info-label">Location:</span>
+                      <span class="info-value">${activity.location || '[Not specified]'}</span>
+                    </div>
+                  </div>
+                  ${activity.description ? `
+                    <div style="margin-top: 10px;">
+                      <span class="info-label">Description:</span>
+                      <div style="margin-top: 5px; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+                        ${activity.description}
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="total-hours">
+              Total Volunteer Hours: ${calculateTotalHours()}
+            </div>
+
+            <div class="prepared-by">
+              <h3>Prepared By</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <span class="info-label">Name:</span>
+                  <span class="info-value">${formData.prepared_by_first || '[First]'} ${formData.prepared_by_last || '[Last]'}</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">Position/Title:</span>
+                  <span class="info-value">${formData.position_title || '[Not specified]'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="footer">
+              <p>This is a preview document. Please review all information before final submission.</p>
+              <p>Activity Log - Generated by VCEG Management System</p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    }
   };
 
   const handleSubmit = async () => {
@@ -350,30 +545,51 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-end">
-              <button
-                onClick={onBack}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4" />
-                    Submit Log
-                  </>
+            <div className="flex flex-col sm:flex-row gap-4 justify-between">
+              <div className="flex gap-4">
+                {onHome && (
+                  <button
+                    onClick={onHome}
+                    className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center justify-center gap-2"
+                  >
+                    <Home className="w-4 h-4" />
+                    Home
+                  </button>
                 )}
-              </button>
+                <button
+                  onClick={onBack}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+                >
+                  Cancel
+                </button>
+              </div>
+              
+              <div className="flex gap-4">
+                <button
+                  onClick={generatePreviewPDF}
+                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  Preview PDF
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Submit Log
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

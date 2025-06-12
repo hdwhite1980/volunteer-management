@@ -1,24 +1,71 @@
 // src/components/JobBoard.tsx
-// Enhanced version with volunteer ID integration
+// Enhanced Job Board with Volunteer ID Integration & Advanced Features
 import React, { useState, useEffect } from 'react';
-import { MapPin, Clock, Users, Calendar, Star, Mail, Phone, AlertCircle, CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send, User, Badge } from 'lucide-react';
+import { 
+  MapPin, Clock, Users, Calendar, Star, Mail, Phone, AlertCircle, 
+  CheckCircle, Heart, ArrowLeft, Edit, Trash2, Eye, Send, User, 
+  Badge, Search, Filter, Home, Zap, Target, Fire, TrendingUp,
+  ChevronDown, ChevronUp, X, Plus, UserPlus, Navigation
+} from 'lucide-react';
 
 interface JobBoardProps {
   jobId?: any;
 }
 
+interface Job {
+  id: number;
+  title: string;
+  category: string;
+  description: string;
+  city: string;
+  state: string;
+  zipcode: string;
+  latitude?: number;
+  longitude?: number;
+  volunteers_needed: number;
+  volunteers_assigned?: number;
+  urgency: string;
+  start_date: string;
+  end_date: string;
+  time_commitment: string;
+  duration_hours?: number;
+  skills_needed?: string[];
+  experience_level?: string;
+  age_requirement?: string;
+  contact_name?: string;
+  contact_email: string;
+  contact_phone?: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  distance_miles?: number;
+  positions_remaining?: number;
+}
+
+interface VolunteerProfile {
+  id: number;
+  username: string;
+  name: string;
+  email: string;
+  phone?: string;
+  experience_level: string;
+  skills: string[];
+  categories_interested: string[];
+}
+
 const JobDetails = ({ jobId }: { jobId: any }) => {
-  const [job, setJob] = useState<any>(null);
+  const [job, setJob] = useState<Job | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [applying, setApplying] = useState(false);
   const [showApplicationForm, setShowApplicationForm] = useState(false);
-  const [volunteerProfile, setVolunteerProfile] = useState<any>(null);
-  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [volunteerProfile, setVolunteerProfile] = useState<VolunteerProfile | null>(null);
+  const [checkingVolunteer, setCheckingVolunteer] = useState(false);
   const [applicationData, setApplicationData] = useState({
     volunteer_name: '',
     email: '',
     phone: '',
+    volunteer_id: '',
     cover_letter: '',
     experience: ''
   });
@@ -36,7 +83,9 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
       
       if (response.ok) {
         const data = await response.json();
-        setJob(data);
+        // Calculate real-time availability
+        const positionsRemaining = data.volunteers_needed - (data.volunteers_assigned || 0);
+        setJob({ ...data, positions_remaining: Math.max(0, positionsRemaining) });
       } else {
         setError('Failed to load job details');
       }
@@ -47,16 +96,20 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
     }
   };
 
-  // Enhanced volunteer profile check
-  const checkExistingVolunteer = async (email: string) => {
-    if (!email || email.length < 3) {
+  // Enhanced volunteer lookup by ID or email
+  const checkVolunteerByIdOrEmail = async (identifier: string) => {
+    if (!identifier || identifier.length < 3) {
       setVolunteerProfile(null);
       return;
     }
 
-    setCheckingEmail(true);
+    setCheckingVolunteer(true);
     try {
-      const response = await fetch(`/api/volunteers?email=${encodeURIComponent(email)}`);
+      // Try by volunteer ID first, then by email
+      const isEmail = identifier.includes('@');
+      const searchParam = isEmail ? `email=${encodeURIComponent(identifier)}` : `search=${encodeURIComponent(identifier)}`;
+      
+      const response = await fetch(`/api/volunteers?${searchParam}`);
       if (response.ok) {
         const data = await response.json();
         if (data.volunteers && data.volunteers.length > 0) {
@@ -72,25 +125,27 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
             categories_interested: volunteer.categories_interested || []
           });
           
-          // Auto-fill name if found
+          // Auto-fill form data
           setApplicationData(prev => ({
             ...prev,
             volunteer_name: `${volunteer.first_name} ${volunteer.last_name}`,
-            phone: volunteer.phone || prev.phone
+            email: volunteer.email,
+            phone: volunteer.phone || prev.phone,
+            volunteer_id: volunteer.username
           }));
         } else {
           setVolunteerProfile(null);
         }
       }
     } catch (error) {
-      console.error('Error checking volunteer profile:', error);
+      console.error('Error checking volunteer:', error);
       setVolunteerProfile(null);
     } finally {
-      setCheckingEmail(false);
+      setCheckingVolunteer(false);
     }
   };
 
-  const handleApplicationSubmit = async (e: any) => {
+  const handleApplicationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setApplying(true);
 
@@ -100,7 +155,7 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           job_id: jobId,
-          volunteer_id: volunteerProfile?.id, // Include volunteer ID if found
+          volunteer_id: volunteerProfile?.id,
           ...applicationData
         })
       });
@@ -113,10 +168,13 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
           volunteer_name: '',
           email: '',
           phone: '',
+          volunteer_id: '',
           cover_letter: '',
           experience: ''
         });
         setVolunteerProfile(null);
+        // Refresh job details to update availability
+        fetchJobDetails();
       } else {
         const result = await response.json();
         alert(`Error: ${result.error}`);
@@ -136,6 +194,13 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
       case 'low': return 'text-green-600 bg-green-100 border-green-200';
       default: return 'text-gray-600 bg-gray-100 border-gray-200';
     }
+  };
+
+  const getAvailabilityColor = (remaining: number, total: number) => {
+    const percentage = (remaining / total) * 100;
+    if (percentage > 50) return 'text-green-600 bg-green-100';
+    if (percentage > 20) return 'text-yellow-600 bg-yellow-100';
+    return 'text-red-600 bg-red-100';
   };
 
   if (loading) {
@@ -161,19 +226,42 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-6 py-8">
         <div className="max-w-4xl mx-auto">
-          <button
-            onClick={() => window.history.back()}
-            className="mb-6 flex items-center text-blue-600 hover:text-blue-800 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Job Board
-          </button>
+          <div className="flex items-center justify-between mb-6">
+            <button
+              onClick={() => window.history.back()}
+              className="flex items-center text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Job Board
+            </button>
+            
+            <button
+              onClick={() => window.location.href = '/'}
+              className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Home
+            </button>
+          </div>
 
           <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-            {/* Job Header */}
-            <div className="p-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+            {/* Job Header with Urgency */}
+            <div className={`p-8 ${
+              job.urgency === 'urgent' 
+                ? 'bg-gradient-to-r from-red-600 to-orange-600' 
+                : 'bg-gradient-to-r from-blue-600 to-purple-600'
+            } text-white relative overflow-hidden`}>
+              {job.urgency === 'urgent' && (
+                <div className="absolute top-0 right-0 p-4">
+                  <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-3 py-1">
+                    <Fire className="w-4 h-4 animate-pulse" />
+                    <span className="text-sm font-bold">URGENT</span>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex justify-between items-start">
-                <div>
+                <div className="flex-1">
                   <h1 className="text-3xl font-bold mb-2">{job.title}</h1>
                   <div className="flex items-center space-x-4 text-blue-100">
                     <div className="flex items-center">
@@ -182,12 +270,39 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                     </div>
                     <div className="flex items-center">
                       <Users className="w-4 h-4 mr-1" />
-                      {job.positions_remaining} positions available
+                      <span className={`font-bold ${
+                        job.positions_remaining === 0 ? 'text-red-200' : 
+                        job.positions_remaining <= 2 ? 'text-yellow-200' : 'text-green-200'
+                      }`}>
+                        {job.positions_remaining} of {job.volunteers_needed} spots available
+                      </span>
                     </div>
                   </div>
                 </div>
-                <div className={`px-3 py-1 rounded-full text-sm font-medium ${getUrgencyColor(job.urgency)}`}>
+                
+                <div className={`px-4 py-2 rounded-full text-sm font-medium border ${getUrgencyColor(job.urgency)}`}>
                   {job.urgency} priority
+                </div>
+              </div>
+
+              {/* Real-time Availability Bar */}
+              <div className="mt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Position Availability</span>
+                  <span className="text-sm">
+                    {job.volunteers_needed - job.positions_remaining} filled • {job.positions_remaining} remaining
+                  </span>
+                </div>
+                <div className="w-full bg-white/20 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      job.positions_remaining === 0 ? 'bg-red-400' :
+                      job.positions_remaining <= 2 ? 'bg-yellow-400' : 'bg-green-400'
+                    }`}
+                    style={{ 
+                      width: `${((job.volunteers_needed - job.positions_remaining) / job.volunteers_needed) * 100}%` 
+                    }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -215,10 +330,10 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                     </div>
                   )}
 
-                  {job.experience && (
+                  {job.experience_level && (
                     <div>
                       <h2 className="text-xl font-semibold mb-3">Experience Required</h2>
-                      <p className="text-gray-700">{job.experience}</p>
+                      <p className="text-gray-700 capitalize">{job.experience_level}</p>
                     </div>
                   )}
                 </div>
@@ -277,9 +392,16 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                   {/* Apply Button */}
                   <button
                     onClick={() => setShowApplicationForm(true)}
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                    disabled={job.positions_remaining === 0}
+                    className={`w-full py-3 px-6 rounded-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-xl ${
+                      job.positions_remaining === 0 
+                        ? 'bg-gray-400 text-white cursor-not-allowed'
+                        : job.urgency === 'urgent'
+                        ? 'bg-gradient-to-r from-red-600 to-orange-600 text-white hover:from-red-700 hover:to-orange-700'
+                        : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700'
+                    }`}
                   >
-                    Apply Now
+                    {job.positions_remaining === 0 ? 'Position Filled' : 'Apply Now'}
                   </button>
                 </div>
               </div>
@@ -307,7 +429,13 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                       <span className="font-medium">ID:</span> {volunteerProfile.username}
                     </div>
                     <div>
+                      <span className="font-medium">Name:</span> {volunteerProfile.name}
+                    </div>
+                    <div>
                       <span className="font-medium">Experience:</span> {volunteerProfile.experience_level}
+                    </div>
+                    <div>
+                      <span className="font-medium">Email:</span> {volunteerProfile.email}
                     </div>
                     {volunteerProfile.skills.length > 0 && (
                       <div className="col-span-2">
@@ -321,6 +449,36 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
               <form onSubmit={handleApplicationSubmit} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Volunteer ID or Email Address *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter your volunteer ID (e.g., johndoe2024) or email address"
+                    value={applicationData.volunteer_id || applicationData.email}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value.includes('@')) {
+                        setApplicationData({...applicationData, email: value, volunteer_id: ''});
+                      } else {
+                        setApplicationData({...applicationData, volunteer_id: value, email: ''});
+                      }
+                      checkVolunteerByIdOrEmail(value);
+                    }}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {checkingVolunteer && (
+                    <p className="text-sm text-blue-600 mt-1">Checking volunteer profile...</p>
+                  )}
+                  {!volunteerProfile && (applicationData.email || applicationData.volunteer_id) && !checkingVolunteer && (
+                    <p className="text-sm text-orange-600 mt-1">
+                      No volunteer profile found. You can still apply, but consider registering as a volunteer for faster future applications.
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
                     Full Name *
                   </label>
                   <input
@@ -330,28 +488,6 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
                     onChange={(e) => setApplicationData({...applicationData, volunteer_name: e.target.value})}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
-                    {checkingEmail && <span className="ml-2 text-sm text-blue-600">Checking...</span>}
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={applicationData.email}
-                    onChange={(e) => {
-                      setApplicationData({...applicationData, email: e.target.value});
-                      checkExistingVolunteer(e.target.value);
-                    }}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {!volunteerProfile && applicationData.email && !checkingEmail && (
-                    <p className="text-sm text-orange-600 mt-1">
-                      No volunteer profile found. Consider registering as a volunteer first for faster future applications.
-                    </p>
-                  )}
                 </div>
 
                 <div>
@@ -421,36 +557,49 @@ const JobDetails = ({ jobId }: { jobId: any }) => {
 };
 
 const JobBoard = ({ jobId }: JobBoardProps) => {
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: 'all',
     zipcode: '',
     distance: 25,
-    skills: '',
+    urgency: 'all',
+    availability: 'all',
     search: ''
   });
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Available categories for filtering
+  const availableCategories = [
+    'Emergency Services', 'Supply Distribution', 'Medical Support',
+    'Search & Rescue', 'Shelter Operations', 'Food Services',
+    'Transportation', 'Administrative Support', 'Community Outreach',
+    'Education', 'Environmental', 'Construction & Repair'
+  ];
 
   useEffect(() => {
     fetchJobs();
-  }, [filters]);
+  }, []);
+
+  useEffect(() => {
+    filterJobs();
+  }, [jobs, filters]);
 
   const fetchJobs = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams();
-      
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value && value !== 'all') {
-          params.append(key, value.toString());
-        }
-      });
-
-      const response = await fetch(`/api/jobs?${params}`);
+      const response = await fetch('/api/jobs?status=active');
       
       if (response.ok) {
         const data = await response.json();
-        setJobs(data.jobs || []);
+        // Calculate positions remaining for each job
+        const jobsWithAvailability = (data.jobs || []).map((job: Job) => ({
+          ...job,
+          positions_remaining: Math.max(0, job.volunteers_needed - (job.volunteers_assigned || 0))
+        }));
+        setJobs(jobsWithAvailability);
+        setFilteredJobs(jobsWithAvailability);
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -459,8 +608,80 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
     }
   };
 
+  const filterJobs = () => {
+    let filtered = [...jobs];
+
+    // Search filter
+    if (filters.search) {
+      const searchTerm = filters.search.toLowerCase();
+      filtered = filtered.filter(job =>
+        job.title.toLowerCase().includes(searchTerm) ||
+        job.description.toLowerCase().includes(searchTerm) ||
+        job.category.toLowerCase().includes(searchTerm) ||
+        job.city.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    // Category filter
+    if (filters.category !== 'all') {
+      filtered = filtered.filter(job => job.category === filters.category);
+    }
+
+    // Zipcode filter
+    if (filters.zipcode) {
+      filtered = filtered.filter(job => 
+        job.zipcode.includes(filters.zipcode) ||
+        job.city.toLowerCase().includes(filters.zipcode.toLowerCase())
+      );
+    }
+
+    // Urgency filter  
+    if (filters.urgency !== 'all') {
+      filtered = filtered.filter(job => job.urgency === filters.urgency);
+    }
+
+    // Availability filter
+    if (filters.availability !== 'all') {
+      if (filters.availability === 'available') {
+        filtered = filtered.filter(job => job.positions_remaining > 0);
+      } else if (filters.availability === 'urgent') {
+        filtered = filtered.filter(job => job.positions_remaining <= 2 && job.positions_remaining > 0);
+      } else if (filters.availability === 'filled') {
+        filtered = filtered.filter(job => job.positions_remaining === 0);
+      }
+    }
+
+    // Sort by urgency and availability
+    filtered.sort((a, b) => {
+      // Urgent jobs first
+      if (a.urgency === 'urgent' && b.urgency !== 'urgent') return -1;
+      if (b.urgency === 'urgent' && a.urgency !== 'urgent') return 1;
+      
+      // Then by positions remaining (fewer spots = higher priority)
+      if (a.positions_remaining !== b.positions_remaining) {
+        return a.positions_remaining - b.positions_remaining;
+      }
+      
+      // Finally by creation date (newer first)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+
+    setFilteredJobs(filtered);
+  };
+
   const handleFilterChange = (key: string, value: any) => {
     setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      category: 'all',
+      zipcode: '',
+      distance: 25,
+      urgency: 'all',
+      availability: 'all',
+      search: ''
+    });
   };
 
   const getUrgencyColor = (urgency: string) => {
@@ -473,71 +694,180 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
     }
   };
 
+  const getAvailabilityStatus = (remaining: number, total: number) => {
+    if (remaining === 0) return { text: 'Filled', color: 'text-red-600 bg-red-100' };
+    if (remaining <= 2) return { text: `Only ${remaining} left!`, color: 'text-orange-600 bg-orange-100' };
+    return { text: `${remaining} available`, color: 'text-green-600 bg-green-100' };
+  };
+
   if (jobId) {
     return <JobDetails jobId={jobId} />;
   }
+
+  // Separate urgent jobs for special display
+  const urgentJobs = filteredJobs.filter(job => job.urgency === 'urgent' && job.positions_remaining > 0);
+  const regularJobs = filteredJobs.filter(job => job.urgency !== 'urgent' || job.positions_remaining === 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-6 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Volunteer Opportunities</h1>
-          <p className="text-gray-600">Find meaningful ways to make a difference in your community</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Volunteer Opportunities</h1>
+              <p className="text-gray-600">Find meaningful ways to make a difference in your community</p>
+            </div>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              <span>Home</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <div className="bg-white border-b shadow-sm">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex flex-wrap gap-4">
-            <div>
-              <select
-                value={filters.category}
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+        <div className="container mx-auto px-6 py-6">
+          <div className="space-y-4">
+            {/* Main Search Bar */}
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search jobs by title, description, category, or location..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center space-x-2 px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <option value="all">All Categories</option>
-                <option value="Environment">Environment</option>
-                <option value="Education">Education</option>
-                <option value="Human Services">Human Services</option>
-                <option value="Health">Health</option>
-                <option value="Community">Community</option>
-              </select>
+                <Filter className="w-4 h-4" />
+                <span>Filters</span>
+                {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
             </div>
 
-            <div>
-              <input
-                type="text"
-                placeholder="Enter zipcode"
-                value={filters.zipcode}
-                onChange={(e) => handleFilterChange('zipcode', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <select
-                value={filters.distance}
-                onChange={(e) => handleFilterChange('distance', parseInt(e.target.value))}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+            {/* Quick Filter Buttons */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handleFilterChange('urgency', filters.urgency === 'urgent' ? 'all' : 'urgent')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  filters.urgency === 'urgent'
+                    ? 'bg-red-600 text-white'
+                    : 'bg-red-100 text-red-700 hover:bg-red-200'
+                }`}
               >
-                <option value={5}>Within 5 miles</option>
-                <option value={10}>Within 10 miles</option>
-                <option value={25}>Within 25 miles</option>
-                <option value={50}>Within 50 miles</option>
-              </select>
+                <Fire className="w-4 h-4 inline mr-1" />
+                Urgent Jobs
+              </button>
+              
+              <button
+                onClick={() => handleFilterChange('availability', filters.availability === 'urgent' ? 'all' : 'urgent')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  filters.availability === 'urgent'
+                    ? 'bg-orange-600 text-white'
+                    : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                }`}
+              >
+                <Target className="w-4 h-4 inline mr-1" />
+                Few Spots Left
+              </button>
+              
+              <button
+                onClick={() => handleFilterChange('availability', filters.availability === 'available' ? 'all' : 'available')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  filters.availability === 'available'
+                    ? 'bg-green-600 text-white'
+                    : 'bg-green-100 text-green-700 hover:bg-green-200'
+                }`}
+              >
+                <CheckCircle className="w-4 h-4 inline mr-1" />
+                Available Now
+              </button>
             </div>
 
-            <div>
-              <input
-                type="text"
-                placeholder="Search opportunities..."
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            {/* Advanced Filters */}
+            {showFilters && (
+              <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select
+                      value={filters.category}
+                      onChange={(e) => handleFilterChange('category', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Categories</option>
+                      {availableCategories.map(category => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                    <input
+                      type="text"
+                      placeholder="Enter zipcode or city"
+                      value={filters.zipcode}
+                      onChange={(e) => handleFilterChange('zipcode', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Urgency Level</label>
+                    <select
+                      value={filters.urgency}
+                      onChange={(e) => handleFilterChange('urgency', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Urgency Levels</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="high">High</option>
+                      <option value="medium">Medium</option>
+                      <option value="low">Low</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Availability</label>
+                    <select
+                      value={filters.availability}
+                      onChange={(e) => handleFilterChange('availability', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="all">All Jobs</option>
+                      <option value="available">Available Positions</option>
+                      <option value="urgent">Few Spots Left</option>
+                      <option value="filled">Filled Positions</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">
+                    Showing {filteredJobs.length} of {jobs.length} opportunities
+                  </span>
+                  <button
+                    onClick={clearFilters}
+                    className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>Clear Filters</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -549,61 +879,211 @@ const JobBoard = ({ jobId }: JobBoardProps) => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading opportunities...</p>
           </div>
-        ) : jobs.length === 0 ? (
+        ) : filteredJobs.length === 0 ? (
           <div className="text-center py-12">
             <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No opportunities found</h3>
             <p className="text-gray-600">Try adjusting your search filters</p>
+            <button
+              onClick={clearFilters}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Clear Filters
+            </button>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {jobs.map((job) => (
-              <div key={job.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${getUrgencyColor(job.urgency)}`}>
-                      {job.urgency}
-                    </div>
-                    <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 cursor-pointer transition-colors" />
+          <div className="space-y-8">
+            {/* Urgent Jobs Section */}
+            {urgentJobs.length > 0 && (
+              <div>
+                <div className="flex items-center mb-6">
+                  <div className="flex items-center space-x-2 bg-red-100 text-red-800 px-4 py-2 rounded-full">
+                    <Fire className="w-5 h-5 animate-pulse" />
+                    <span className="font-bold">URGENT OPPORTUNITIES</span>
                   </div>
+                  <div className="flex-1 h-px bg-red-200 ml-4"></div>
+                </div>
+                
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                  {urgentJobs.map((job) => (
+                    <div key={job.id} className="bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden">
+                      {/* Urgent Badge */}
+                      <div className="bg-red-600 text-white p-2 flex items-center justify-center">
+                        <Fire className="w-4 h-4 mr-1 animate-pulse" />
+                        <span className="font-bold text-sm">URGENT - IMMEDIATE NEED</span>
+                      </div>
+                      
+                      <div className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <h3 className="text-xl font-semibold text-gray-900 mb-2">{job.title}</h3>
+                            <p className="text-gray-600 mb-3 line-clamp-2">{job.description}</p>
+                          </div>
+                        </div>
 
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{job.title}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-3">{job.description}</p>
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <MapPin className="w-4 h-4 mr-2" />
+                            {job.city}, {job.state}
+                            {job.distance_miles && (
+                              <span className="ml-2 text-blue-600">
+                                ({Math.round(job.distance_miles)} mi)
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Prominent Availability Display */}
+                          <div className="flex items-center text-sm">
+                            <Users className="w-4 h-4 mr-2 text-red-600" />
+                            <span className="font-bold text-red-600">
+                              {job.positions_remaining} of {job.volunteers_needed} spots left!
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Clock className="w-4 h-4 mr-2" />
+                            {job.time_commitment}
+                          </div>
+                        </div>
 
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center text-sm text-gray-500">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      {job.city}, {job.state}
-                      {job.distance_miles && (
-                        <span className="ml-2 text-blue-600">
-                          ({Math.round(job.distance_miles)} mi)
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Users className="w-4 h-4 mr-2" />
-                      {job.positions_remaining} positions available
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500">
-                      <Clock className="w-4 h-4 mr-2" />
-                      {job.time_commitment}
-                    </div>
-                  </div>
+                        {/* Availability Progress Bar */}
+                        <div className="mb-4">
+                          <div className="flex justify-between text-xs text-gray-600 mb-1">
+                            <span>Filled: {job.volunteers_needed - job.positions_remaining}</span>
+                            <span>Remaining: {job.positions_remaining}</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-red-500 h-2 rounded-full transition-all duration-300"
+                              style={{ 
+                                width: `${((job.volunteers_needed - job.positions_remaining) / job.volunteers_needed) * 100}%` 
+                              }}
+                            ></div>
+                          </div>
+                        </div>
 
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => window.location.href = `/jobs/${job.id}`}
-                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                    >
-                      View Details
-                    </button>
-                    <button className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => window.location.href = `/jobs/${job.id}`}
+                            className="flex-1 bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+                          >
+                            Apply Now
+                          </button>
+                          <button 
+                            onClick={() => window.location.href = `/jobs/${job.id}`}
+                            className="px-3 py-2 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+                          >
+                            <Eye className="w-4 h-4 text-red-600" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
+
+            {/* Regular Jobs Section */}
+            {regularJobs.length > 0 && (
+              <div>
+                {urgentJobs.length > 0 && (
+                  <div className="flex items-center mb-6">
+                    <div className="flex items-center space-x-2 bg-blue-100 text-blue-800 px-4 py-2 rounded-full">
+                      <TrendingUp className="w-5 h-5" />
+                      <span className="font-bold">ALL OPPORTUNITIES</span>
+                    </div>
+                    <div className="flex-1 h-px bg-blue-200 ml-4"></div>
+                  </div>
+                )}
+                
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {regularJobs.map((job) => {
+                    const availabilityStatus = getAvailabilityStatus(job.positions_remaining, job.volunteers_needed);
+                    
+                    return (
+                      <div key={job.id} className="bg-white rounded-2xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                        <div className="p-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${getUrgencyColor(job.urgency)}`}>
+                              {job.urgency}
+                            </div>
+                            <div className={`px-3 py-1 rounded-full text-xs font-medium ${availabilityStatus.color}`}>
+                              {availabilityStatus.text}
+                            </div>
+                          </div>
+
+                          <h3 className="text-xl font-semibold text-gray-900 mb-2">{job.title}</h3>
+                          <p className="text-gray-600 mb-4 line-clamp-3">{job.description}</p>
+
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center text-sm text-gray-500">
+                              <MapPin className="w-4 h-4 mr-2" />
+                              {job.city}, {job.state}
+                              {job.distance_miles && (
+                                <span className="ml-2 text-blue-600">
+                                  ({Math.round(job.distance_miles)} mi)
+                                </span>
+                              )}
+                            </div>
+                            
+                            {/* Availability Display */}
+                            <div className="flex items-center text-sm">
+                              <Users className="w-4 h-4 mr-2" />
+                              <span className={`font-medium ${
+                                job.positions_remaining === 0 ? 'text-red-600' :
+                                job.positions_remaining <= 2 ? 'text-orange-600' : 'text-green-600'
+                              }`}>
+                                {job.positions_remaining} of {job.volunteers_needed} spots available
+                              </span>
+                            </div>
+                            
+                            <div className="flex items-center text-sm text-gray-500">
+                              <Clock className="w-4 h-4 mr-2" />
+                              {job.time_commitment}
+                            </div>
+                          </div>
+
+                          {/* Availability Progress Bar */}
+                          <div className="mb-4">
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className={`h-2 rounded-full transition-all duration-300 ${
+                                  job.positions_remaining === 0 ? 'bg-red-500' :
+                                  job.positions_remaining <= 2 ? 'bg-orange-500' : 'bg-green-500'
+                                }`}
+                                style={{ 
+                                  width: `${((job.volunteers_needed - job.positions_remaining) / job.volunteers_needed) * 100}%` 
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => window.location.href = `/jobs/${job.id}`}
+                              disabled={job.positions_remaining === 0}
+                              className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
+                                job.positions_remaining === 0
+                                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                                  : 'bg-blue-600 text-white hover:bg-blue-700'
+                              }`}
+                            >
+                              {job.positions_remaining === 0 ? 'Filled' : 'View Details'}
+                            </button>
+                            <button 
+                              onClick={() => window.location.href = `/jobs/${job.id}`}
+                              className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
