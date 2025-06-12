@@ -87,14 +87,14 @@ const VolunteerApp = () => {
   // Check authentication on app load
   useEffect(() => {
     if (!isAuthenticated) {
-      console.log('Frontend: Component mounted, checking auth status...');
+      // console.log('Frontend: Component mounted, checking auth status...');
       checkAuthStatus();
     }
   }, []);
 
   // Debug effect to monitor auth state changes
   useEffect(() => {
-    console.log('Auth state changed - Authenticated:', isAuthenticated, 'User:', currentUser?.username, 'View:', currentView);
+    // console.log('Auth state changed - Authenticated:', isAuthenticated, 'User:', currentUser?.username, 'View:', currentView);
   }, [isAuthenticated, currentUser, currentView]);
 
   // Load data when viewing dashboard
@@ -107,16 +107,16 @@ const VolunteerApp = () => {
 
   const checkAuthStatus = async () => {
     try {
-      console.log('Frontend: Checking auth status...');
+      // console.log('Frontend: Checking auth status...');
       const response = await fetch('/api/auth/session', {
         credentials: 'include'
       });
       
-      console.log('Frontend: Auth check response status:', response.status);
+      // console.log('Frontend: Auth check response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Frontend: Auth check successful:', data);
+        // console.log('Frontend: Auth check successful:', data);
         
         if (data.authenticated && data.user) {
           setIsAuthenticated(true);
@@ -126,7 +126,7 @@ const VolunteerApp = () => {
           setCurrentUser(null);
         }
       } else {
-        console.log('Frontend: Auth check failed, status:', response.status);
+        // console.log('Frontend: Auth check failed, status:', response.status);
         setIsAuthenticated(false);
         setCurrentUser(null);
       }
@@ -141,7 +141,7 @@ const VolunteerApp = () => {
 
   const handleLogin = async (username: string, password: string) => {
     try {
-      console.log('Frontend: Starting login...');
+      // console.log('Frontend: Starting login...');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -150,16 +150,16 @@ const VolunteerApp = () => {
       });
 
       const data = await response.json();
-      console.log('Frontend: Login response:', data);
+      // console.log('Frontend: Login response:', data);
 
       if (response.ok && data.success) {
-        console.log('Frontend: Login successful, setting user state...');
+        // console.log('Frontend: Login successful, setting user state...');
         setIsAuthenticated(true);
         setCurrentUser(data.user);
         setCurrentView('dashboard');
         return { success: true };
       } else {
-        console.log('Frontend: Login failed:', data.error);
+        // console.log('Frontend: Login failed:', data.error);
         return { success: false, error: data.error || 'Login failed' };
       }
     } catch (error) {
@@ -170,12 +170,12 @@ const VolunteerApp = () => {
 
   const handleLogout = async () => {
     try {
-      console.log('Frontend: Starting logout...');
+      // console.log('Frontend: Starting logout...');
       await fetch('/api/auth/logout', {
         method: 'POST',
         credentials: 'include'
       });
-      console.log('Frontend: Logout successful');
+      // console.log('Frontend: Logout successful');
       setIsAuthenticated(false);
       setCurrentUser(null);
       setCurrentView('landing');
@@ -189,19 +189,19 @@ const VolunteerApp = () => {
 
   const loadStats = async () => {
     try {
-      console.log('Dashboard: Fetching volunteers for stats...');
+      // console.log('Dashboard: Fetching volunteers for stats...');
       const response = await fetch('/api/volunteers', {
         credentials: 'include'
       });
       
-      console.log('Dashboard: Volunteers response status:', response.status);
+      // console.log('Dashboard: Volunteers response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
         setVolunteers(data);
         
-        const totalHours = data.reduce((sum: number, vol: any) => sum + (vol.total_hours || 0), 0);
-        const organizations = new Set(data.map((vol: any) => vol.organization).filter(Boolean));
+        const totalHours = data.reduce((sum: number, vol: unknown) => sum + (vol.total_hours || 0), 0);
+        const organizations = new Set(data.map((vol: unknown) => vol.organization).filter(Boolean));
         
         setStats({
           total_volunteers: data.length,
@@ -209,7 +209,7 @@ const VolunteerApp = () => {
           total_organizations: organizations.size
         });
       } else if (response.status === 401) {
-        console.log('Dashboard: Unauthorized, redirecting to login...');
+        // console.log('Dashboard: Unauthorized, redirecting to login...');
         setIsAuthenticated(false);
         setCurrentUser(null);
         setCurrentView('login');
@@ -221,18 +221,18 @@ const VolunteerApp = () => {
 
   const loadVolunteers = async () => {
     try {
-      console.log('Dashboard: Fetching volunteers...');
+      // console.log('Dashboard: Fetching volunteers...');
       const response = await fetch('/api/volunteers', {
         credentials: 'include'
       });
       
-      console.log('Dashboard: Volunteers response status:', response.status);
+      // console.log('Dashboard: Volunteers response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
         setVolunteers(data);
       } else if (response.status === 401) {
-        console.log('Dashboard: Unauthorized, redirecting to login...');
+        // console.log('Dashboard: Unauthorized, redirecting to login...');
         setIsAuthenticated(false);
         setCurrentUser(null);
         setCurrentView('login');
@@ -350,18 +350,18 @@ const VolunteerApp = () => {
 
     const loadUsers = async () => {
       try {
-        console.log('UserManagement: Fetching users...');
+        // console.log('UserManagement: Fetching users...');
         const response = await fetch('/api/users', {
           credentials: 'include'
         });
         
-        console.log('UserManagement: Users response status:', response.status);
+        // console.log('UserManagement: Users response status:', response.status);
         
         if (response.ok) {
           const data = await response.json();
           setUsers(data);
         } else if (response.status === 401) {
-          console.log('UserManagement: Unauthorized access');
+          // console.log('UserManagement: Unauthorized access');
           setIsAuthenticated(false);
           setCurrentUser(null);
           setCurrentView('login');
@@ -373,7 +373,7 @@ const VolunteerApp = () => {
 
     const handleCreateUser = async () => {
       try {
-        console.log('UserManagement: Creating user...');
+        // console.log('UserManagement: Creating user...');
         const response = await fetch('/api/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -400,7 +400,7 @@ const VolunteerApp = () => {
       if (!editingUser) return;
 
       try {
-        console.log('UserManagement: Updating user...');
+        // console.log('UserManagement: Updating user...');
         const updateData = {
           username: formData.username,
           email: formData.email,
@@ -701,7 +701,7 @@ const VolunteerApp = () => {
           <div className="flex flex-wrap justify-center gap-6">
             <button
               onClick={() => {
-                console.log('View Database clicked, authenticated:', isAuthenticated);
+                // console.log('View Database clicked, authenticated:', isAuthenticated);
                 if (isAuthenticated) {
                   setCurrentView('dashboard');
                 } else {
@@ -1433,7 +1433,7 @@ const VolunteerApp = () => {
 
         if (response.ok) {
           alert(`Successfully uploaded ${result.files?.length || 1} files!`);
-          setUploadedFiles(prev => [...prev, ...(result.files?.map((f: any) => f.name) || ['Uploaded file'])]);
+          setUploadedFiles(prev => [...prev, ...(result.files?.map((f: unknown) => f.name) || ['Uploaded file'])]);
         } else {
           alert(`Upload failed: ${result.error}`);
         }
@@ -1527,7 +1527,7 @@ const VolunteerApp = () => {
 
   // Render current view with authentication checks
   const renderCurrentView = () => {
-    console.log('Current view:', currentView, 'Authenticated:', isAuthenticated);
+    // console.log('Current view:', currentView, 'Authenticated:', isAuthenticated);
 
     switch (currentView) {
       case 'partnership':
@@ -1985,7 +1985,7 @@ export default VolunteerApp;
         
         if (response.ok) {
           alert(`Successfully uploaded ${result.files?.length || 1} files!`);
-          setUploadedFiles(prev => [...prev, ...(result.files?.map((f: any) => f.name) || ['Uploaded file'])]);
+          setUploadedFiles(prev => [...prev, ...(result.files?.map((f: unknown) => f.name) || ['Uploaded file'])]);
         } else {
           alert(`Upload failed: ${result.error}`);
         }
@@ -2079,7 +2079,7 @@ export default VolunteerApp;
 
   // Render current view with authentication checks
   const renderCurrentView = () => {
-    console.log('Current view:', currentView, 'Authenticated:', isAuthenticated);
+    // console.log('Current view:', currentView, 'Authenticated:', isAuthenticated);
     
     switch (currentView) {
       case 'partnership':
