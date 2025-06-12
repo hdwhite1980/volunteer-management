@@ -107,6 +107,50 @@ const JobBoard: React.FC<JobBoardProps> = ({ jobId }) => {
     search: ''
   });
 
+  const getUrgencyStyles = (urgency: string) => {
+    switch (urgency) {
+      case 'urgent':
+        return {
+          bg: 'bg-gradient-to-r from-red-500 to-pink-500',
+          text: 'text-red-700',
+          badge: 'bg-red-100 text-red-800 border-red-200',
+          glow: 'shadow-red-500/25',
+          pulse: 'animate-pulse'
+        };
+      case 'high':
+        return {
+          bg: 'bg-gradient-to-r from-orange-500 to-yellow-500',
+          text: 'text-orange-700',
+          badge: 'bg-orange-100 text-orange-800 border-orange-200',
+          glow: 'shadow-orange-500/25',
+          pulse: ''
+        };
+      case 'medium':
+        return {
+          bg: 'bg-gradient-to-r from-blue-500 to-purple-500',
+          text: 'text-blue-700',
+          badge: 'bg-blue-100 text-blue-800 border-blue-200',
+          glow: 'shadow-blue-500/25',
+          pulse: ''
+        };
+      default:
+        return {
+          bg: 'bg-gradient-to-r from-green-500 to-teal-500',
+          text: 'text-green-700',
+          badge: 'bg-green-100 text-green-800 border-green-200',
+          glow: 'shadow-green-500/25',
+          pulse: ''
+        };
+    }
+  };
+
+  const getAvailabilityColor = (remaining: number, total: number) => {
+    const percentage = (remaining / total) * 100;
+    if (percentage > 50) return 'text-green-600';
+    if (percentage > 20) return 'text-yellow-600';
+    return 'text-red-600';
+  };
+
   // If jobId is provided, load job details
   useEffect(() => {
     if (jobId) {
