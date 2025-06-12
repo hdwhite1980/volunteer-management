@@ -2054,10 +2054,6 @@ export default VolunteerApp;
               >
                 Back to Dashboard
               </button>
-            </div>
-          </div>
-        </div>
-      </div>
     );
   };
 
@@ -2068,11 +2064,8 @@ export default VolunteerApp;
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 animate-pulse">
             <Users className="w-8 h-8 text-white" />
-          </div>
           <div className="text-white text-lg font-medium">Loading...</div>
           <div className="text-gray-300 text-sm mt-2">Checking authentication status</div>
-        </div>
-      </div>
     );
   }
 
