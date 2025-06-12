@@ -52,6 +52,7 @@ interface Assignment {
   job_state?: string;
   job_start_date?: string;
   job_end_date?: string;
+  applied_at?: string;
   assigned_by_username?: string;
 }
 
