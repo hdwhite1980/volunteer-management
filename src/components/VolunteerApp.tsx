@@ -1444,6 +1444,7 @@ const VolunteerApp = () => {
         event.target.value = '';
       }
     };
+  }
     return (
       <div className="min-h-screen bg-gray-50 p-6">
         <div className="max-w-4xl mx-auto">
@@ -1561,7 +1562,6 @@ const VolunteerApp = () => {
   };
 
   return renderCurrentView();
-};
 
 export default VolunteerApp;
                       onChange={(e) => setFormData({ ...formData, position_title: e.target.value })}
@@ -1602,7 +1602,6 @@ export default VolunteerApp;
         </div>
       </div>
     );
-  };
 
   // Activity Form
   const ActivityForm = () => {
@@ -2054,6 +2053,10 @@ export default VolunteerApp;
               >
                 Back to Dashboard
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   };
 
@@ -2064,8 +2067,11 @@ export default VolunteerApp;
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 animate-pulse">
             <Users className="w-8 h-8 text-white" />
+          </div>
           <div className="text-white text-lg font-medium">Loading...</div>
           <div className="text-gray-300 text-sm mt-2">Checking authentication status</div>
+        </div>
+      </div>
     );
   }
 
@@ -2109,3 +2115,4 @@ export default VolunteerApp;
 ;
 
 export default VolunteerApp;
+}
