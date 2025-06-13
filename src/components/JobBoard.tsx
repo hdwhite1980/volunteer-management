@@ -11,20 +11,89 @@ interface JobBoardProps {
   jobId?: string | number;
 }
 
+interface Job {
+  id: number;
+  title: string;
+  category: string;
+  description: string;
+  city: string;
+  state: string;
+  zipcode: string;
+  volunteers_needed: number;
+  filled_positions: number;
+  positions_remaining: number;
+  urgency: string;
+  start_date: string;
+  end_date: string;
+  time_commitment: string;
+  duration_hours: number;
+  skills_needed: string | string[];
+  age_requirement: string;
+  contact_name: string;
+  contact_email: string;
+  contact_phone: string;
+  status: string;
+  created_at: string;
+  expires_at: string;
+  distance_miles?: number;
+  latitude?: number;
+  longitude?: number;
+  background_check_required?: boolean;
+  training_provided?: boolean;
+  flexible_schedule?: boolean;
+  remote_possible?: boolean;
+  transportation_provided?: boolean;
+  meal_provided?: boolean;
+  stipend_amount?: number;
+}
+
+interface VolunteerProfile {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  skills: string[];
+  experience_level: string;
+  is_active: boolean;
+  total_hours: number;
+  created_at: string;
+}
+
+interface JobResponse {
+  jobs: Job[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+interface ApplicationData {
+  volunteer_name: string;
+  email: string;
+  phone: string;
+  cover_letter: string;
+  experience: string;
+}
+
 function JobBoard({ jobId }: JobBoardProps) {
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [filteredJobs, setFilteredJobs] = useState([]);
-  const [showVolunteerIdLogin, setShowVolunteerIdLogin] = useState(false);
-  const [volunteerEmail, setVolunteerEmail] = useState('');
-  const [volunteerProfile, setVolunteerProfile] = useState(null);
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [showApplication, setShowApplication] = useState(false);
-  const [jobDetails, setJobDetails] = useState(null);
-  const [loadingJobDetails, setLoadingJobDetails] = useState(false);
-  const [applying, setApplying] = useState(false);
-  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
+  const [showVolunteerIdLogin, setShowVolunteerIdLogin] = useState<boolean>(false);
+  const [volunteerEmail, setVolunteerEmail] = useState<string>('');
+  const [volunteerProfile, setVolunteerProfile] = useState<VolunteerProfile | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [showApplication, setShowApplication] = useState<boolean>(false);
+  const [jobDetails, setJobDetails] = useState<Job | null>(null);
+  const [loadingJobDetails, setLoadingJobDetails] = useState<boolean>(false);
+  const [applying, setApplying] = useState<boolean>(false);
+  const [loadingProfile, setLoadingProfile] = useState<boolean>(false);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 20,
@@ -43,7 +112,7 @@ function JobBoard({ jobId }: JobBoardProps) {
     skills: ''
   });
 
-  const [applicationData, setApplicationData] = useState({
+  const [applicationData, setApplicationData] = useState<ApplicationData>({
     volunteer_name: '',
     email: '',
     phone: '',
@@ -52,7 +121,7 @@ function JobBoard({ jobId }: JobBoardProps) {
   });
 
   // Fetch jobs from API
-  const fetchJobs = async () => {
+  const fetchJobs = async (): Promise<void> => {
     try {
       setLoading(true);
       setError('');
@@ -75,10 +144,10 @@ function JobBoard({ jobId }: JobBoardProps) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
+      const data: JobResponse = await response.json();
       
       // Ensure skills_needed is always an array
-      const processedJobs = data.jobs.map((job: any) => ({
+      const processedJobs = data.jobs.map((job: Job) => ({
         ...job,
         skills_needed: typeof job.skills_needed === 'string' 
           ? job.skills_needed.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
@@ -100,7 +169,7 @@ function JobBoard({ jobId }: JobBoardProps) {
   };
 
   // Load job details if jobId is provided
-  const loadJobDetails = async () => {
+  const loadJobDetails = async (): Promise<void> => {
     if (!jobId) return;
     
     setLoadingJobDetails(true);
@@ -117,7 +186,7 @@ function JobBoard({ jobId }: JobBoardProps) {
       const processedJob = {
         ...job,
         skills_needed: typeof job.skills_needed === 'string' 
-          ? job.skills_needed.split(',').map(s => s.trim()).filter(s => s.length > 0)
+          ? job.skills_needed.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0)
           : job.skills_needed || []
       };
       
@@ -131,7 +200,7 @@ function JobBoard({ jobId }: JobBoardProps) {
   };
 
   // Fetch volunteer profile by email
-  const fetchVolunteerProfile = async (email: string) => {
+  const fetchVolunteerProfile = async (email: string): Promise<VolunteerProfile | null> => {
     if (!email.trim()) return null;
     
     setLoadingProfile(true);
@@ -154,7 +223,7 @@ function JobBoard({ jobId }: JobBoardProps) {
   };
 
   // Submit job application
-  const handleApplicationSubmit = async (e: React.FormEvent) => {
+  const handleApplicationSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (!selectedJob && !jobDetails) return;
     
@@ -165,7 +234,7 @@ function JobBoard({ jobId }: JobBoardProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          job_id: targetJob.id,
+          job_id: targetJob!.id,
           volunteer_id: volunteerProfile?.id || null,
           ...applicationData
         })
@@ -234,7 +303,7 @@ function JobBoard({ jobId }: JobBoardProps) {
     }
   };
 
-  const getAvailabilityColor = (remaining: number, total: number) => {
+  const getAvailabilityColor = (remaining: number, total: number): string => {
     if (total === 0) return 'text-gray-600';
     const percentage = (remaining / total) * 100;
     if (percentage > 50) return 'text-green-600';
@@ -242,7 +311,7 @@ function JobBoard({ jobId }: JobBoardProps) {
     return 'text-red-600';
   };
 
-  const handleVolunteerLogin = async () => {
+  const handleVolunteerLogin = async (): Promise<void> => {
     if (volunteerEmail.trim()) {
       const profile = await fetchVolunteerProfile(volunteerEmail.trim());
       setVolunteerProfile(profile);
@@ -262,12 +331,12 @@ function JobBoard({ jobId }: JobBoardProps) {
     }
   };
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: any): void => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page when filtering
   };
 
-  const handleLogout = () => {
+  const handleLogout = (): void => {
     setVolunteerProfile(null);
     setVolunteerEmail('');
     setApplicationData({
@@ -349,7 +418,7 @@ function JobBoard({ jobId }: JobBoardProps) {
                         <div className="mb-6">
                           <h3 className="text-xl font-semibold text-gray-800 mb-3">Skills Needed</h3>
                           <div className="flex flex-wrap gap-3">
-                            {jobDetails.skills_needed.map((skill, index) => (
+                            {jobDetails.skills_needed.map((skill: string, index: number) => (
                               <span key={index} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-full font-medium">
                                 {skill}
                               </span>
@@ -492,8 +561,8 @@ function JobBoard({ jobId }: JobBoardProps) {
   }
 
   // Main job board view
-  const urgentJobs = filteredJobs.filter(job => job.urgency.toLowerCase() === 'urgent' && job.positions_remaining > 0);
-  const regularJobs = filteredJobs.filter(job => job.urgency.toLowerCase() !== 'urgent');
+  const urgentJobs = filteredJobs.filter((job: Job) => job.urgency.toLowerCase() === 'urgent' && job.positions_remaining > 0);
+  const regularJobs = filteredJobs.filter((job: Job) => job.urgency.toLowerCase() !== 'urgent');
 
   if (loading && jobs.length === 0) {
     return (
@@ -707,7 +776,7 @@ function JobBoard({ jobId }: JobBoardProps) {
               </div>
               
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {urgentJobs.map((job: any) => {
+                {urgentJobs.map((job: Job) => {
                   const urgencyStyles = getUrgencyStyles(job.urgency);
                   return (
                     <div key={job.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 overflow-hidden border-2 border-red-200">
@@ -813,7 +882,7 @@ function JobBoard({ jobId }: JobBoardProps) {
               </div>
               
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {regularJobs.map((job: any) => {
+                {regularJobs.map((job: Job) => {
                   const urgencyStyles = getUrgencyStyles(job.urgency);
                   return (
                     <div key={job.id} className={`bg-white rounded-3xl shadow-xl ${urgencyStyles.glow} hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden`}>
@@ -981,7 +1050,7 @@ function JobBoard({ jobId }: JobBoardProps) {
                   onChange={(e) => setVolunteerEmail(e.target.value)}
                   placeholder="Enter your registered email"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none text-lg"
-                  onKeyPress={(e: any) => e.key === 'Enter' && handleVolunteerLogin()}
+                  onKeyPress={(e: React.KeyboardEvent) => e.key === 'Enter' && handleVolunteerLogin()}
                 />
               </div>
               
@@ -1054,7 +1123,7 @@ function JobBoard({ jobId }: JobBoardProps) {
                       onChange={(e) => setVolunteerEmail(e.target.value)}
                       placeholder="Enter your email address"
                       className="flex-1 px-3 py-2 border border-yellow-300 rounded-lg focus:border-yellow-500 focus:outline-none"
-                      onKeyPress={(e: any) => e.key === 'Enter' && handleVolunteerLogin()}
+                      onKeyPress={(e: React.KeyboardEvent) => e.key === 'Enter' && handleVolunteerLogin()}
                     />
                     <button
                       onClick={handleVolunteerLogin}
