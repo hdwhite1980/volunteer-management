@@ -1,33 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, MapPin, Users, Clock, AlertCircle, CheckCircle, ArrowRight, ArrowLeft, Calendar, Shield, Star, Zap, Target, Globe, Heart, Award, Sparkles } from 'lucide-react';
-
-// Mock hooks for demonstration
-const useCategories = (type) => ({
-  categories: [
-    { category_name: 'Environment' },
-    { category_name: 'Education' },
-    { category_name: 'Human Services' },
-    { category_name: 'Health' },
-    { category_name: 'Community' },
-    { category_name: 'Arts & Culture' },
-    { category_name: 'Sports & Recreation' },
-    { category_name: 'Faith-based' },
-    { category_name: 'Emergency Services' },
-    { category_name: 'Technology' },
-    { category_name: 'Administrative' },
-    { category_name: 'Construction' },
-    { category_name: 'Events' }
-  ],
-  loading: false,
-  error: null
-});
-
-const useZipLookup = () => ({
-  data: null,
-  loading: false,
-  error: null,
-  lookup: (zip) => console.log('Looking up:', zip)
-});
+import { useCategories } from '@/hooks/useCategories';
+import { useZipLookup } from '@/hooks/useZipLookup';
 
 interface JobFormData {
   title: string;
@@ -123,15 +97,8 @@ const PostJob = () => {
     }
   }, [zipData]);
 
-  const fallbackCategories = [
-    'Environment', 'Education', 'Human Services', 'Health', 'Community',
-    'Arts & Culture', 'Sports & Recreation', 'Faith-based', 'Emergency Services',
-    'Technology', 'Administrative', 'Construction', 'Events'
-  ];
-
-  const categoryOptions = categories.length > 0 
-    ? categories.map(cat => cat.category_name)
-    : fallbackCategories;
+  // Use categories from hook
+  const categoryOptions = categories.map(cat => cat.category_name);
 
   const skillGroups: Record<string, string[]> = {
     'Administration & Documentation': [
