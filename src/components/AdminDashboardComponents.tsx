@@ -204,13 +204,19 @@ export const VolunteerCard: React.FC<{
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-3 border-t border-gray-100 space-y-2 sm:space-y-0">
         <div className="flex items-center justify-center sm:justify-start space-x-3">
           {volunteer.email_notifications && (
-            <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" title="Email notifications" />
+            <div title="Email notifications enabled">
+              <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+            </div>
           )}
           {volunteer.sms_notifications && (
-            <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" title="SMS notifications" />
+            <div title="SMS notifications enabled">
+              <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
+            </div>
           )}
           {volunteer.background_check_consent && (
-            <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" title="Background check" />
+            <div title="Background check consented">
+              <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
+            </div>
           )}
         </div>
         
