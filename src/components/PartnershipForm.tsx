@@ -19,14 +19,6 @@ const PartnershipForm: React.FC<PartnershipFormProps> = ({ onBack }) => {
   const [events, setEvents] = useState([
     { date: '', site: '', hours_worked: '', volunteers: '' },
     { date: '', site: '', hours_worked: '', volunteers: '' },
-    { date: '', site: '', hours_worked: '', volunteers: '' },
-    { date: '', site: '', hours_worked: '', volunteers: '' },
-    { date: '', site: '', hours_worked: '', volunteers: '' },
-    { date: '', site: '', hours_worked: '', volunteers: '' },
-    { date: '', site: '', hours_worked: '', volunteers: '' },
-    { date: '', site: '', hours_worked: '', volunteers: '' },
-    { date: '', site: '', hours_worked: '', volunteers: '' },
-    { date: '', site: '', hours_worked: '', volunteers: '' },
     { date: '', site: '', hours_worked: '', volunteers: '' }
   ]);
   
@@ -42,6 +34,17 @@ const PartnershipForm: React.FC<PartnershipFormProps> = ({ onBack }) => {
     const newEvents = [...events];
     newEvents[index][field] = value;
     setEvents(newEvents);
+  };
+
+  const addEvent = () => {
+    setEvents([...events, { date: '', site: '', hours_worked: '', volunteers: '' }]);
+  };
+
+  const removeEvent = (index: number) => {
+    if (events.length > 1) {
+      const newEvents = events.filter((_, i) => i !== index);
+      setEvents(newEvents);
+    }
   };
 
   const generatePDF = async () => {
@@ -221,17 +224,27 @@ const PartnershipForm: React.FC<PartnershipFormProps> = ({ onBack }) => {
 
             {/* Volunteer Hours Table */}
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                Volunteer Hours:
-              </h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold text-gray-800">
+                  Volunteer Hours:
+                </h2>
+                <button
+                  onClick={addEvent}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                >
+                  + Add Event
+                </button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full border border-gray-300 rounded-lg">
                   <thead>
                     <tr className="bg-gray-50">
+                      <th className="border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 text-center">#</th>
                       <th className="border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 text-center">Event Date</th>
                       <th className="border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 text-center">Event Site Zip</th>
                       <th className="border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 text-center">Total Number of Hours Worked</th>
                       <th className="border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 text-center">Total Number of Volunteers</th>
+                      <th className="border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -275,6 +288,17 @@ const PartnershipForm: React.FC<PartnershipFormProps> = ({ onBack }) => {
                             placeholder="Count"
                             min="0"
                           />
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1 text-center">
+                          {events.length > 1 && (
+                            <button
+                              onClick={() => removeEvent(index)}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                              title="Remove event"
+                            >
+                              ✕
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

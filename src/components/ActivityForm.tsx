@@ -18,22 +18,18 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
     position_title: ''
   });
 
-  // Initialize with 8 team member rows (as shown in your image)
+  // Start with 2 team member rows, allow adding more
   const [teamMembers, setTeamMembers] = useState([
-    { name: '', title: '', organization: '' },
-    { name: '', title: '', organization: '' },
-    { name: '', title: '', organization: '' },
-    { name: '', title: '', organization: '' },
-    { name: '', title: '', organization: '' },
-    { name: '', title: '', organization: '' },
     { name: '', title: '', organization: '' },
     { name: '', title: '', organization: '' }
   ]);
 
-  // Initialize with 20 activity rows (as shown in your image)
-  const [activities, setActivities] = useState(
-    Array.from({ length: 20 }, () => ({ date_time: '', notable_activities: '' }))
-  );
+  // Start with 3 activity rows, allow adding more
+  const [activities, setActivities] = useState([
+    { date_time: '', notable_activities: '' },
+    { date_time: '', notable_activities: '' },
+    { date_time: '', notable_activities: '' }
+  ]);
 
   const [isComplete, setIsComplete] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,6 +44,28 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
     const newActivities = [...activities];
     newActivities[index][field] = value;
     setActivities(newActivities);
+  };
+
+  const addTeamMember = () => {
+    setTeamMembers([...teamMembers, { name: '', title: '', organization: '' }]);
+  };
+
+  const removeTeamMember = (index: number) => {
+    if (teamMembers.length > 1) {
+      const newTeamMembers = teamMembers.filter((_, i) => i !== index);
+      setTeamMembers(newTeamMembers);
+    }
+  };
+
+  const addActivity = () => {
+    setActivities([...activities, { date_time: '', notable_activities: '' }]);
+  };
+
+  const removeActivity = (index: number) => {
+    if (activities.length > 1) {
+      const newActivities = activities.filter((_, i) => i !== index);
+      setActivities(newActivities);
+    }
   };
 
   const generatePDF = async () => {
@@ -253,9 +271,17 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
 
             {/* Resources Assigned Section */}
             <div className="mb-8">
-              <h3 className="text-sm font-bold text-gray-800 mb-2">
-                Resources Assigned. List team members that worked onsite with you.
-              </h3>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-bold text-gray-800">
+                  Resources Assigned. List team members that worked onsite with you.
+                </h3>
+                <button
+                  onClick={addTeamMember}
+                  className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 flex items-center gap-1"
+                >
+                  + Add Team Member
+                </button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse border border-gray-400">
                   <thead>
@@ -264,6 +290,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
                       <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center">Name</th>
                       <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center">Title</th>
                       <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center">Organization</th>
+                      <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center w-16">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -297,6 +324,17 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
                             placeholder=""
                           />
                         </td>
+                        <td className="border border-gray-400 px-1 py-1 text-center">
+                          {teamMembers.length > 1 && (
+                            <button
+                              onClick={() => removeTeamMember(index)}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                              title="Remove team member"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -306,9 +344,17 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
 
             {/* Activity Log Section */}
             <div className="mb-8">
-              <h3 className="text-sm font-bold text-gray-800 mb-2">
-                Activity Log. Complete the table. Example: 5/22/25 - 8:30AM: Met with team to develop action plans/22/25 - 9:00AM: Began unloading trucks w/ team; organizes supplies
-              </h3>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="text-sm font-bold text-gray-800">
+                  Activity Log. Complete the table. Example: 5/22/25 - 8:30AM: Met with team to develop action plans/22/25 - 9:00AM: Began unloading trucks w/ team; organizes supplies
+                </h3>
+                <button
+                  onClick={addActivity}
+                  className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 flex items-center gap-1"
+                >
+                  + Add Activity
+                </button>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse border border-gray-400">
                   <thead>
@@ -316,6 +362,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
                       <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center w-12">#</th>
                       <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center w-1/3">Date/Time</th>
                       <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center">Noteable Activities</th>
+                      <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center w-16">Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -339,6 +386,17 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
                             className="w-full text-sm border-0 focus:ring-0 px-1 py-1 bg-transparent"
                             placeholder=""
                           />
+                        </td>
+                        <td className="border border-gray-400 px-1 py-1 text-center">
+                          {activities.length > 1 && (
+                            <button
+                              onClick={() => removeActivity(index)}
+                              className="text-red-600 hover:text-red-800 text-sm"
+                              title="Remove activity"
+                            >
+                              ✕
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

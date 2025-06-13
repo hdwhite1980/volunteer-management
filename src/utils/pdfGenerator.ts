@@ -148,6 +148,24 @@ export class PDFGenerator {
               `).join('')}
             </tbody>
           </table>
+        </div> 25%; text-align: center;">Event Date</th>
+                <th style="width: 25%; text-align: center;">Event Site Zip</th>
+                <th style="width: 20%; text-align: center;">Total Number of Hours Worked</th>
+                <th style="width: 20%; text-align: center;">Total Number of Volunteers</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.events.map((event, index) => `
+                <tr>
+                  <td style="text-align: center;">${index + 1}.</td>
+                  <td>${event.date}</td>
+                  <td>${event.site}</td>
+                  <td>${event.hours_worked}</td>
+                  <td>${event.volunteers}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
         </div>
         
         <div class="form-section">
