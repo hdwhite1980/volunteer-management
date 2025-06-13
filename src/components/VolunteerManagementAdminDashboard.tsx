@@ -474,12 +474,12 @@ const VolunteerManagementAdminDashboard = () => {
       <div className="bg-white shadow-sm border-b">
         <div className="px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+            <div className="flex items-center space-x-3 flex-1 min-w-0">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
                 <BarChart3 className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-lg sm:text-2xl font-bold text-gray-900">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
                   <span className="hidden sm:inline">Volunteer Management Admin Dashboard</span>
                   <span className="sm:hidden">Admin Dashboard</span>
                 </h1>
@@ -492,13 +492,13 @@ const VolunteerManagementAdminDashboard = () => {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="sm:hidden p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg"
+              className="sm:hidden p-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg ml-2 flex-shrink-0"
             >
               <Menu className="w-5 h-5" />
             </button>
 
             {/* Desktop action buttons */}
-            <div className="hidden sm:flex items-center space-x-3">
+            <div className="hidden sm:flex items-center space-x-3 ml-4">
               <button
                 onClick={() => window.location.href = '/'}
                 className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
@@ -527,21 +527,21 @@ const VolunteerManagementAdminDashboard = () => {
           <div className="flex sm:hidden items-center justify-between mt-3 space-x-2">
             <button
               onClick={() => window.location.href = '/'}
-              className="flex items-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg text-sm"
+              className="flex items-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg text-sm flex-1 justify-center"
             >
               <Home className="w-4 h-4" />
               <span>Home</span>
             </button>
             <button
               onClick={loadAllData}
-              className="flex items-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg text-sm"
+              className="flex items-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg text-sm flex-1 justify-center"
             >
               <RefreshCw className="w-4 h-4" />
               <span>Refresh</span>
             </button>
             <button
               onClick={exportToPDF}
-              className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm"
+              className="flex items-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-lg text-sm flex-1 justify-center"
             >
               <Download className="w-4 h-4" />
               <span>Export</span>
@@ -952,13 +952,16 @@ const VolunteerManagementAdminDashboard = () => {
               ) : (
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                   {/* Mobile view - Cards */}
-                  <div className="sm:hidden">
+                  <div className="block sm:hidden">
                     <div className="divide-y divide-gray-200">
                       {filteredLogs.map((log, index) => (
                         <div key={index} className="p-4">
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="font-medium text-gray-900">{log.name}</div>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900 text-sm truncate">{log.name}</div>
+                              <div className="text-xs text-gray-600 break-all mt-1">{log.email}</div>
+                            </div>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ml-2 flex-shrink-0 ${
                               log.log_type === 'partnership' 
                                 ? 'bg-blue-100 text-blue-800' 
                                 : 'bg-green-100 text-green-800'
@@ -966,12 +969,18 @@ const VolunteerManagementAdminDashboard = () => {
                               {log.log_type}
                             </span>
                           </div>
-                          <div className="space-y-1 text-sm text-gray-600">
-                            <div>{log.email}</div>
-                            <div>{log.organization}</div>
+                          <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span>Hours: <span className="font-semibold">{Math.round(log.total_hours || 0)}</span></span>
-                              <span>{new Date(log.created_at).toLocaleDateString()}</span>
+                              <span className="text-gray-600">Organization:</span>
+                              <span className="text-gray-900 font-medium">{log.organization}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Hours:</span>
+                              <span className="text-gray-900 font-semibold">{Math.round(log.total_hours || 0)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Date:</span>
+                              <span className="text-gray-900">{new Date(log.created_at).toLocaleDateString()}</span>
                             </div>
                           </div>
                         </div>
@@ -980,45 +989,47 @@ const VolunteerManagementAdminDashboard = () => {
                   </div>
 
                   {/* Desktop view - Table */}
-                  <div className="hidden sm:block overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Organization</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Hours</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {filteredLogs.map((log, index) => (
-                          <tr key={index} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="font-medium text-gray-900">{log.name}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.email}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.organization}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="font-semibold text-gray-900">{Math.round(log.total_hours || 0)}</span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                                log.log_type === 'partnership' 
-                                  ? 'bg-blue-100 text-blue-800' 
-                                  : 'bg-green-100 text-green-800'
-                              }`}>
-                                {log.log_type}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                              {new Date(log.created_at).toLocaleDateString()}
-                            </td>
+                  <div className="hidden sm:block">
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Organization</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Hours</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {filteredLogs.map((log, index) => (
+                            <tr key={index} className="hover:bg-gray-50 transition-colors">
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="font-medium text-gray-900">{log.name}</div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.email}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.organization}</td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className="font-semibold text-gray-900">{Math.round(log.total_hours || 0)}</span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                                  log.log_type === 'partnership' 
+                                    ? 'bg-blue-100 text-blue-800' 
+                                    : 'bg-green-100 text-green-800'
+                                }`}>
+                                  {log.log_type}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                                {new Date(log.created_at).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </div>
               )
