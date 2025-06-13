@@ -566,8 +566,8 @@ function JobBoard({ jobId }: JobBoardProps) {
 
   if (loading && jobs.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center text-white">
+		 <div className="min-h-screen bg-gray-100">
+         <div className="text-center text-white">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
           <p className="text-xl">Loading volunteer opportunities...</p>
         </div>
