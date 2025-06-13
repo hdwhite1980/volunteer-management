@@ -1,63 +1,47 @@
 'use client';
 import React, { useState } from 'react';
-import { 
-  Clock, User, Edit, Plus, Trash2, CheckCircle, 
-  FileText, Home, Eye, Download 
-} from 'lucide-react';
-
-// Volunteer Categories
-const VOLUNTEER_CATEGORIES = [
-  'Debris Removal & Cleanup',
-  'Structural Assessment & Repair',
-  'Home Stabilization (e.g., tarping, boarding)',
-  'Utility Restoration Support',
-  'Supply Distribution',
-  'Warehouse Management',
-  'Transportation Assistance',
-  'Administrative & Office Support',
-  'First Aid & Medical Support',
-  'Mental Health & Emotional Support',
-  'Spiritual Care',
-  'Pet Care Services',
-  'Childcare & Youth Programs',
-  'Senior Assistance',
-  'Multilingual & Translation Support',
-  'Legal Aid Assistance',
-  'Volunteer Coordination',
-  'IT & Communication Support',
-  'Damage Assessment & Reporting',
-  'Fundraising & Community Outreach'
-];
+import { Clock, User, Edit, CheckCircle, FileText } from 'lucide-react';
 
 interface ActivityFormProps {
   onBack: () => void;
-  onHome?: () => void;
 }
 
-const ActivityForm: React.FC<ActivityFormProps> = ({ onBack, onHome }) => {
+const ActivityForm: React.FC<ActivityFormProps> = ({ onBack }) => {
   const [formData, setFormData] = useState({
-    volunteer_name: '',
-    email: '',
-    phone: '',
-    student_id: '',
+    incident_name: '',
+    date_from: '',
+    date_to: '',
+    time_from: '',
+    time_to: '',
     prepared_by_first: '',
     prepared_by_last: '',
     position_title: ''
   });
-  const [activities, setActivities] = useState([
-    { date: '', activity: '', organization: '', location: '', hours: '', description: '' }
+
+  // Initialize with 8 team member rows (as shown in your image)
+  const [teamMembers, setTeamMembers] = useState([
+    { name: '', title: '', organization: '' },
+    { name: '', title: '', organization: '' },
+    { name: '', title: '', organization: '' },
+    { name: '', title: '', organization: '' },
+    { name: '', title: '', organization: '' },
+    { name: '', title: '', organization: '' },
+    { name: '', title: '', organization: '' },
+    { name: '', title: '', organization: '' }
   ]);
+
+  // Initialize with 20 activity rows (as shown in your image)
+  const [activities, setActivities] = useState(
+    Array.from({ length: 20 }, () => ({ date_time: '', notable_activities: '' }))
+  );
+
+  const [isComplete, setIsComplete] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const addActivity = () => {
-    setActivities([...activities, { date: '', activity: '', organization: '', location: '', hours: '', description: '' }]);
-  };
-
-  const removeActivity = (index: number) => {
-    if (activities.length > 1) {
-      const newActivities = activities.filter((_, i) => i !== index);
-      setActivities(newActivities);
-    }
+  const updateTeamMember = (index: number, field: keyof typeof teamMembers[0], value: string) => {
+    const newTeamMembers = [...teamMembers];
+    newTeamMembers[index][field] = value;
+    setTeamMembers(newTeamMembers);
   };
 
   const updateActivity = (index: number, field: keyof typeof activities[0], value: string) => {
@@ -66,243 +50,67 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack, onHome }) => {
     setActivities(newActivities);
   };
 
-  const calculateTotalHours = () => {
-    return activities.reduce((total, activity) => {
-      return total + (parseFloat(activity.hours) || 0);
-    }, 0);
-  };
-
-  const generatePreviewPDF = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Activity Log - Preview</title>
-            <style>
-              body { 
-                font-family: Arial, sans-serif; 
-                margin: 20px; 
-                color: #374151; 
-                line-height: 1.6;
-              }
-              .header { 
-                text-align: center; 
-                margin-bottom: 30px; 
-                padding-bottom: 20px; 
-                border-bottom: 3px solid #059669; 
-              }
-              .header h1 { 
-                color: #1f2937; 
-                font-size: 24px; 
-                margin-bottom: 5px; 
-              }
-              .info-section {
-                margin: 20px 0;
-                padding: 15px;
-                background: #f9fafb;
-                border-radius: 8px;
-              }
-              .info-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
-                margin-top: 10px;
-              }
-              .info-item {
-                padding: 8px;
-              }
-              .info-label {
-                font-weight: bold;
-                color: #374151;
-                display: block;
-                margin-bottom: 3px;
-              }
-              .info-value {
-                color: #6b7280;
-              }
-              .activities-section {
-                margin: 30px 0;
-              }
-              .activity-item {
-                margin: 20px 0;
-                padding: 15px;
-                border: 1px solid #e5e7eb;
-                border-radius: 8px;
-                background: white;
-              }
-              .activity-header {
-                font-size: 16px;
-                font-weight: bold;
-                color: #059669;
-                margin-bottom: 10px;
-              }
-              .activity-grid {
-                display: grid;
-                grid-template-columns: repeat(3, 1fr);
-                gap: 10px;
-                margin-bottom: 10px;
-              }
-              .total-hours {
-                background: #d1fae5;
-                padding: 15px;
-                border-radius: 8px;
-                text-align: center;
-                font-size: 18px;
-                font-weight: bold;
-                color: #059669;
-                margin: 20px 0;
-              }
-              .prepared-by {
-                margin-top: 30px;
-                padding-top: 20px;
-                border-top: 2px solid #e5e7eb;
-              }
-              .footer {
-                margin-top: 40px;
-                text-align: center;
-                font-size: 12px;
-                color: #6b7280;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>📋 Activity Log (ICS 214)</h1>
-              <p>Volunteer Community Engagement Group</p>
-              <p>Generated on: ${new Date().toLocaleDateString()}</p>
-            </div>
-
-            <div class="info-section">
-              <h3>Volunteer Information</h3>
-              <div class="info-grid">
-                <div class="info-item">
-                  <span class="info-label">Name:</span>
-                  <span class="info-value">${formData.volunteer_name || '[Not specified]'}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Email:</span>
-                  <span class="info-value">${formData.email || '[Not specified]'}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Phone:</span>
-                  <span class="info-value">${formData.phone || '[Not specified]'}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Student ID:</span>
-                  <span class="info-value">${formData.student_id || '[Not specified]'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="activities-section">
-              <h3>Activities</h3>
-              ${activities.map((activity, index) => `
-                <div class="activity-item">
-                  <div class="activity-header">Activity ${index + 1}</div>
-                  <div class="activity-grid">
-                    <div>
-                      <span class="info-label">Date:</span>
-                      <span class="info-value">${activity.date || '[Not specified]'}</span>
-                    </div>
-                    <div>
-                      <span class="info-label">Activity:</span>
-                      <span class="info-value">${activity.activity || '[Not specified]'}</span>
-                    </div>
-                    <div>
-                      <span class="info-label">Hours:</span>
-                      <span class="info-value">${activity.hours || '0'}</span>
-                    </div>
-                    <div>
-                      <span class="info-label">Organization:</span>
-                      <span class="info-value">${activity.organization || '[Not specified]'}</span>
-                    </div>
-                    <div>
-                      <span class="info-label">Location:</span>
-                      <span class="info-value">${activity.location || '[Not specified]'}</span>
-                    </div>
-                  </div>
-                  ${activity.description ? `
-                    <div style="margin-top: 10px;">
-                      <span class="info-label">Description:</span>
-                      <div style="margin-top: 5px; padding: 8px; background: #f3f4f6; border-radius: 4px;">
-                        ${activity.description}
-                      </div>
-                    </div>
-                  ` : ''}
-                </div>
-              `).join('')}
-            </div>
-
-            <div class="total-hours">
-              Total Volunteer Hours: ${calculateTotalHours()}
-            </div>
-
-            <div class="prepared-by">
-              <h3>Prepared By</h3>
-              <div class="info-grid">
-                <div class="info-item">
-                  <span class="info-label">Name:</span>
-                  <span class="info-value">${formData.prepared_by_first || '[First]'} ${formData.prepared_by_last || '[Last]'}</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">Position/Title:</span>
-                  <span class="info-value">${formData.position_title || '[Not specified]'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="footer">
-              <p>This is a preview document. Please review all information before final submission.</p>
-              <p>Activity Log - Generated by VCEG Management System</p>
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+  const generatePDF = async () => {
+    try {
+      // Import the PDF generator
+      const { PDFGenerator } = await import('../utils/pdfGenerator');
+      
+      const pdfData = {
+        incident_name: formData.incident_name,
+        date_from: formData.date_from,
+        date_to: formData.date_to,
+        time_from: formData.time_from,
+        time_to: formData.time_to,
+        prepared_by_first: formData.prepared_by_first,
+        prepared_by_last: formData.prepared_by_last,
+        position_title: formData.position_title,
+        team_members: teamMembers,
+        activities: activities,
+        is_complete: isComplete
+      };
+      
+      PDFGenerator.generateActivityLogPDF(pdfData);
+    } catch (error) {
+      console.error('PDF generation error:', error);
+      alert('Error generating PDF. Please try again.');
     }
   };
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      if (!formData.volunteer_name || !formData.email || !formData.prepared_by_first || !formData.prepared_by_last || !formData.position_title) {
+      if (!formData.incident_name || !formData.date_from || !formData.date_to || 
+          !formData.time_from || !formData.time_to || !formData.prepared_by_first || 
+          !formData.prepared_by_last || !formData.position_title) {
         alert('Please fill in all required fields (marked with *)');
         return;
       }
 
-      const validActivities = activities.filter(activity => 
-        activity.date && activity.activity && activity.organization && activity.description
-      );
-
-      if (validActivities.length === 0) {
-        alert('Please add at least one complete activity with date, type, organization, and description');
+      if (!isComplete) {
+        alert('Please check "I am complete" to submit the form');
         return;
       }
 
-      for (const activity of validActivities) {
-        if (!activity.hours || isNaN(parseFloat(activity.hours))) {
-          alert('Please enter valid hours for all activities');
-          return;
-        }
-      }
+      const validTeamMembers = teamMembers.filter(member => 
+        member.name || member.title || member.organization
+      );
+
+      const validActivities = activities.filter(activity => 
+        activity.date_time || activity.notable_activities
+      );
 
       const submitData = {
-        volunteer_name: formData.volunteer_name.trim(),
-        email: formData.email.trim(),
-        phone: formData.phone?.trim() || null,
-        student_id: formData.student_id?.trim() || null,
+        incident_name: formData.incident_name.trim(),
+        date_from: formData.date_from,
+        date_to: formData.date_to,
+        time_from: formData.time_from,
+        time_to: formData.time_to,
         prepared_by_first: formData.prepared_by_first.trim(),
         prepared_by_last: formData.prepared_by_last.trim(),
         position_title: formData.position_title.trim(),
-        activities: validActivities.map(activity => ({
-          date: activity.date,
-          activity: activity.activity,
-          organization: activity.organization.trim(),
-          location: activity.location?.trim() || '',
-          hours: activity.hours,
-          description: activity.description.trim()
-        }))
+        team_members: validTeamMembers,
+        activities: validActivities,
+        is_complete: isComplete
       };
 
       const response = await fetch('/api/activity-logs', {
@@ -313,7 +121,7 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack, onHome }) => {
       });
 
       if (response.ok) {
-        alert('Activity log submitted successfully!');
+        alert('Activity log (ICS 214) submitted successfully!');
         onBack();
       } else {
         const result = await response.json();
@@ -329,267 +137,261 @@ const ActivityForm: React.FC<ActivityFormProps> = ({ onBack, onHome }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-6xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg">
           <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white p-6 rounded-t-lg">
-            <h1 className="text-2xl font-bold mb-2">Activity Log (ICS 214)</h1>
-            <p className="text-green-100">Record individual volunteer activities and track service hours</p>
+            <h1 className="text-2xl font-bold mb-2 text-center">ACTIVITY LOG (ICS 214)</h1>
+            <p className="text-green-100 text-center">Record incident response activities and team coordination</p>
           </div>
 
           <div className="p-6">
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <User className="w-5 h-5 mr-2" />
-                Volunteer Information
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Volunteer Name *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.volunteer_name}
-                    onChange={(e) => setFormData({ ...formData, volunteer_name: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter full name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter email address"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter phone number"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Student ID (if applicable)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.student_id}
-                    onChange={(e) => setFormData({ ...formData, student_id: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Enter student ID"
-                  />
-                </div>
+            {/* Incident Name */}
+            <div className="mb-6">
+              <label className="block text-sm font-bold text-gray-800 mb-1">
+                Incident Name *
+              </label>
+              <input
+                type="text"
+                value={formData.incident_name}
+                onChange={(e) => setFormData({ ...formData, incident_name: e.target.value })}
+                className="w-full border-b-2 border-gray-300 px-0 py-2 bg-transparent focus:border-green-500 focus:outline-none"
+                placeholder=""
+              />
+            </div>
+
+            {/* Date and Time Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-1">
+                  Date From *
+                </label>
+                <input
+                  type="date"
+                  value={formData.date_from}
+                  onChange={(e) => setFormData({ ...formData, date_from: e.target.value })}
+                  className="w-full border-b-2 border-gray-300 px-0 py-2 bg-transparent focus:border-green-500 focus:outline-none"
+                />
+                <small className="text-gray-600">Date</small>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-1">
+                  Date To *
+                </label>
+                <input
+                  type="date"
+                  value={formData.date_to}
+                  onChange={(e) => setFormData({ ...formData, date_to: e.target.value })}
+                  className="w-full border-b-2 border-gray-300 px-0 py-2 bg-transparent focus:border-green-500 focus:outline-none"
+                />
+                <small className="text-gray-600">Date</small>
               </div>
             </div>
 
-            <div className="mb-8">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold text-gray-800 flex items-center">
-                  <Clock className="w-5 h-5 mr-2" />
-                  Activities
-                </h2>
-                <button
-                  onClick={addActivity}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2"
-                >
-                  <Plus className="w-4 h-4" />
-                  Add Activity
-                </button>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-1">
+                  Time From *
+                </label>
+                <input
+                  type="time"
+                  value={formData.time_from}
+                  onChange={(e) => setFormData({ ...formData, time_from: e.target.value })}
+                  className="w-full border-b-2 border-gray-300 px-0 py-2 bg-transparent focus:border-green-500 focus:outline-none"
+                />
               </div>
-
-              <div className="space-y-4">
-                {activities.map((activity, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="font-medium text-gray-700">Activity {index + 1}</h3>
-                      {activities.length > 1 && (
-                        <button
-                          onClick={() => removeActivity(index)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                        <input
-                          type="date"
-                          value={activity.date}
-                          onChange={(e) => updateActivity(index, 'date', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Activity Type</label>
-                        <select
-                          value={activity.activity}
-                          onChange={(e) => updateActivity(index, 'activity', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        >
-                          <option value="">Select activity type</option>
-                          {VOLUNTEER_CATEGORIES.map((category) => (
-                            <option key={category} value={category}>{category}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
-                        <input
-                          type="text"
-                          value={activity.organization}
-                          onChange={(e) => updateActivity(index, 'organization', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="Organization name"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                        <input
-                          type="text"
-                          value={activity.location}
-                          onChange={(e) => updateActivity(index, 'location', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="Activity location"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Hours</label>
-                        <input
-                          type="number"
-                          value={activity.hours}
-                          onChange={(e) => updateActivity(index, 'hours', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                          placeholder="Hours worked"
-                          min="0"
-                          step="0.5"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                      <textarea
-                        value={activity.description}
-                        onChange={(e) => updateActivity(index, 'description', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        rows={3}
-                        placeholder="Describe the volunteer activity..."
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                <div className="text-lg font-semibold text-green-800">
-                  Total Volunteer Hours: {calculateTotalHours()}
-                </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-800 mb-1">
+                  Time To *
+                </label>
+                <input
+                  type="time"
+                  value={formData.time_to}
+                  onChange={(e) => setFormData({ ...formData, time_to: e.target.value })}
+                  className="w-full border-b-2 border-gray-300 px-0 py-2 bg-transparent focus:border-green-500 focus:outline-none"
+                />
               </div>
             </div>
 
-            <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                <Edit className="w-5 h-5 mr-2" />
-                Prepared By
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Prepared By Section */}
+            <div className="mb-6">
+              <h3 className="text-sm font-bold text-gray-800 mb-4">Prepared By *</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    First Name *
-                  </label>
                   <input
                     type="text"
                     value={formData.prepared_by_first}
                     onChange={(e) => setFormData({ ...formData, prepared_by_first: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Preparer's first name"
+                    className="w-full border-b-2 border-gray-300 px-0 py-2 bg-transparent focus:border-green-500 focus:outline-none"
+                    placeholder=""
                   />
+                  <small className="text-gray-600">First Name</small>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Name *
-                  </label>
                   <input
                     type="text"
                     value={formData.prepared_by_last}
                     onChange={(e) => setFormData({ ...formData, prepared_by_last: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Preparer's last name"
+                    className="w-full border-b-2 border-gray-300 px-0 py-2 bg-transparent focus:border-green-500 focus:outline-none"
+                    placeholder=""
                   />
+                  <small className="text-gray-600">Last Name</small>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Position/Title *
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.position_title}
-                    onChange={(e) => setFormData({ ...formData, position_title: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                    placeholder="Job title or position"
-                  />
-                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-800 mb-1">
+                  Your Position/Title *
+                </label>
+                <input
+                  type="text"
+                  value={formData.position_title}
+                  onChange={(e) => setFormData({ ...formData, position_title: e.target.value })}
+                  className="w-full md:w-1/2 border-b-2 border-gray-300 px-0 py-2 bg-transparent focus:border-green-500 focus:outline-none"
+                  placeholder=""
+                />
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-between">
-              <div className="flex gap-4">
-                {onHome && (
-                  <button
-                    onClick={onHome}
-                    className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center justify-center gap-2"
-                  >
-                    <Home className="w-4 h-4" />
-                    Home
-                  </button>
+            {/* Resources Assigned Section */}
+            <div className="mb-8">
+              <h3 className="text-sm font-bold text-gray-800 mb-2">
+                Resources Assigned. List team members that worked onsite with you.
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-400">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center w-12">#</th>
+                      <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center">Name</th>
+                      <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center">Title</th>
+                      <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center">Organization</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teamMembers.map((member, index) => (
+                      <tr key={index} className="h-10">
+                        <td className="border border-gray-400 px-2 py-1 text-center text-sm font-medium">{index + 1}.</td>
+                        <td className="border border-gray-400 px-1 py-1">
+                          <input
+                            type="text"
+                            value={member.name}
+                            onChange={(e) => updateTeamMember(index, 'name', e.target.value)}
+                            className="w-full text-sm border-0 focus:ring-0 px-1 py-1 bg-transparent"
+                            placeholder=""
+                          />
+                        </td>
+                        <td className="border border-gray-400 px-1 py-1">
+                          <input
+                            type="text"
+                            value={member.title}
+                            onChange={(e) => updateTeamMember(index, 'title', e.target.value)}
+                            className="w-full text-sm border-0 focus:ring-0 px-1 py-1 bg-transparent"
+                            placeholder=""
+                          />
+                        </td>
+                        <td className="border border-gray-400 px-1 py-1">
+                          <input
+                            type="text"
+                            value={member.organization}
+                            onChange={(e) => updateTeamMember(index, 'organization', e.target.value)}
+                            className="w-full text-sm border-0 focus:ring-0 px-1 py-1 bg-transparent"
+                            placeholder=""
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Activity Log Section */}
+            <div className="mb-8">
+              <h3 className="text-sm font-bold text-gray-800 mb-2">
+                Activity Log. Complete the table. Example: 5/22/25 - 8:30AM: Met with team to develop action plans/22/25 - 9:00AM: Began unloading trucks w/ team; organizes supplies
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse border border-gray-400">
+                  <thead>
+                    <tr className="bg-gray-50">
+                      <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center w-12">#</th>
+                      <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center w-1/3">Date/Time</th>
+                      <th className="border border-gray-400 px-2 py-2 text-xs font-bold text-center">Noteable Activities</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {activities.map((activity, index) => (
+                      <tr key={index} className="h-10">
+                        <td className="border border-gray-400 px-2 py-1 text-center text-sm font-medium">{index + 1}.</td>
+                        <td className="border border-gray-400 px-1 py-1">
+                          <input
+                            type="text"
+                            value={activity.date_time}
+                            onChange={(e) => updateActivity(index, 'date_time', e.target.value)}
+                            className="w-full text-sm border-0 focus:ring-0 px-1 py-1 bg-transparent"
+                            placeholder=""
+                          />
+                        </td>
+                        <td className="border border-gray-400 px-1 py-1">
+                          <input
+                            type="text"
+                            value={activity.notable_activities}
+                            onChange={(e) => updateActivity(index, 'notable_activities', e.target.value)}
+                            className="w-full text-sm border-0 focus:ring-0 px-1 py-1 bg-transparent"
+                            placeholder=""
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Completion Checkbox */}
+            <div className="mb-8">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={isComplete}
+                  onChange={(e) => setIsComplete(e.target.checked)}
+                  className="form-checkbox h-4 w-4 text-green-600 border-2 border-gray-400"
+                />
+                <span className="text-sm font-bold text-gray-800">I am complete. *</span>
+              </label>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-end">
+              <button
+                onClick={onBack}
+                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={generatePDF}
+                className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 flex items-center justify-center gap-2"
+              >
+                <FileText className="w-4 h-4" />
+                📄 Preview PDF
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4" />
+                    Submit
+                  </>
                 )}
-                <button
-                  onClick={onBack}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center justify-center gap-2"
-                >
-                  Cancel
-                </button>
-              </div>
-              
-              <div className="flex gap-4">
-                <button
-                  onClick={generatePreviewPDF}
-                  className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center justify-center gap-2"
-                >
-                  <Eye className="w-4 h-4" />
-                  Preview PDF
-                </button>
-                <button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Submitting...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Submit Log
-                    </>
-                  )}
-                </button>
-              </div>
+              </button>
             </div>
           </div>
         </div>

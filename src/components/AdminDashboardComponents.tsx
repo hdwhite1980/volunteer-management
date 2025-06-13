@@ -1,4 +1,4 @@
-// Mobile-Responsive AdminDashboardComponents.tsx
+// src/components/AdminDashboardComponents.tsx - Mobile-Responsive Version
 import React, { useState } from 'react';
 import { 
   MapPin, Clock, Phone, Mail, Calendar, Star, Eye, Edit, Trash2, 
@@ -88,6 +88,160 @@ export const VolunteerCard: React.FC<{
       default: return 'bg-green-100 text-green-800';
     }
   };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-3 sm:space-y-0">
+        <div className="flex-1">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
+            <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
+              {volunteer.first_name} {volunteer.last_name}
+            </h3>
+            {volunteer.username && (
+              <span className="inline-block sm:inline px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium mt-2 sm:mt-0 self-start">
+                ID: {volunteer.username}
+              </span>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center text-sm text-gray-600">
+              <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="break-all">{volunteer.email}</span>
+            </div>
+            {volunteer.phone && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+                {volunteer.phone}
+              </div>
+            )}
+            <div className="flex items-center text-sm text-gray-600">
+              <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+              {volunteer.city}, {volunteer.state} {volunteer.zipcode}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex flex-row sm:flex-col items-start sm:items-end space-x-2 sm:space-x-0 sm:space-y-2">
+          <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+            volunteer.status === 'active' ? 'bg-green-100 text-green-800' :
+            volunteer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-gray-100 text-gray-600'
+          }`}>
+            {volunteer.status}
+          </span>
+          
+          <span className={`px-3 py-1 text-xs rounded-full font-medium ${getExperienceBadgeColor(volunteer.experience_level)}`}>
+            {volunteer.experience_level}
+          </span>
+        </div>
+      </div>
+
+      {/* Skills & Categories */}
+      <div className="mb-4 space-y-3">
+        {volunteer.skills && volunteer.skills.length > 0 && (
+          <div>
+            <span className="text-sm font-medium text-gray-700">Skills: </span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {volunteer.skills.slice(0, 3).map((skill, index) => (
+                <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
+                  {skill}
+                </span>
+              ))}
+              {volunteer.skills.length > 3 && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                  +{volunteer.skills.length - 3} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {volunteer.categories_interested && volunteer.categories_interested.length > 0 && (
+          <div>
+            <span className="text-sm font-medium text-gray-700">Interested in: </span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {volunteer.categories_interested.slice(0, 2).map((category, index) => (
+                <span key={index} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded">
+                  {category}
+                </span>
+              ))}
+              {volunteer.categories_interested.length > 2 && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                  +{volunteer.categories_interested.length - 2} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Additional Info */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 text-sm">
+        <div>
+          <span className="font-medium text-gray-700">Max Distance:</span>
+          <p className="text-gray-600">{volunteer.max_distance || 25} miles</p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Transportation:</span>
+          <p className="text-gray-600 capitalize">{volunteer.transportation || 'Own'}</p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Background Check:</span>
+          <p className={volunteer.background_check_consent ? 'text-green-600' : 'text-red-600'}>
+            {volunteer.background_check_consent ? 'Consented' : 'Not Consented'}
+          </p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Registered:</span>
+          <p className="text-gray-600">{new Date(volunteer.created_at).toLocaleDateString()}</p>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 border-t border-gray-100 space-y-3 sm:space-y-0">
+        <div className="flex items-center justify-center sm:justify-start space-x-4">
+          {volunteer.email_notifications && (
+            <div className="w-4 h-4 text-blue-600" title="Email notifications enabled">
+              <Mail className="w-4 h-4" />
+            </div>
+          )}
+          {volunteer.sms_notifications && (
+            <div className="w-4 h-4 text-green-600" title="SMS notifications enabled">
+              <MessageSquare className="w-4 h-4" />
+            </div>
+          )}
+          {volunteer.background_check_consent && (
+            <div className="w-4 h-4 text-purple-600" title="Background check consented">
+              <UserCheck className="w-4 h-4" />
+            </div>
+          )}
+        </div>
+        
+        <button
+          onClick={() => onViewDetails(volunteer)}
+          className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
+        >
+          <Eye className="w-4 h-4" />
+          <span>View Details</span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// JobCard Component
+export const JobCard: React.FC<{ job: Job }> = ({ job }) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'filled': return 'bg-blue-100 text-blue-800';
+      case 'expired': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const spotsRemaining = job.volunteers_needed - job.volunteers_assigned;
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
@@ -659,158 +813,4 @@ export const ApplicationDetailsModal: React.FC<{
       </div>
     </div>
   );
-};="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-3 sm:space-y-0">
-        <div className="flex-1">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
-            <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
-              {volunteer.first_name} {volunteer.last_name}
-            </h3>
-            {volunteer.username && (
-              <span className="inline-block sm:inline px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium mt-2 sm:mt-0 self-start">
-                ID: {volunteer.username}
-              </span>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center text-sm text-gray-600">
-              <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
-              <span className="break-all">{volunteer.email}</span>
-            </div>
-            {volunteer.phone && (
-              <div className="flex items-center text-sm text-gray-600">
-                <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
-                {volunteer.phone}
-              </div>
-            )}
-            <div className="flex items-center text-sm text-gray-600">
-              <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-              {volunteer.city}, {volunteer.state} {volunteer.zipcode}
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex flex-row sm:flex-col items-start sm:items-end space-x-2 sm:space-x-0 sm:space-y-2">
-          <span className={`px-3 py-1 text-xs rounded-full font-medium ${
-            volunteer.status === 'active' ? 'bg-green-100 text-green-800' :
-            volunteer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-gray-100 text-gray-600'
-          }`}>
-            {volunteer.status}
-          </span>
-          
-          <span className={`px-3 py-1 text-xs rounded-full font-medium ${getExperienceBadgeColor(volunteer.experience_level)}`}>
-            {volunteer.experience_level}
-          </span>
-        </div>
-      </div>
-
-      {/* Skills & Categories */}
-      <div className="mb-4 space-y-3">
-        {volunteer.skills && volunteer.skills.length > 0 && (
-          <div>
-            <span className="text-sm font-medium text-gray-700">Skills: </span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {volunteer.skills.slice(0, 3).map((skill, index) => (
-                <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                  {skill}
-                </span>
-              ))}
-              {volunteer.skills.length > 3 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                  +{volunteer.skills.length - 3} more
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-        
-        {volunteer.categories_interested && volunteer.categories_interested.length > 0 && (
-          <div>
-            <span className="text-sm font-medium text-gray-700">Interested in: </span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {volunteer.categories_interested.slice(0, 2).map((category, index) => (
-                <span key={index} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded">
-                  {category}
-                </span>
-              ))}
-              {volunteer.categories_interested.length > 2 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                  +{volunteer.categories_interested.length - 2} more
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Additional Info */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 text-sm">
-        <div>
-          <span className="font-medium text-gray-700">Max Distance:</span>
-          <p className="text-gray-600">{volunteer.max_distance || 25} miles</p>
-        </div>
-        <div>
-          <span className="font-medium text-gray-700">Transportation:</span>
-          <p className="text-gray-600 capitalize">{volunteer.transportation || 'Own'}</p>
-        </div>
-        <div>
-          <span className="font-medium text-gray-700">Background Check:</span>
-          <p className={volunteer.background_check_consent ? 'text-green-600' : 'text-red-600'}>
-            {volunteer.background_check_consent ? 'Consented' : 'Not Consented'}
-          </p>
-        </div>
-        <div>
-          <span className="font-medium text-gray-700">Registered:</span>
-          <p className="text-gray-600">{new Date(volunteer.created_at).toLocaleDateString()}</p>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 border-t border-gray-100 space-y-3 sm:space-y-0">
-        <div className="flex items-center justify-center sm:justify-start space-x-4">
-          {volunteer.email_notifications && (
-            <div className="w-4 h-4 text-blue-600" title="Email notifications enabled">
-              <Mail className="w-4 h-4" />
-            </div>
-          )}
-          {volunteer.sms_notifications && (
-            <div className="w-4 h-4 text-green-600" title="SMS notifications enabled">
-              <MessageSquare className="w-4 h-4" />
-            </div>
-          )}
-          {volunteer.background_check_consent && (
-            <div className="w-4 h-4 text-purple-600" title="Background check consented">
-              <UserCheck className="w-4 h-4" />
-            </div>
-          )}
-        </div>
-        
-        <button
-          onClick={() => onViewDetails(volunteer)}
-          className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
-        >
-          <Eye className="w-4 h-4" />
-          <span>View Details</span>
-        </button>
-      </div>
-    </div>
-  );
 };
-
-// JobCard Component
-export const JobCard: React.FC<{ job: Job }> = ({ job }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'filled': return 'bg-blue-100 text-blue-800';
-      case 'expired': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
-
-  const spotsRemaining = job.volunteers_needed - job.volunteers_assigned;
-
-  return (
-    <div className
