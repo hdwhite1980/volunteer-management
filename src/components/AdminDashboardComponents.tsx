@@ -1,4 +1,4 @@
-// src/components/AdminDashboardComponents.tsx
+// Mobile-Responsive AdminDashboardComponents.tsx
 import React, { useState } from 'react';
 import { 
   MapPin, Clock, Phone, Mail, Calendar, Star, Eye, Edit, Trash2, 
@@ -90,177 +90,23 @@ export const VolunteerCard: React.FC<{
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-4">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-3 sm:space-y-0">
         <div className="flex-1">
-          <div className="flex items-center space-x-3 mb-2">
-            <h3 className="font-semibold text-gray-900 text-lg">
-              {volunteer.first_name} {volunteer.last_name}
-            </h3>
-            {volunteer.username && (
-              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">
-                ID: {volunteer.username}
-              </span>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center text-sm text-gray-600">
-              <Mail className="w-4 h-4 mr-2" />
-              {volunteer.email}
-            </div>
-            {volunteer.phone && (
-              <div className="flex items-center text-sm text-gray-600">
-                <Phone className="w-4 h-4 mr-2" />
-                {volunteer.phone}
-              </div>
-            )}
-            <div className="flex items-center text-sm text-gray-600">
-              <MapPin className="w-4 h-4 mr-2" />
-              {volunteer.city}, {volunteer.state} {volunteer.zipcode}
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex flex-col items-end space-y-2">
-          <span className={`px-3 py-1 text-xs rounded-full font-medium ${
-            volunteer.status === 'active' ? 'bg-green-100 text-green-800' :
-            volunteer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-            'bg-gray-100 text-gray-600'
-          }`}>
-            {volunteer.status}
-          </span>
-          
-          <span className={`px-3 py-1 text-xs rounded-full font-medium ${getExperienceBadgeColor(volunteer.experience_level)}`}>
-            {volunteer.experience_level}
-          </span>
-        </div>
-      </div>
-
-      {/* Skills & Categories */}
-      <div className="mb-4">
-        {volunteer.skills && volunteer.skills.length > 0 && (
-          <div className="mb-2">
-            <span className="text-sm font-medium text-gray-700">Skills: </span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {volunteer.skills.slice(0, 3).map((skill, index) => (
-                <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
-                  {skill}
-                </span>
-              ))}
-              {volunteer.skills.length > 3 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                  +{volunteer.skills.length - 3} more
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-        
-        {volunteer.categories_interested && volunteer.categories_interested.length > 0 && (
-          <div>
-            <span className="text-sm font-medium text-gray-700">Interested in: </span>
-            <div className="flex flex-wrap gap-1 mt-1">
-              {volunteer.categories_interested.slice(0, 2).map((category, index) => (
-                <span key={index} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded">
-                  {category}
-                </span>
-              ))}
-              {volunteer.categories_interested.length > 2 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
-                  +{volunteer.categories_interested.length - 2} more
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Additional Info */}
-      <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-        <div>
-          <span className="font-medium text-gray-700">Max Distance:</span>
-          <p className="text-gray-600">{volunteer.max_distance || 25} miles</p>
-        </div>
-        <div>
-          <span className="font-medium text-gray-700">Transportation:</span>
-          <p className="text-gray-600">{volunteer.transportation || 'Own'}</p>
-        </div>
-        <div>
-          <span className="font-medium text-gray-700">Background Check:</span>
-          <p className={volunteer.background_check_consent ? 'text-green-600' : 'text-red-600'}>
-            {volunteer.background_check_consent ? 'Consented' : 'Not Consented'}
-          </p>
-        </div>
-        <div>
-          <span className="font-medium text-gray-700">Registered:</span>
-          <p className="text-gray-600">{new Date(volunteer.created_at).toLocaleDateString()}</p>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-        <div className="flex items-center space-x-2">
-          {volunteer.email_notifications && (
-            <div className="w-4 h-4 text-blue-600" title="Email notifications enabled">
-              <Mail className="w-4 h-4" />
-            </div>
-          )}
-          {volunteer.sms_notifications && (
-            <div className="w-4 h-4 text-green-600" title="SMS notifications enabled">
-              <MessageSquare className="w-4 h-4" />
-            </div>
-          )}
-          {volunteer.background_check_consent && (
-            <div className="w-4 h-4 text-purple-600" title="Background check consented">
-              <UserCheck className="w-4 h-4" />
-            </div>
-          )}
-        </div>
-        
-        <button
-          onClick={() => onViewDetails(volunteer)}
-          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Eye className="w-4 h-4" />
-          <span>View Details</span>
-        </button>
-      </div>
-    </div>
-  );
-};
-
-// JobCard Component
-export const JobCard: React.FC<{ job: Job }> = ({ job }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'bg-green-100 text-green-800';
-      case 'filled': return 'bg-blue-100 text-blue-800';
-      case 'expired': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-600';
-    }
-  };
-
-  const spotsRemaining = job.volunteers_needed - job.volunteers_assigned;
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-4">
-        <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 text-lg mb-2">{job.title}</h3>
-          <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+          <h3 className="font-semibold text-gray-900 text-base sm:text-lg mb-2">{job.title}</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-2 sm:space-y-0 text-sm text-gray-600 mb-3">
             <div className="flex items-center">
-              <Tag className="w-4 h-4 mr-1" />
-              {job.category}
+              <Tag className="w-4 h-4 mr-1 flex-shrink-0" />
+              <span>{job.category}</span>
             </div>
             <div className="flex items-center">
-              <MapPin className="w-4 h-4 mr-1" />
-              {job.city}, {job.state}
+              <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
+              <span>{job.city}, {job.state}</span>
             </div>
           </div>
         </div>
         
-        <span className={`px-3 py-1 text-xs rounded-full font-medium ${getStatusColor(job.status)}`}>
+        <span className={`px-3 py-1 text-xs rounded-full font-medium self-start ${getStatusColor(job.status)}`}>
           {job.status}
         </span>
       </div>
@@ -269,7 +115,7 @@ export const JobCard: React.FC<{ job: Job }> = ({ job }) => {
         <p className="text-gray-700 text-sm line-clamp-3">{job.description}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-4 text-sm">
         <div>
           <span className="font-medium text-gray-700">Volunteers Needed:</span>
           <p className="text-gray-900 font-semibold">{job.volunteers_needed}</p>
@@ -290,17 +136,17 @@ export const JobCard: React.FC<{ job: Job }> = ({ job }) => {
         </div>
       </div>
 
-      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-        <div className="text-xs text-gray-500">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 border-t border-gray-100 space-y-3 sm:space-y-0">
+        <div className="text-xs text-gray-500 text-center sm:text-left">
           Created {new Date(job.created_at).toLocaleDateString()}
         </div>
         
         <div className="flex space-x-2">
-          <button className="flex items-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center justify-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-1 sm:flex-none">
             <Eye className="w-4 h-4" />
             <span>View</span>
           </button>
-          <button className="flex items-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+          <button className="flex items-center justify-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-1 sm:flex-none">
             <Edit className="w-4 h-4" />
             <span>Edit</span>
           </button>
@@ -327,37 +173,37 @@ export const ApplicationCard: React.FC<{
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
-      <div className="flex justify-between items-start mb-4">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-3 sm:space-y-0">
         <div className="flex-1">
-          <h3 className="font-semibold text-gray-900 text-lg mb-1">
+          <h3 className="font-semibold text-gray-900 text-base sm:text-lg mb-1">
             {application.volunteer_name || `${application.first_name} ${application.last_name}`}
           </h3>
-          <p className="text-blue-600 font-medium mb-2">{application.job_title}</p>
+          <p className="text-blue-600 font-medium mb-3 text-sm sm:text-base">{application.job_title}</p>
           
-          <div className="space-y-1 text-sm text-gray-600">
+          <div className="space-y-2 text-sm text-gray-600">
             <div className="flex items-center">
-              <Mail className="w-4 h-4 mr-2" />
-              {application.email}
+              <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="break-all">{application.email}</span>
             </div>
             {application.phone && (
               <div className="flex items-center">
-                <Phone className="w-4 h-4 mr-2" />
-                {application.phone}
+                <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span>{application.phone}</span>
               </div>
             )}
             <div className="flex items-center">
-              <MapPin className="w-4 h-4 mr-2" />
-              {application.job_city}, {application.job_state}
+              <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span>{application.job_city}, {application.job_state}</span>
             </div>
             <div className="flex items-center">
-              <Tag className="w-4 h-4 mr-2" />
-              {application.job_category}
+              <Tag className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span>{application.job_category}</span>
             </div>
           </div>
         </div>
         
-        <span className={`px-3 py-1 text-xs rounded-full font-medium ${getStatusColor(application.status)}`}>
+        <span className={`px-3 py-1 text-xs rounded-full font-medium self-start ${getStatusColor(application.status)}`}>
           {application.status}
         </span>
       </div>
@@ -368,7 +214,7 @@ export const ApplicationCard: React.FC<{
         </div>
       )}
 
-      <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center text-sm text-gray-500 mb-4 space-y-1 sm:space-y-0">
         <span>Applied {new Date(application.applied_at).toLocaleDateString()}</span>
         {application.updated_at && (
           <span>Updated {new Date(application.updated_at).toLocaleDateString()}</span>
@@ -382,27 +228,27 @@ export const ApplicationCard: React.FC<{
         </div>
       )}
 
-      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 border-t border-gray-100 space-y-3 sm:space-y-0">
         <button
           onClick={() => onViewDetails(application)}
-          className="flex items-center space-x-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          className="flex items-center justify-center space-x-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full sm:w-auto"
         >
           <Eye className="w-4 h-4" />
           <span>View Details</span>
         </button>
         
         {application.status === 'pending' && (
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 w-full sm:w-auto">
             <button
               onClick={() => onUpdateStatus(application.id, 'accepted')}
-              className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center justify-center space-x-1 px-3 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors flex-1 sm:flex-none"
             >
               <CheckCircle className="w-4 h-4" />
               <span>Accept</span>
             </button>
             <button
               onClick={() => onUpdateStatus(application.id, 'rejected')}
-              className="flex items-center space-x-1 px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
+              className="flex items-center justify-center space-x-1 px-3 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors flex-1 sm:flex-none"
             >
               <X className="w-4 h-4" />
               <span>Reject</span>
@@ -424,10 +270,10 @@ export const DetailModal: React.FC<{
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-screen overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
+        <div className="p-4 sm:p-6">
+          <div className="flex justify-between items-start mb-4 sm:mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                 {volunteer.first_name} {volunteer.last_name}
               </h2>
               {volunteer.username && (
@@ -438,18 +284,18 @@ export const DetailModal: React.FC<{
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             {/* Personal Information */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Personal Information</h3>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <p className="text-gray-900">{volunteer.email}</p>
+                  <p className="text-gray-900 break-all">{volunteer.email}</p>
                 </div>
                 {volunteer.phone && (
                   <div>
@@ -522,8 +368,8 @@ export const DetailModal: React.FC<{
           </div>
 
           {/* Skills & Categories */}
-          <div className="mt-8">
-            <div className="grid md:grid-cols-2 gap-8">
+          <div className="mt-6 sm:mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
               {volunteer.skills && volunteer.skills.length > 0 && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Skills</h3>
@@ -554,10 +400,10 @@ export const DetailModal: React.FC<{
 
           {/* Availability */}
           {volunteer.availability && (
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Availability</h3>
               <div className="bg-gray-50 rounded-lg p-4">
-                <pre className="text-sm text-gray-700 whitespace-pre-wrap">
+                <pre className="text-sm text-gray-700 whitespace-pre-wrap overflow-x-auto">
                   {JSON.stringify(volunteer.availability, null, 2)}
                 </pre>
               </div>
@@ -566,7 +412,7 @@ export const DetailModal: React.FC<{
 
           {/* Notes */}
           {volunteer.notes && (
-            <div className="mt-8">
+            <div className="mt-6 sm:mt-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Notes</h3>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-gray-700">{volunteer.notes}</p>
@@ -575,8 +421,8 @@ export const DetailModal: React.FC<{
           )}
 
           {/* Registration Info */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="grid md:grid-cols-3 gap-4 text-sm">
+          <div className="mt-6 sm:mt-8 pt-6 border-t border-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
               <div>
                 <span className="font-medium text-gray-700">Status:</span>
                 <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
@@ -601,14 +447,14 @@ export const DetailModal: React.FC<{
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 mt-6 sm:mt-8 pt-6 border-t border-gray-200">
             <button
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors order-2 sm:order-1"
             >
               Close
             </button>
-            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors order-1 sm:order-2">
               Edit Volunteer
             </button>
           </div>
@@ -644,11 +490,11 @@ export const ApplicationDetailsModal: React.FC<{
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-6">
+        <div className="p-4 sm:p-6">
+          <div className="flex justify-between items-start mb-4 sm:mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Application Details</h2>
-              <p className="text-gray-600">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Application Details</h2>
+              <p className="text-gray-600 text-sm sm:text-base">
                 {application.volunteer_name || `${application.first_name} ${application.last_name}`} • {application.job_title}
               </p>
             </div>
@@ -656,7 +502,7 @@ export const ApplicationDetailsModal: React.FC<{
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
           </div>
 
@@ -664,14 +510,14 @@ export const ApplicationDetailsModal: React.FC<{
             {/* Application Info */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Application Information</h3>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Applicant</label>
                   <p className="text-gray-900">{application.volunteer_name || `${application.first_name} ${application.last_name}`}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Email</label>
-                  <p className="text-gray-900">{application.email}</p>
+                  <p className="text-gray-900 break-all">{application.email}</p>
                 </div>
                 {application.phone && (
                   <div>
@@ -696,7 +542,7 @@ export const ApplicationDetailsModal: React.FC<{
             {/* Job Information */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Job Information</h3>
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Job Title</label>
                   <p className="text-gray-900">{application.job_title}</p>
@@ -749,16 +595,16 @@ export const ApplicationDetailsModal: React.FC<{
                       value={feedback}
                       onChange={(e) => setFeedback(e.target.value)}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                       placeholder="Add feedback for the applicant..."
                     />
                   </div>
                   
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
                     <button
                       onClick={() => handleStatusUpdate('accepted')}
                       disabled={isUpdating}
-                      className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                      className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex-1 sm:flex-none"
                     >
                       <CheckCircle className="w-4 h-4" />
                       <span>{isUpdating ? 'Updating...' : 'Accept Application'}</span>
@@ -767,7 +613,7 @@ export const ApplicationDetailsModal: React.FC<{
                     <button
                       onClick={() => handleStatusUpdate('rejected')}
                       disabled={isUpdating}
-                      className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                      className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex-1 sm:flex-none"
                     >
                       <X className="w-4 h-4" />
                       <span>{isUpdating ? 'Updating...' : 'Reject Application'}</span>
@@ -779,7 +625,7 @@ export const ApplicationDetailsModal: React.FC<{
 
             {/* Timestamps */}
             <div className="pt-6 border-t border-gray-200">
-              <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600">
                 <div>
                   <span className="font-medium">Applied:</span>
                   <span className="ml-2">{new Date(application.applied_at).toLocaleString()}</span>
@@ -794,16 +640,16 @@ export const ApplicationDetailsModal: React.FC<{
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+            <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-6 border-t border-gray-200">
               <button
                 onClick={onClose}
-                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors order-2 sm:order-1"
               >
                 Close
               </button>
               
               {application.status !== 'pending' && (
-                <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors order-1 sm:order-2">
                   Contact Applicant
                 </button>
               )}
@@ -813,4 +659,158 @@ export const ApplicationDetailsModal: React.FC<{
       </div>
     </div>
   );
+};="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 space-y-3 sm:space-y-0">
+        <div className="flex-1">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
+            <h3 className="font-semibold text-gray-900 text-base sm:text-lg">
+              {volunteer.first_name} {volunteer.last_name}
+            </h3>
+            {volunteer.username && (
+              <span className="inline-block sm:inline px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium mt-2 sm:mt-0 self-start">
+                ID: {volunteer.username}
+              </span>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex items-center text-sm text-gray-600">
+              <Mail className="w-4 h-4 mr-2 flex-shrink-0" />
+              <span className="break-all">{volunteer.email}</span>
+            </div>
+            {volunteer.phone && (
+              <div className="flex items-center text-sm text-gray-600">
+                <Phone className="w-4 h-4 mr-2 flex-shrink-0" />
+                {volunteer.phone}
+              </div>
+            )}
+            <div className="flex items-center text-sm text-gray-600">
+              <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+              {volunteer.city}, {volunteer.state} {volunteer.zipcode}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex flex-row sm:flex-col items-start sm:items-end space-x-2 sm:space-x-0 sm:space-y-2">
+          <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+            volunteer.status === 'active' ? 'bg-green-100 text-green-800' :
+            volunteer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+            'bg-gray-100 text-gray-600'
+          }`}>
+            {volunteer.status}
+          </span>
+          
+          <span className={`px-3 py-1 text-xs rounded-full font-medium ${getExperienceBadgeColor(volunteer.experience_level)}`}>
+            {volunteer.experience_level}
+          </span>
+        </div>
+      </div>
+
+      {/* Skills & Categories */}
+      <div className="mb-4 space-y-3">
+        {volunteer.skills && volunteer.skills.length > 0 && (
+          <div>
+            <span className="text-sm font-medium text-gray-700">Skills: </span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {volunteer.skills.slice(0, 3).map((skill, index) => (
+                <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
+                  {skill}
+                </span>
+              ))}
+              {volunteer.skills.length > 3 && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                  +{volunteer.skills.length - 3} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {volunteer.categories_interested && volunteer.categories_interested.length > 0 && (
+          <div>
+            <span className="text-sm font-medium text-gray-700">Interested in: </span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {volunteer.categories_interested.slice(0, 2).map((category, index) => (
+                <span key={index} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded">
+                  {category}
+                </span>
+              ))}
+              {volunteer.categories_interested.length > 2 && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded">
+                  +{volunteer.categories_interested.length - 2} more
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Additional Info */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 text-sm">
+        <div>
+          <span className="font-medium text-gray-700">Max Distance:</span>
+          <p className="text-gray-600">{volunteer.max_distance || 25} miles</p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Transportation:</span>
+          <p className="text-gray-600 capitalize">{volunteer.transportation || 'Own'}</p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Background Check:</span>
+          <p className={volunteer.background_check_consent ? 'text-green-600' : 'text-red-600'}>
+            {volunteer.background_check_consent ? 'Consented' : 'Not Consented'}
+          </p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Registered:</span>
+          <p className="text-gray-600">{new Date(volunteer.created_at).toLocaleDateString()}</p>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 border-t border-gray-100 space-y-3 sm:space-y-0">
+        <div className="flex items-center justify-center sm:justify-start space-x-4">
+          {volunteer.email_notifications && (
+            <div className="w-4 h-4 text-blue-600" title="Email notifications enabled">
+              <Mail className="w-4 h-4" />
+            </div>
+          )}
+          {volunteer.sms_notifications && (
+            <div className="w-4 h-4 text-green-600" title="SMS notifications enabled">
+              <MessageSquare className="w-4 h-4" />
+            </div>
+          )}
+          {volunteer.background_check_consent && (
+            <div className="w-4 h-4 text-purple-600" title="Background check consented">
+              <UserCheck className="w-4 h-4" />
+            </div>
+          )}
+        </div>
+        
+        <button
+          onClick={() => onViewDetails(volunteer)}
+          className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
+        >
+          <Eye className="w-4 h-4" />
+          <span>View Details</span>
+        </button>
+      </div>
+    </div>
+  );
 };
+
+// JobCard Component
+export const JobCard: React.FC<{ job: Job }> = ({ job }) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'filled': return 'bg-blue-100 text-blue-800';
+      case 'expired': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const spotsRemaining = job.volunteers_needed - job.volunteers_assigned;
+
+  return (
+    <div className
