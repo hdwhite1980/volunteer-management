@@ -368,7 +368,7 @@ function JobBoard({ jobId }: JobBoardProps) {
     const urgencyStyles = getUrgencyStyles(jobDetails.urgency);
     
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+      <div className="min-h-screen bg-gray-100">
         <div className="relative z-10">
           <div className="bg-white/10 backdrop-blur-md border-b border-white/20">
             <div className="container mx-auto px-6 py-6">
@@ -566,9 +566,9 @@ function JobBoard({ jobId }: JobBoardProps) {
 
   if (loading && jobs.length === 0) {
     return (
-		 <div className="min-h-screen bg-gray-100">
-         <div className="text-center text-white">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center text-gray-800">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-800 mx-auto mb-4"></div>
           <p className="text-xl">Loading volunteer opportunities...</p>
         </div>
       </div>
@@ -577,13 +577,13 @@ function JobBoard({ jobId }: JobBoardProps) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center text-white">
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center text-gray-800">
           <AlertCircle className="w-12 h-12 mx-auto mb-4" />
           <p className="text-xl mb-4">{error}</p>
           <button
             onClick={() => fetchJobs()}
-            className="bg-white text-purple-900 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
+            className="bg-white text-gray-800 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors border border-gray-300"
           >
             Try Again
           </button>
@@ -593,7 +593,7 @@ function JobBoard({ jobId }: JobBoardProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900">
+    <div className="min-h-screen bg-gray-100">
       <div className="relative z-20">
         {/* Header with Volunteer Login */}
         <div className="bg-gradient-to-r from-blue-600 via-indigo-700 to-purple-700 shadow-xl">
@@ -758,7 +758,7 @@ function JobBoard({ jobId }: JobBoardProps) {
         {/* Main Content */}
         <div className="container mx-auto px-6 py-10">
           <div className="mb-8 text-center">
-            <p className="text-white text-lg">
+            <p className="text-gray-800 text-lg">
               {loading ? 'Loading...' : `Found ${pagination.total} volunteer opportunities`}
               {filters.zipcode && ` near ${filters.zipcode}`}
             </p>
@@ -994,9 +994,9 @@ function JobBoard({ jobId }: JobBoardProps) {
           {/* No Results */}
           {!loading && jobs.length === 0 && (
             <div className="text-center py-12">
-              <AlertCircle className="w-16 h-16 text-white/60 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-white mb-4">No opportunities found</h3>
-              <p className="text-white/80 mb-6">Try adjusting your search filters or check back later for new opportunities.</p>
+              <AlertCircle className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-gray-800 mb-4">No opportunities found</h3>
+              <p className="text-gray-600 mb-6">Try adjusting your search filters or check back later for new opportunities.</p>
               <button
                 onClick={() => {
                   setFilters({
@@ -1008,7 +1008,7 @@ function JobBoard({ jobId }: JobBoardProps) {
                     skills: ''
                   });
                 }}
-                className="bg-white text-purple-900 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
+                className="bg-white text-gray-800 px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-colors border border-gray-300"
               >
                 Clear All Filters
               </button>
