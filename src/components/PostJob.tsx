@@ -290,11 +290,21 @@ const PostJob = () => {
       <div className="bg-white/80 backdrop-blur-xl shadow-lg border-b border-white/20 sticky top-0 z-50">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Create Opportunity
-              </h1>
-              <p className="text-gray-600 mt-1">Step {currentStep} of 4 • {getCompletionPercentage()}% Complete</p>
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => window.location.href = '/'}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-sm hover:shadow-md"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="font-medium">Home</span>
+              </button>
+              <div className="h-6 w-px bg-gray-300"></div>
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Create Opportunity
+                </h1>
+                <p className="text-gray-600 mt-1">Step {currentStep} of 4 • {getCompletionPercentage()}% Complete</p>
+              </div>
             </div>
             <div className="hidden md:flex items-center space-x-6">
               <div className="flex items-center space-x-2 text-sm text-gray-600">
