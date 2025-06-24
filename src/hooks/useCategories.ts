@@ -105,4 +105,4 @@ function getFallbackRequesterCategories(): Category[] {
     { id: 22, category_name: 'Need Roof Tarping / Emergency Repairs', category_type: 'requester', description: 'Request emergency roof covering', display_order: 22, is_active: true },
     // ... add all requester categories here if needed
   ];
-}
+}	

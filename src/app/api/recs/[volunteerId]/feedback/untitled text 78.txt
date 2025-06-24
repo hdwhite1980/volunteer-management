@@ -1,0 +1,6 @@
+// src/app/volunteer-signup/page.tsx
+import VolunteerSignup from '../../components/VolunteerSignup';
+
+export default function VolunteerSignupPage() {
+  return <VolunteerSignup />;
+}

@@ -61,6 +61,43 @@ export interface Session {
   created_at?: string;
 }
 
+// Discovery Feed interfaces
+export interface Job {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  location: string;
+  time_commitment: string;
+  required_skills?: string[];
+  user_id: number;
+  organization_name: string;
+  status: 'active' | 'inactive';
+  created_at: string;
+}
+
+export interface Recommendation {
+  id?: number;
+  volunteer_id: number;
+  job_id: number;
+  score: number;
+  algo: string;
+  served_at: string;
+  clicked: boolean;
+  created_at?: string;
+}
+
+export interface VolunteerProfile {
+  id?: number;
+  user_id: number;
+  preferred_location?: string;
+  preferred_categories?: string[];
+  skills?: string[];
+  availability?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export async function createPartnershipLog(data: PartnershipLog) {
   const result = await sql`
     INSERT INTO partnership_logs (first_name, last_name, organization, email, phone, families_served, events, prepared_by)
@@ -163,5 +200,99 @@ export async function searchVolunteers(searchParams: {
   } catch (error) {
     console.error('Error searching volunteers:', error);
     return [];
+  }
+}
+
+// Discovery Feed functions
+export async function getRecommendationsForVolunteer(volunteerId: number, limit = 20) {
+  try {
+    const result = await sql`
+      SELECT r.*, j.title, j.description, j.location, j.time_commitment,
+             j.category, j.required_skills, o.username as organization_name
+      FROM recommendations r
+      JOIN jobs j ON r.job_id = j.id
+      JOIN users o ON j.user_id = o.id
+      WHERE r.volunteer_id = ${volunteerId} AND j.status = 'active'
+      ORDER BY r.score DESC
+      LIMIT ${limit}
+    `;
+    return result;
+  } catch (error) {
+    console.error('Error getting recommendations:', error);
+    return [];
+  }
+}
+
+export async function logSwipeFeedback(volunteerId: number, jobId: number, action: 'like' | 'skip') {
+  try {
+    // Log the swipe action
+    await sql`
+      INSERT INTO activity_logs (user_id, activity_type, details, swipe_at, swipe_action)
+      VALUES (${volunteerId}, 'swipe', ${`Job ID: ${jobId}`}, NOW(), ${action})
+    `;
+
+    // Update recommendation as clicked
+    await sql`
+      UPDATE recommendations 
+      SET clicked = true 
+      WHERE volunteer_id = ${volunteerId} AND job_id = ${jobId}
+    `;
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error logging swipe feedback:', error);
+    throw error;
+  }
+}
+
+export async function generateRecommendations() {
+  try {
+    console.log('Generating recommendations...');
+    
+    // Get all volunteers
+    const volunteers = await sql`SELECT id FROM users WHERE role = 'volunteer'`;
+    
+    for (const volunteer of volunteers) {
+      const volunteerId = volunteer.id;
+      
+      // Simple recommendation algorithm
+      const jobs = await sql`
+        SELECT j.*, u.username as organization_name,
+        CASE 
+          WHEN j.location ILIKE '%norfolk%' THEN 0.3
+          ELSE 0.1 
+        END +
+        CASE 
+          WHEN j.category = 'Community Service' THEN 0.4
+          ELSE 0.2 
+        END +
+        (1.0 - EXTRACT(EPOCH FROM (NOW() - j.created_at)) / 604800.0) * 0.3 as score
+        FROM jobs j
+        JOIN users u ON j.user_id = u.id
+        WHERE j.status = 'active'
+        AND j.id NOT IN (
+          SELECT job_id FROM job_applications WHERE volunteer_id = ${volunteerId}
+        )
+        ORDER BY score DESC
+        LIMIT 50
+      `;
+
+      // Clear old recommendations for this volunteer
+      await sql`DELETE FROM recommendations WHERE volunteer_id = ${volunteerId}`;
+
+      // Insert new recommendations
+      for (const job of jobs) {
+        await sql`
+          INSERT INTO recommendations (volunteer_id, job_id, score, algo, served_at)
+          VALUES (${volunteerId}, ${job.id}, ${job.score}, 'simple_hybrid', NOW())
+        `;
+      }
+    }
+    
+    console.log('Recommendations generated successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('Error generating recommendations:', error);
+    throw error;
   }
 }

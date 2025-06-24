@@ -1,5 +1,5 @@
 /* --------------------------------------------------------------------------
-   src/app/api/jobs/route.ts  – UPDATED (no auth required for POST)
+   src/app/api/jobs/route.ts  – UPDATED (matching your existing structure)
 -------------------------------------------------------------------------- */
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/database';
@@ -11,6 +11,7 @@ interface SessionUser {
   email: string;
   role: string;
 }
+
 interface Job {
   id: number;
   title: string;
@@ -46,16 +47,20 @@ async function checkAuth(req: NextRequest): Promise<SessionUser | null> {
   const sid = req.cookies.get('session')?.value;
   if (!sid) return null;
 
-  const rows = await sql`\
-    SELECT u.id, u.username, u.email, u.role\
-    FROM sessions s\
-    JOIN users    u ON u.id = s.user_id\
-    WHERE s.id = ${sid}\
-      AND s.expires_at > CURRENT_TIMESTAMP\
-      AND u.is_active = true\
-  ` as SessionUser[];
+  try {
+    const rows = await sql`
+      SELECT u.id, u.username, u.email, u.role
+      FROM sessions s
+      JOIN users u ON u.id = s.user_id
+      WHERE s.id = ${sid}
+        AND s.expires_at > CURRENT_TIMESTAMP
+    ` as SessionUser[];
 
-  return rows[0] ?? null;
+    return rows[0] ?? null;
+  } catch (error) {
+    console.error('Auth check error:', error);
+    return null;
+  }
 }
 
 /* ───────── GET /api/jobs ───────── */
@@ -75,22 +80,81 @@ export async function GET(req: NextRequest) {
     let   p = 0;
     const where: string[] = ["j.status = 'active'", "j.expires_at > CURRENT_TIMESTAMP"];
 
-    if (category && category !== 'all') { params.push(category); where.push(`j.category = $${++p}`); }
-    if (skills)  { params.push(`%${skills}%`); where.push(`j.skills_needed::text ILIKE $${++p}`); }
-    if (search)  { params.push(`%${search}%`); where.push(`(j.title ILIKE $${++p} OR j.description ILIKE $${p})`); }
+    if (category && category !== 'all') { 
+      params.push(category); 
+      where.push(`j.category = ${++p}`); 
+    }
+    
+    if (skills) { 
+      params.push(`%${skills}%`); 
+      where.push(`j.skills_needed::text ILIKE ${++p}`); 
+    }
+    
+    if (search) { 
+      params.push(`%${search}%`); 
+      where.push(`(j.title ILIKE ${++p} OR j.description ILIKE ${p})`); 
+    }
 
+    // Handle zipcode-based distance filtering
     const userZipJoin = zipcode ? `LEFT JOIN zipcode_coordinates user_zc ON user_zc.zipcode = $1` : '';
-    if (zipcode) { params.unshift(zipcode); ++p; }
+    if (zipcode) { 
+      params.unshift(zipcode); 
+      ++p; 
+    }
 
-    const distSel = zipcode ? `, calculate_distance_miles(COALESCE(j.latitude, zc.latitude), COALESCE(j.longitude, zc.longitude), user_zc.latitude, user_zc.longitude) AS distance_miles` : '';
+    const distSel = zipcode ? 
+      `, calculate_distance_miles(
+          COALESCE(j.latitude, zc.latitude), 
+          COALESCE(j.longitude, zc.longitude), 
+          user_zc.latitude, 
+          user_zc.longitude
+        ) AS distance_miles` : '';
 
-    const distWhere = zipcode ? `AND calculate_distance_miles(COALESCE(j.latitude, zc.latitude), COALESCE(j.longitude, zc.longitude), user_zc.latitude, user_zc.longitude) <= ${distance}` : '';
+    const distWhere = zipcode ? 
+      `AND calculate_distance_miles(
+        COALESCE(j.latitude, zc.latitude), 
+        COALESCE(j.longitude, zc.longitude), 
+        user_zc.latitude, 
+        user_zc.longitude
+      ) <= ${distance}` : '';
 
-    const baseQuery = `SELECT j.*, zc.city AS zip_city, zc.state AS zip_state, zc.latitude AS zip_latitude, zc.longitude AS zip_longitude, COALESCE(j.latitude, zc.latitude) AS computed_latitude, COALESCE(j.longitude, zc.longitude) AS computed_longitude, u.username AS posted_by_username, (SELECT COUNT(*) FROM job_applications ja WHERE ja.job_id = j.id AND ja.status = 'accepted') AS filled_positions, (j.volunteers_needed - COALESCE((SELECT COUNT(*) FROM job_applications ja WHERE ja.job_id = j.id AND ja.status = 'accepted'),0)) AS positions_remaining ${distSel} FROM jobs j LEFT JOIN zipcode_coordinates zc ON zc.zipcode = j.zipcode LEFT JOIN users u ON u.id = j.posted_by ${userZipJoin} WHERE ${where.join(' AND ')} ${distWhere} ORDER BY ${zipcode ? 'distance_miles ASC,' : ''} j.urgency DESC, j.created_at DESC LIMIT ${limit} OFFSET ${offset};`;
+    const baseQuery = `
+      SELECT 
+        j.*, 
+        zc.city AS zip_city, 
+        zc.state AS zip_state, 
+        zc.latitude AS zip_latitude, 
+        zc.longitude AS zip_longitude,
+        COALESCE(j.latitude, zc.latitude) AS computed_latitude, 
+        COALESCE(j.longitude, zc.longitude) AS computed_longitude,
+        COALESCE(u.username, j.contact_name, 'Anonymous') AS posted_by_username,
+        (SELECT COUNT(*) FROM job_applications ja 
+         WHERE ja.job_id = j.id AND ja.status = 'accepted') AS filled_positions,
+        (j.volunteers_needed - COALESCE(
+          (SELECT COUNT(*) FROM job_applications ja 
+           WHERE ja.job_id = j.id AND ja.status = 'accepted'), 0)
+        ) AS positions_remaining
+        ${distSel}
+      FROM jobs j 
+      LEFT JOIN zipcode_coordinates zc ON zc.zipcode = j.zipcode 
+      LEFT JOIN users u ON u.id = j.posted_by
+      ${userZipJoin}
+      WHERE ${where.join(' AND ')} ${distWhere}
+      ORDER BY ${zipcode ? 'distance_miles ASC,' : ''} j.urgency DESC, j.created_at DESC 
+      LIMIT ${limit} OFFSET ${offset}
+    `;
 
     const jobs = await sql(baseQuery, params) as Job[];
 
-    const countQuery = `SELECT COUNT(*) AS total FROM jobs j LEFT JOIN zipcode_coordinates zc ON zc.zipcode = j.zipcode ${userZipJoin} WHERE ${where.join(' AND ')} ${distWhere};`;
+    // Get total count for pagination
+    const countQuery = `
+      SELECT COUNT(*) AS total 
+      FROM jobs j 
+      LEFT JOIN zipcode_coordinates zc ON zc.zipcode = j.zipcode 
+      ${userZipJoin}
+      WHERE ${where.join(' AND ')} ${distWhere}
+    `;
+    
     const [{ total }] = await sql(countQuery, params) as { total: string }[];
     const totalNum = Number(total);
 
@@ -105,7 +169,9 @@ export async function GET(req: NextRequest) {
         positions_remaining: Number(j.positions_remaining ?? j.volunteers_needed ?? 0)
       })),
       pagination: {
-        page, limit, total: totalNum,
+        page, 
+        limit, 
+        total: totalNum,
         totalPages: Math.ceil(totalNum / limit),
         hasNext: page * limit < totalNum,
         hasPrev: page > 1
@@ -123,21 +189,26 @@ export async function POST(req: NextRequest) {
     console.log('Jobs API: Creating job (no auth required)');
 
     const body = await req.json();
+    
+    // Required fields validation
     const reqd = ['title','description','category','contact_email','zipcode','volunteers_needed'];
     const miss = reqd.filter(k => !body[k]);
-    if (miss.length) return NextResponse.json({ error: `Missing: ${miss.join(', ')}` }, { status: 400 });
+    if (miss.length) {
+      return NextResponse.json({ error: `Missing required fields: ${miss.join(', ')}` }, { status: 400 });
+    }
 
+    // Normalize skills array
     const skillsArray = Array.isArray(body.skills_needed)
       ? body.skills_needed
       : typeof body.skills_needed === 'string' && body.skills_needed.length
-        ? body.skills_needed.split(',').map((s:string)=>s.trim())
+        ? body.skills_needed.split(',').map((s: string) => s.trim())
         : [];
 
-    // Calculate expires_at in JavaScript instead of SQL
+    // Calculate expires_at (30 days from now if not provided)
     const expiresAt = body.expires_at || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
     // Insert job with posted_by as NULL (no auth required)
-    const insert = await sql`\
+    const insert = await sql`
       INSERT INTO jobs (
         title, description, category, contact_name, contact_email, contact_phone, 
         address, city, state, zipcode, latitude, longitude, skills_needed, 
@@ -160,7 +231,7 @@ export async function POST(req: NextRequest) {
         ${body.stipend_amount ?? null}, ${null},
         ${expiresAt}, 'active'
       ) 
-      RETURNING id, title, created_at;\
+      RETURNING id, title, created_at
     ` as { id: number; title: string; created_at: Date }[];
 
     console.log(`Jobs API: Successfully created job ${insert[0].id} (no auth)`);
@@ -178,7 +249,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ 
       error: 'Failed to create job',
       details: err instanceof Error ? err.message : String(err),
-      stack: err instanceof Error ? err.stack : undefined
+      stack: process.env.NODE_ENV === 'development' ? (err instanceof Error ? err.stack : undefined) : undefined
     }, { status: 500 });
   }
 }

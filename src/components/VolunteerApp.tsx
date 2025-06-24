@@ -1,10 +1,11 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Users, Building2, Clock, Search, Plus, Lock, Navigation, BarChart3 } from 'lucide-react';
+import { Users, Building2, Clock, Search, Plus, Lock, Navigation, BarChart3, Upload, LogOut, User } from 'lucide-react';
 import PartnershipForm from './PartnershipForm';
 import ActivityForm from './ActivityForm';
 import Dashboard from './Dashboard';
 import VolunteerManagementAdminDashboard from './VolunteerManagementAdminDashboard';
+import UploadComponent from './UploadComponent';
 
 interface AuthUser {
   id: number;
@@ -338,6 +339,17 @@ const VolunteerApp = () => {
               <BarChart3 className="w-5 h-5 inline mr-3" />
               Admin Dashboard
             </button>
+
+            {/* Upload Forms Button - Only show when authenticated */}
+            {isAuthenticated && (
+              <button
+                onClick={() => setCurrentView('upload')}
+                className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <Upload className="w-5 h-5 inline mr-3" />
+                Upload Forms
+              </button>
+            )}
             
             <button
               onClick={() => window.location.href = '/post-job'}
@@ -356,6 +368,14 @@ const VolunteerApp = () => {
         </div>
       </div>
     </div>
+  );
+
+  // Upload Component Wrapper
+  const UploadWrapper = () => (
+    <UploadComponent 
+      currentUser={currentUser} 
+      onBack={() => setCurrentView('dashboard')} 
+    />
   );
 
   // Loading screen
@@ -398,6 +418,11 @@ const VolunteerApp = () => {
           return <LoginPage />;
         }
         return <VolunteerManagementAdminDashboard />;
+      case 'upload':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        return <UploadWrapper />;
       case 'login':
         return <LoginPage />;
       default:
