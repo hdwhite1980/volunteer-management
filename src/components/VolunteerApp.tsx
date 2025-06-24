@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Users, Building2, Clock, Search, Plus, Lock, Navigation, BarChart3, Upload, LogOut, User } from 'lucide-react';
+import { Users, Building2, Clock, Search, Plus, Lock, Navigation, BarChart3, Upload } from 'lucide-react';
 import PartnershipForm from './PartnershipForm';
 import ActivityForm from './ActivityForm';
 import Dashboard from './Dashboard';
@@ -211,7 +211,7 @@ const VolunteerApp = () => {
   // Landing Page Component
   const LandingPage = () => (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc+')] opacity-20"></div>
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iNCIvPjwvZz48L2c+PC9zdmc=')] opacity-20"></div>
       
       <div className="relative z-10">
         <div className="container mx-auto px-6 py-16">
@@ -324,6 +324,21 @@ const VolunteerApp = () => {
               <Search className="w-5 h-5 inline mr-3" />
               View Database
             </button>
+
+            <button
+              onClick={() => {
+                console.log('Upload Forms clicked, authenticated:', isAuthenticated);
+                if (isAuthenticated) {
+                  setCurrentView('upload');
+                } else {
+                  setCurrentView('login');
+                }
+              }}
+              className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
+              <Upload className="w-5 h-5 inline mr-3" />
+              Upload Forms
+            </button>
             
             <button
               onClick={() => {
@@ -339,17 +354,6 @@ const VolunteerApp = () => {
               <BarChart3 className="w-5 h-5 inline mr-3" />
               Admin Dashboard
             </button>
-
-            {/* Upload Forms Button - Only show when authenticated */}
-            {isAuthenticated && (
-              <button
-                onClick={() => setCurrentView('upload')}
-                className="bg-white/10 backdrop-blur-lg text-white py-4 px-8 rounded-xl font-semibold hover:bg-white/20 transition-all duration-200 border border-white/20 hover:border-white/30 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <Upload className="w-5 h-5 inline mr-3" />
-                Upload Forms
-              </button>
-            )}
             
             <button
               onClick={() => window.location.href = '/post-job'}
@@ -370,10 +374,10 @@ const VolunteerApp = () => {
     </div>
   );
 
-  // Upload Component Wrapper
+  // Upload Wrapper Component
   const UploadWrapper = () => (
     <UploadComponent 
-      currentUser={currentUser} 
+      currentUser={currentUser || undefined} 
       onBack={() => setCurrentView('dashboard')} 
     />
   );
@@ -413,16 +417,16 @@ const VolunteerApp = () => {
             onNavigate={setCurrentView}
           />
         );
-      case 'admin-dashboard':
-        if (!isAuthenticated) {
-          return <LoginPage />;
-        }
-        return <VolunteerManagementAdminDashboard />;
       case 'upload':
         if (!isAuthenticated) {
           return <LoginPage />;
         }
         return <UploadWrapper />;
+      case 'admin-dashboard':
+        if (!isAuthenticated) {
+          return <LoginPage />;
+        }
+        return <VolunteerManagementAdminDashboard />;
       case 'login':
         return <LoginPage />;
       default:
