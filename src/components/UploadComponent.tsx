@@ -347,59 +347,78 @@ const UploadComponent: React.FC<UploadComponentProps> = ({ currentUser, onBack }
               </div>
               
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full table-fixed">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="w-1/4 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         File Name
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="w-1/6 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Upload Date
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="w-1/6 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      <th className="w-1/12 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Size
                       </th>
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Details
+                      <th className="w-1/3 px-4 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Processing Details
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {uploadedFiles.map((file) => (
                       <tr key={file.id} className="hover:bg-gray-50 transition-colors">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="font-medium text-gray-900">{file.name}</div>
-                          <div className="text-sm text-gray-500">{file.type}</div>
+                        <td className="px-4 py-4">
+                          <div className="font-medium text-gray-900 truncate" title={file.name}>
+                            {file.name}
+                          </div>
+                          <div className="text-xs text-gray-500">{file.type}</div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                          {new Date(file.uploadDate).toLocaleString()}
+                        <td className="px-4 py-4 text-sm text-gray-600">
+                          <div className="whitespace-nowrap">
+                            {new Date(file.uploadDate).toLocaleDateString()}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(file.uploadDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(file.status)}`}>
+                        <td className="px-4 py-4">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(file.status)}`}>
                             {getStatusIcon(file.status)}
                             <span className="ml-1 capitalize">{file.status.replace('_', ' ')}</span>
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                        <td className="px-4 py-4 text-sm text-gray-600 whitespace-nowrap">
                           {formatFileSize(file.size)}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <td className="px-4 py-4 text-sm">
                           {file.status === 'completed' && file.processedDate && (
                             <div className="text-green-600">
-                              ✓ Processed {new Date(file.processedDate).toLocaleString()}
+                              <div className="font-medium">✓ Processing Complete</div>
+                              <div className="text-xs">
+                                {new Date(file.processedDate).toLocaleString()}
+                              </div>
                             </div>
                           )}
                           {file.status === 'processing' && (
-                            <div className="text-blue-600">🔄 Processing...</div>
+                            <div className="text-blue-600">
+                              <div className="font-medium">🔄 Processing Document</div>
+                              <div className="text-xs">AI is analyzing content...</div>
+                            </div>
                           )}
                           {file.status === 'error' && file.error && (
-                            <div className="text-red-600">❌ {file.error}</div>
+                            <div className="text-red-600">
+                              <div className="font-medium">❌ Processing Failed</div>
+                              <div className="text-xs break-words">{file.error}</div>
+                            </div>
                           )}
                           {file.status === 'no_data_found' && (
-                            <div className="text-yellow-600">⚠️ No volunteer data found</div>
+                            <div className="text-yellow-600">
+                              <div className="font-medium">⚠️ No Data Found</div>
+                              <div className="text-xs">No volunteer data detected in file</div>
+                            </div>
                           )}
                         </td>
                       </tr>
