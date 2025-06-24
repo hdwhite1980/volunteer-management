@@ -1,5 +1,5 @@
 /* --------------------------------------------------------------------------
-   src/app/api/jobs/route.ts  – UPDATED (matching your existing structure)
+   src/app/api/jobs/route.ts  – FIXED VERSION
 -------------------------------------------------------------------------- */
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@/lib/database';
@@ -80,19 +80,20 @@ export async function GET(req: NextRequest) {
     let   p = 0;
     const where: string[] = ["j.status = 'active'", "j.expires_at > CURRENT_TIMESTAMP"];
 
+    // FIXED: Added $ prefix for proper parameter placeholders
     if (category && category !== 'all') { 
       params.push(category); 
-      where.push(`j.category = ${++p}`); 
+      where.push(`j.category = $${++p}`); 
     }
     
     if (skills) { 
       params.push(`%${skills}%`); 
-      where.push(`j.skills_needed::text ILIKE ${++p}`); 
+      where.push(`j.skills_needed::text ILIKE $${++p}`); 
     }
     
     if (search) { 
       params.push(`%${search}%`); 
-      where.push(`(j.title ILIKE ${++p} OR j.description ILIKE ${p})`); 
+      where.push(`(j.title ILIKE $${++p} OR j.description ILIKE $${p})`); 
     }
 
     // Handle zipcode-based distance filtering
