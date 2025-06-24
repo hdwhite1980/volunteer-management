@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+// src/components/AdminDashboardComponents.tsx - IMPROVED Mobile-Responsive Version
+import React, { useState } from 'react';
 import { 
-  Users, Search, Filter, Download, MapPin, Clock, Phone, Mail, 
-  Calendar, Star, Eye, Edit, Trash2, UserCheck, AlertCircle,
-  CheckCircle, X, User, Building2, Tag, Settings, RefreshCw,
-  ChevronDown, ChevronUp, ExternalLink, MessageSquare, Briefcase,
-  UserPlus, Activity, BarChart3, Navigation, Award, BookOpen, Upload
+  MapPin, Clock, Phone, Mail, Calendar, Star, Eye, Edit, Trash2, 
+  UserCheck, AlertCircle, CheckCircle, X, User, Building2, Tag,
+  Users, Briefcase, Send, MessageSquare, Award, ExternalLink
 } from 'lucide-react';
-import UploadComponent from './UploadComponent';
 
+// Interfaces
 interface VolunteerRegistration {
   id: number;
   first_name: string;
@@ -40,13 +39,24 @@ interface VolunteerRegistration {
   username?: string;
 }
 
-interface VolunteerLogEntry {
-  name: string;
+interface JobApplication {
+  id: number;
+  job_id: number;
+  volunteer_id: number;
+  status: string;
+  message: string;
+  applied_at: string;
+  updated_at?: string;
+  feedback?: string;
+  job_title: string;
+  job_category: string;
+  job_city: string;
+  job_state: string;
+  first_name: string;
+  last_name: string;
   email: string;
-  organization: string;
-  total_hours: number;
-  log_type: string;
-  created_at: string;
+  phone?: string;
+  volunteer_name?: string;
 }
 
 interface Job {
@@ -65,718 +75,749 @@ interface Job {
   created_at: string;
 }
 
-const VolunteerManagementAdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState<'registrations' | 'database' | 'jobs'>('registrations');
-  const [showUpload, setShowUpload] = useState(false);
-  
-  // Volunteer Registration State
-  const [volunteers, setVolunteers] = useState<VolunteerRegistration[]>([]);
-  const [filteredVolunteers, setFilteredVolunteers] = useState<VolunteerRegistration[]>([]);
-  
-  // Volunteer Database State
-  const [volunteerLogs, setVolunteerLogs] = useState<VolunteerLogEntry[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<VolunteerLogEntry[]>([]);
-  
-  // Jobs State
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]);
-  
-  // UI State
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [experienceFilter, setExperienceFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('active');
-  const [locationFilter, setLocationFilter] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedVolunteer, setSelectedVolunteer] = useState<VolunteerRegistration | null>(null);
-  const [showDetails, setShowDetails] = useState(false);
-  const [sortBy, setSortBy] = useState<'name' | 'date' | 'location'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-
-  // Available skills and categories
-  const availableSkills = [
-    'First Aid', 'CPR Certified', 'Debris Removal', 'Search & Rescue',
-    'Emergency Communications', 'Medical Support', 'Food Service',
-    'Construction', 'Transportation', 'Translation', 'Administrative',
-    'Technology Support', 'Child Care', 'Elder Care', 'Animal Care'
-  ];
-
-  const availableCategories = [
-    'Emergency Services', 'Supply Distribution', 'Medical Support',
-    'Search & Rescue', 'Shelter Operations', 'Food Services',
-    'Transportation', 'Administrative Support', 'Community Outreach',
-    'Education', 'Environmental', 'Construction & Repair'
-  ];
-
-  useEffect(() => {
-    loadAllData();
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === 'registrations') {
-      filterVolunteers();
-    } else if (activeTab === 'database') {
-      filterVolunteerLogs();
-    } else if (activeTab === 'jobs') {
-      filterJobs();
-    }
-  }, [volunteers, volunteerLogs, jobs, searchTerm, selectedSkills, selectedCategories, experienceFilter, statusFilter, locationFilter, sortBy, sortOrder, activeTab]);
-
-  const loadAllData = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([
-        loadVolunteerRegistrations(),
-        loadVolunteerLogs(),
-        loadJobs()
-      ]);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setLoading(false);
+// VolunteerCard Component - IMPROVED
+export const VolunteerCard: React.FC<{
+  volunteer: VolunteerRegistration;
+  onViewDetails: (volunteer: VolunteerRegistration) => void;
+}> = ({ volunteer, onViewDetails }) => {
+  const getExperienceBadgeColor = (level: string) => {
+    switch (level) {
+      case 'expert': return 'bg-purple-100 text-purple-800';
+      case 'experienced': return 'bg-blue-100 text-blue-800';
+      case 'some': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-green-100 text-green-800';
     }
   };
 
-  const loadVolunteerRegistrations = async () => {
-    try {
-      const response = await fetch('/api/volunteer-signup', {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setVolunteers(data.volunteers || []);
-      }
-    } catch (error) {
-      console.error('Error loading volunteer registrations:', error);
-    }
-  };
-
-  const loadVolunteerLogs = async () => {
-    try {
-      const response = await fetch('/api/volunteers', {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setVolunteerLogs(data || []);
-      }
-    } catch (error) {
-      console.error('Error loading volunteer logs:', error);
-    }
-  };
-
-  const loadJobs = async () => {
-    try {
-      const response = await fetch('/api/jobs', {
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setJobs(data.jobs || []);
-      }
-    } catch (error) {
-      console.error('Error loading jobs:', error);
-    }
-  };
-
-  const filterVolunteers = () => {
-    let filtered = [...volunteers];
-
-    // Text search
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(vol => 
-        `${vol.first_name} ${vol.last_name}`.toLowerCase().includes(term) ||
-        vol.email.toLowerCase().includes(term) ||
-        vol.city.toLowerCase().includes(term) ||
-        vol.zipcode.includes(term) ||
-        (vol.username && vol.username.includes(term))
-      );
-    }
-
-    // Skills filter
-    if (selectedSkills.length > 0) {
-      filtered = filtered.filter(vol => 
-        selectedSkills.some(skill => vol.skills?.includes(skill))
-      );
-    }
-
-    // Categories filter
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter(vol => 
-        selectedCategories.some(cat => vol.categories_interested?.includes(cat))
-      );
-    }
-
-    // Experience filter
-    if (experienceFilter !== 'all') {
-      filtered = filtered.filter(vol => vol.experience_level === experienceFilter);
-    }
-
-    // Status filter
-    filtered = filtered.filter(vol => vol.status === statusFilter);
-
-    // Location filter
-    if (locationFilter) {
-      const location = locationFilter.toLowerCase();
-      filtered = filtered.filter(vol => 
-        vol.city.toLowerCase().includes(location) ||
-        vol.state.toLowerCase().includes(location) ||
-        vol.zipcode.includes(location)
-      );
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      let comparison = 0;
-      
-      switch (sortBy) {
-        case 'name':
-          comparison = `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`);
-          break;
-        case 'date':
-          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-          break;
-        case 'location':
-          comparison = `${a.city}, ${a.state}`.localeCompare(`${b.city}, ${b.state}`);
-          break;
-      }
-
-      return sortOrder === 'desc' ? -comparison : comparison;
-    });
-
-    setFilteredVolunteers(filtered);
-  };
-
-  const filterVolunteerLogs = () => {
-    let filtered = [...volunteerLogs];
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(log => 
-        log.name.toLowerCase().includes(term) ||
-        log.email.toLowerCase().includes(term) ||
-        log.organization.toLowerCase().includes(term)
-      );
-    }
-
-    setFilteredLogs(filtered);
-  };
-
-  const filterJobs = () => {
-    let filtered = [...jobs];
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(job => 
-        job.title.toLowerCase().includes(term) ||
-        job.category.toLowerCase().includes(term) ||
-        job.city.toLowerCase().includes(term)
-      );
-    }
-
-    if (statusFilter !== 'active') {
-      filtered = filtered.filter(job => job.status === statusFilter);
-    }
-
-    setFilteredJobs(filtered);
-  };
-
-  const exportToPDF = () => {
-    const currentData = activeTab === 'registrations' ? filteredVolunteers : 
-                      activeTab === 'database' ? filteredLogs : filteredJobs;
-    
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>VCEG Volunteer Management Report - ${activeTab.toUpperCase()}</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; color: #374151; }
-              .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #3b82f6; }
-              .header h1 { color: #1f2937; font-size: 28px; margin-bottom: 10px; }
-              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-              th { background: #3b82f6; color: white; padding: 12px 8px; font-size: 11px; }
-              td { border: 1px solid #e5e7eb; padding: 8px; font-size: 10px; }
-              tbody tr:nth-child(even) { background: #f9fafb; }
-            </style>
-          </head>
-          <body>
-            <div class="header">
-              <h1>🎯 VCEG Volunteer Management Report</h1>
-              <h2>${activeTab.toUpperCase()} DATA</h2>
-              <p>Generated on: ${new Date().toLocaleDateString()}</p>
-              <p>Total Records: ${currentData.length}</p>
-            </div>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-      printWindow.print();
-    }
-  };
-
-  const TabButton = ({ tab, label, icon: Icon, count }: { tab: string; label: string; icon: any; count?: number }) => (
-    <button
-      onClick={() => setActiveTab(tab as any)}
-      className={`flex items-center space-x-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-        activeTab === tab
-          ? 'bg-blue-600 text-white shadow-lg'
-          : 'bg-white text-gray-600 hover:bg-gray-50 border border-gray-200'
-      }`}
-    >
-      <Icon className="w-5 h-5" />
-      <span>{label}</span>
-      {count !== undefined && (
-        <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-          activeTab === tab ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'
-        }`}>
-          {count}
-        </span>
-      )}
-    </button>
-  );
-
-  const VolunteerCard = ({ volunteer }: { volunteer: VolunteerRegistration }) => (
-    <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-shadow duration-200">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-            <User className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-900 text-lg">
+  return (
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow w-full">
+      {/* Header Section */}
+      <div className="mb-3 sm:mb-4">
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-900 text-sm sm:text-lg truncate">
               {volunteer.first_name} {volunteer.last_name}
             </h3>
-            <p className="text-sm text-gray-600">{volunteer.email}</p>
-            <p className="text-xs font-mono bg-gray-100 text-gray-700 px-2 py-1 rounded mt-1">
-              @{volunteer.username}
-            </p>
+            {volunteer.username && (
+              <span className="inline-block px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium mt-1">
+                ID: {volunteer.username}
+              </span>
+            )}
+          </div>
+          
+          <div className="flex flex-col gap-1 ml-2">
+            <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ${
+              volunteer.status === 'active' ? 'bg-green-100 text-green-800' :
+              volunteer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+              'bg-gray-100 text-gray-600'
+            }`}>
+              {volunteer.status}
+            </span>
+            
+            <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ${getExperienceBadgeColor(volunteer.experience_level)}`}>
+              {volunteer.experience_level}
+            </span>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-            volunteer.experience_level === 'expert' ? 'bg-purple-100 text-purple-800' :
-            volunteer.experience_level === 'experienced' ? 'bg-blue-100 text-blue-800' :
-            volunteer.experience_level === 'some' ? 'bg-green-100 text-green-800' :
-            'bg-gray-100 text-gray-800'
-          }`}>
-            {volunteer.experience_level}
-          </span>
-          <button
-            onClick={() => {
-              setSelectedVolunteer(volunteer);
-              setShowDetails(true);
-            }}
-            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
+        
+        {/* Contact Info */}
+        <div className="space-y-1">
+          <div className="flex items-center text-xs sm:text-sm text-gray-600">
+            <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+            <span className="break-all text-xs sm:text-sm">{volunteer.email}</span>
+          </div>
+          {volunteer.phone && (
+            <div className="flex items-center text-xs sm:text-sm text-gray-600">
+              <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+              <span>{volunteer.phone}</span>
+            </div>
+          )}
+          <div className="flex items-center text-xs sm:text-sm text-gray-600">
+            <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+            <span>{volunteer.city}, {volunteer.state} {volunteer.zipcode}</span>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <div className="flex items-center text-sm text-gray-600">
-          <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-          <span>{volunteer.city}, {volunteer.state} {volunteer.zipcode}</span>
-        </div>
-        
-        {volunteer.phone && (
-          <div className="flex items-center text-sm text-gray-600">
-            <Phone className="w-4 h-4 mr-2 text-gray-400" />
-            <span>{volunteer.phone}</span>
-          </div>
-        )}
-
-        <div className="flex items-center text-sm text-gray-600">
-          <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-          <span>Registered {new Date(volunteer.created_at).toLocaleDateString()}</span>
-        </div>
-
+      {/* Skills & Categories */}
+      <div className="mb-3 sm:mb-4 space-y-2">
         {volunteer.skills && volunteer.skills.length > 0 && (
           <div>
-            <div className="flex items-center text-sm text-gray-500 mb-2">
-              <Star className="w-4 h-4 mr-1" />
-              <span>Skills</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {volunteer.skills.slice(0, 3).map((skill, index) => (
-                <span key={index} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md">
+            <span className="text-xs sm:text-sm font-medium text-gray-700">Skills: </span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {volunteer.skills.slice(0, 2).map((skill, index) => (
+                <span key={index} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">
                   {skill}
                 </span>
               ))}
-              {volunteer.skills.length > 3 && (
-                <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-md">
-                  +{volunteer.skills.length - 3} more
+              {volunteer.skills.length > 2 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                  +{volunteer.skills.length - 2}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {volunteer.categories_interested && volunteer.categories_interested.length > 0 && (
+          <div>
+            <span className="text-xs sm:text-sm font-medium text-gray-700">Interested: </span>
+            <div className="flex flex-wrap gap-1 mt-1">
+              {volunteer.categories_interested.slice(0, 1).map((category, index) => (
+                <span key={index} className="px-2 py-0.5 bg-green-50 text-green-700 text-xs rounded">
+                  {category}
+                </span>
+              ))}
+              {volunteer.categories_interested.length > 1 && (
+                <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                  +{volunteer.categories_interested.length - 1}
                 </span>
               )}
             </div>
           </div>
         )}
       </div>
-    </div>
-  );
 
-  const JobCard = ({ job }: { job: Job }) => {
-    const isFullyBooked = (job.volunteers_assigned || 0) >= job.volunteers_needed;
-    
-    return (
-      <div className={`bg-white rounded-xl border p-6 hover:shadow-lg transition-shadow duration-200 ${
-        isFullyBooked ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200'
-      }`}>
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center space-x-3">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-              isFullyBooked ? 'bg-yellow-200' : 'bg-gradient-to-br from-green-500 to-blue-600'
-            }`}>
-              <Briefcase className={`w-6 h-6 ${isFullyBooked ? 'text-yellow-800' : 'text-white'}`} />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 text-lg">{job.title}</h3>
-              <p className="text-sm text-gray-600">{job.category}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-              isFullyBooked 
-                ? 'bg-yellow-200 text-yellow-800' 
-                : 'bg-green-100 text-green-800'
-            }`}>
-              {isFullyBooked ? 'FULLY BOOKED' : 'AVAILABLE'}
-            </span>
-          </div>
+      {/* Additional Info - Mobile Condensed */}
+      <div className="grid grid-cols-2 gap-2 mb-3 sm:mb-4 text-xs sm:text-sm">
+        <div>
+          <span className="font-medium text-gray-700">Distance:</span>
+          <p className="text-gray-600">{volunteer.max_distance || 25}mi</p>
         </div>
-
-        <div className="space-y-3">
-          <div className="flex items-center text-sm text-gray-600">
-            <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-            <span>{job.city}, {job.state}</span>
-          </div>
-          
-          <div className="flex items-center text-sm text-gray-600">
-            <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-            <span>{new Date(job.start_date).toLocaleDateString()} - {new Date(job.end_date).toLocaleDateString()}</span>
-          </div>
-
-          <div className="flex items-center text-sm text-gray-600">
-            <Users className="w-4 h-4 mr-2 text-gray-400" />
-            <span>{job.volunteers_assigned || 0} / {job.volunteers_needed} volunteers</span>
-          </div>
+        <div>
+          <span className="font-medium text-gray-700">Transport:</span>
+          <p className="text-gray-600 capitalize">{volunteer.transportation || 'Own'}</p>
         </div>
-      </div>
-    );
-  };
-
-  const DetailModal = () => {
-    if (!selectedVolunteer) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-                  <User className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    {selectedVolunteer.first_name} {selectedVolunteer.last_name}
-                  </h2>
-                  <p className="text-gray-600">{selectedVolunteer.email}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowDetails(false)}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-          <div className="p-6">
-            <p>Volunteer details would be displayed here...</p>
-          </div>
+        <div>
+          <span className="font-medium text-gray-700">Background:</span>
+          <p className={volunteer.background_check_consent ? 'text-green-600' : 'text-red-600'}>
+            {volunteer.background_check_consent ? 'Yes' : 'No'}
+          </p>
         </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Volunteer Management Admin Dashboard</h1>
-                <p className="text-sm text-gray-600">
-                  Comprehensive volunteer management with registrations, database, and job tracking
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowUpload(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-              >
-                <Upload className="w-4 h-4" />
-                <span>Upload Forms</span>
-              </button>
-              <button
-                onClick={loadAllData}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <span>Refresh</span>
-              </button>
-              <button
-                onClick={exportToPDF}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export PDF</span>
-              </button>
-            </div>
-          </div>
+        <div>
+          <span className="font-medium text-gray-700">Registered:</span>
+          <p className="text-gray-600">{new Date(volunteer.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
         </div>
       </div>
 
-      <div className="container mx-auto px-6 py-8">
-        {/* Tab Navigation */}
-        <div className="flex items-center space-x-4 mb-8">
-          <TabButton 
-            tab="registrations" 
-            label="Volunteer Registrations" 
-            icon={UserPlus}
-            count={volunteers.length}
-          />
-          <TabButton 
-            tab="database" 
-            label="Volunteer Database" 
-            icon={Activity}
-            count={volunteerLogs.length}
-          />
-          <TabButton 
-            tab="jobs" 
-            label="Job Opportunities" 
-            icon={Briefcase}
-            count={jobs.length}
-          />
+      {/* Action Section */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-3 border-t border-gray-100 space-y-2 sm:space-y-0">
+        <div className="flex items-center justify-center sm:justify-start space-x-3">
+          {volunteer.email_notifications && (
+            <div title="Email notifications enabled">
+              <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+            </div>
+          )}
+          {volunteer.sms_notifications && (
+            <div title="SMS notifications enabled">
+              <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
+            </div>
+          )}
+          {volunteer.background_check_consent && (
+            <div title="Background check consented">
+              <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600" />
+            </div>
+          )}
         </div>
-
-        {/* Stats Cards */}
-        {activeTab === 'registrations' && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                  <Users className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Volunteers</p>
-                  <p className="text-2xl font-bold text-gray-900">{volunteers.length}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Active Status</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {volunteers.filter(v => v.status === 'active').length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                  <UserCheck className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Background Checks</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {volunteers.filter(v => v.background_check_consent).length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
-                  <MapPin className="w-6 h-6 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Zip Codes</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {new Set(volunteers.map(v => v.zipcode)).size}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Search Bar */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-          <div className="p-6">
-            <div className="relative">
-              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-              <input
-                type="text"
-                placeholder="Search volunteers, logs, or jobs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Content Area */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <RefreshCw className="w-8 h-8 text-blue-600 animate-spin" />
-            </div>
-            <p className="text-gray-600">Loading data...</p>
-          </div>
-        ) : (
-          <>
-            {/* Results Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {activeTab === 'registrations' && `Volunteer Registrations (${filteredVolunteers.length})`}
-                  {activeTab === 'database' && `Volunteer Database (${filteredLogs.length})`}
-                  {activeTab === 'jobs' && `Job Opportunities (${filteredJobs.length})`}
-                </h2>
-              </div>
-            </div>
-
-            {/* Content Grid */}
-            {activeTab === 'registrations' && (
-              filteredVolunteers.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                    <Users className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No volunteers found</h3>
-                  <p className="text-gray-600">Try adjusting your search criteria or filters.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredVolunteers.map(volunteer => (
-                    <VolunteerCard key={volunteer.id} volunteer={volunteer} />
-                  ))}
-                </div>
-              )
-            )}
-
-            {activeTab === 'database' && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Organization</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Hours</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {filteredLogs.map((log, index) => (
-                        <tr key={index} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="font-medium text-gray-900">{log.name}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.email}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.organization}</td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="font-semibold text-gray-900">{Math.round(log.total_hours || 0)}</span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                              log.log_type === 'partnership' 
-                                ? 'bg-blue-100 text-blue-800' 
-                                : 'bg-green-100 text-green-800'
-                            }`}>
-                              {log.log_type}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                            {new Date(log.created_at).toLocaleDateString()}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'jobs' && (
-              filteredJobs.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                    <Briefcase className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
-                  <p className="text-gray-600">Try adjusting your search criteria.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {filteredJobs.map(job => (
-                    <JobCard key={job.id} job={job} />
-                  ))}
-                </div>
-              )
-            )}
-          </>
-        )}
+        
+        <button
+          onClick={() => onViewDetails(volunteer)}
+          className="flex items-center justify-center space-x-2 px-3 py-2 bg-blue-600 text-white text-xs sm:text-sm rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
+        >
+          <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span>View Details</span>
+        </button>
       </div>
-
-      {/* Detail Modal */}
-      {showDetails && <DetailModal />}
-
-      {/* Upload Modal */}
-      {showUpload && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-          <div className="h-full overflow-y-auto">
-            <UploadComponent 
-              currentUser={{ 
-                id: 1,
-                username: 'admin',
-                email: 'admin@example.com',
-                role: 'admin' 
-              }} 
-              onBack={() => setShowUpload(false)} 
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default VolunteerManagementAdminDashboard;
+// JobCard Component - IMPROVED
+export const JobCard: React.FC<{ job: Job }> = ({ job }) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'filled': return 'bg-blue-100 text-blue-800';
+      case 'expired': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const spotsRemaining = job.volunteers_needed - job.volunteers_assigned;
+
+  return (
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow w-full">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 text-sm sm:text-lg mb-2 line-clamp-2">{job.title}</h3>
+          <div className="space-y-1">
+            <div className="flex items-center text-xs sm:text-sm text-gray-600">
+              <Tag className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
+              <span className="truncate">{job.category}</span>
+            </div>
+            <div className="flex items-center text-xs sm:text-sm text-gray-600">
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-1 flex-shrink-0" />
+              <span className="truncate">{job.city}, {job.state}</span>
+            </div>
+          </div>
+        </div>
+        
+        <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ml-2 ${getStatusColor(job.status)}`}>
+          {job.status}
+        </span>
+      </div>
+
+      {/* Description */}
+      <div className="mb-3">
+        <p className="text-xs sm:text-sm text-gray-700 line-clamp-2">{job.description}</p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-2 mb-3 text-xs sm:text-sm">
+        <div>
+          <span className="font-medium text-gray-700">Needed:</span>
+          <p className="text-gray-900 font-semibold">{job.volunteers_needed}</p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Assigned:</span>
+          <p className="text-gray-900 font-semibold">{job.volunteers_assigned}</p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Remaining:</span>
+          <p className={`font-semibold ${spotsRemaining > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            {spotsRemaining}
+          </p>
+        </div>
+        <div>
+          <span className="font-medium text-gray-700">Start:</span>
+          <p className="text-gray-600">{new Date(job.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-3 border-t border-gray-100 space-y-2 sm:space-y-0">
+        <div className="text-xs text-gray-500 text-center sm:text-left">
+          Created {new Date(job.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        </div>
+        
+        <div className="flex space-x-2">
+          <button className="flex items-center justify-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-1 sm:flex-none text-xs sm:text-sm">
+            <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span>View</span>
+          </button>
+          <button className="flex items-center justify-center space-x-1 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex-1 sm:flex-none text-xs sm:text-sm">
+            <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span>Edit</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ApplicationCard Component - IMPROVED
+export const ApplicationCard: React.FC<{
+  application: JobApplication;
+  onViewDetails: (application: JobApplication) => void;
+  onUpdateStatus: (id: number, status: string, feedback?: string) => void;
+}> = ({ application, onViewDetails, onUpdateStatus }) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'accepted': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'withdrawn': return 'bg-gray-100 text-gray-600';
+      default: return 'bg-blue-100 text-blue-800';
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-lg sm:rounded-xl shadow-sm border border-gray-200 p-3 sm:p-6 hover:shadow-md transition-shadow w-full">
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-gray-900 text-sm sm:text-lg mb-1 truncate">
+            {application.volunteer_name || `${application.first_name} ${application.last_name}`}
+          </h3>
+          <p className="text-blue-600 font-medium mb-2 text-xs sm:text-base line-clamp-1">{application.job_title}</p>
+          
+          <div className="space-y-1">
+            <div className="flex items-center text-xs sm:text-sm text-gray-600">
+              <Mail className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+              <span className="break-all text-xs">{application.email}</span>
+            </div>
+            {application.phone && (
+              <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                <span>{application.phone}</span>
+              </div>
+            )}
+            <div className="flex items-center text-xs sm:text-sm text-gray-600">
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+              <span className="truncate">{application.job_city}, {application.job_state}</span>
+            </div>
+          </div>
+        </div>
+        
+        <span className={`px-2 py-1 text-xs rounded-full font-medium whitespace-nowrap ml-2 ${getStatusColor(application.status)}`}>
+          {application.status}
+        </span>
+      </div>
+
+      {/* Message Preview */}
+      {application.message && (
+        <div className="mb-3 p-2 bg-gray-50 rounded-lg">
+          <p className="text-xs sm:text-sm text-gray-700 line-clamp-2">{application.message}</p>
+        </div>
+      )}
+
+      {/* Dates */}
+      <div className="flex justify-between text-xs text-gray-500 mb-3">
+        <span>Applied {new Date(application.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+        {application.updated_at && (
+          <span>Updated {new Date(application.updated_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+        )}
+      </div>
+
+      {/* Feedback */}
+      {application.feedback && (
+        <div className="mb-3 p-2 bg-blue-50 rounded-lg">
+          <span className="text-xs font-medium text-blue-800">Feedback:</span>
+          <p className="text-xs text-blue-700 mt-1 line-clamp-2">{application.feedback}</p>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="pt-3 border-t border-gray-100 space-y-2">
+        <button
+          onClick={() => onViewDetails(application)}
+          className="flex items-center justify-center space-x-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors w-full text-xs sm:text-sm"
+        >
+          <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+          <span>View Details</span>
+        </button>
+        
+        {application.status === 'pending' && (
+          <div className="flex space-x-2">
+            <button
+              onClick={() => onUpdateStatus(application.id, 'accepted')}
+              className="flex items-center justify-center space-x-1 px-3 py-2 bg-green-600 text-white text-xs sm:text-sm rounded-lg hover:bg-green-700 transition-colors flex-1"
+            >
+              <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Accept</span>
+            </button>
+            <button
+              onClick={() => onUpdateStatus(application.id, 'rejected')}
+              className="flex items-center justify-center space-x-1 px-3 py-2 bg-red-600 text-white text-xs sm:text-sm rounded-lg hover:bg-red-700 transition-colors flex-1"
+            >
+              <X className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Reject</span>
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// DetailModal Component - IMPROVED
+export const DetailModal: React.FC<{
+  volunteer: VolunteerRegistration | null;
+  onClose: () => void;
+}> = ({ volunteer, onClose }) => {
+  if (!volunteer) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-screen overflow-y-auto">
+        <div className="p-3 sm:p-6">
+          <div className="flex justify-between items-start mb-4 sm:mb-6">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2 truncate">
+                {volunteer.first_name} {volunteer.last_name}
+              </h2>
+              {volunteer.username && (
+                <p className="text-blue-600 font-medium text-sm sm:text-base">Volunteer ID: {volunteer.username}</p>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors ml-2"
+            >
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+            {/* Personal Information */}
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Personal Information</h3>
+              <div className="space-y-3 sm:space-y-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Email</label>
+                  <p className="text-sm sm:text-base text-gray-900 break-all">{volunteer.email}</p>
+                </div>
+                {volunteer.phone && (
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">Phone</label>
+                    <p className="text-sm sm:text-base text-gray-900">{volunteer.phone}</p>
+                  </div>
+                )}
+                {volunteer.birth_date && (
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">Birth Date</label>
+                    <p className="text-sm sm:text-base text-gray-900">{new Date(volunteer.birth_date).toLocaleDateString()}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Address</label>
+                  <p className="text-sm sm:text-base text-gray-900">
+                    {volunteer.address}<br />
+                    {volunteer.city}, {volunteer.state} {volunteer.zipcode}
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Experience Level</label>
+                  <p className="text-sm sm:text-base text-gray-900 capitalize">{volunteer.experience_level}</p>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Transportation</label>
+                  <p className="text-sm sm:text-base text-gray-900 capitalize">{volunteer.transportation}</p>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Max Distance</label>
+                  <p className="text-sm sm:text-base text-gray-900">{volunteer.max_distance || 25} miles</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Emergency Contact & Preferences */}
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Emergency Contact</h3>
+              <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-6">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Name</label>
+                  <p className="text-sm sm:text-base text-gray-900">{volunteer.emergency_contact_name}</p>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Phone</label>
+                  <p className="text-sm sm:text-base text-gray-900">{volunteer.emergency_contact_phone}</p>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Relationship</label>
+                  <p className="text-sm sm:text-base text-gray-900">{volunteer.emergency_contact_relationship}</p>
+                </div>
+              </div>
+
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Preferences</h3>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className={`w-4 h-4 sm:w-5 sm:h-5 ${volunteer.email_notifications ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className="text-sm sm:text-base text-gray-900">Email Notifications</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className={`w-4 h-4 sm:w-5 sm:h-5 ${volunteer.sms_notifications ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className="text-sm sm:text-base text-gray-900">SMS Notifications</span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className={`w-4 h-4 sm:w-5 sm:h-5 ${volunteer.background_check_consent ? 'text-green-600' : 'text-gray-400'}`} />
+                  <span className="text-sm sm:text-base text-gray-900">Background Check Consent</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Skills & Categories */}
+          <div className="mt-4 sm:mt-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8">
+              {volunteer.skills && volunteer.skills.length > 0 && (
+                <div>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteer.skills.map((skill, index) => (
+                      <span key={index} className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 text-xs sm:text-sm rounded-full">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {volunteer.categories_interested && volunteer.categories_interested.length > 0 && (
+                <div>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Categories of Interest</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {volunteer.categories_interested.map((category, index) => (
+                      <span key={index} className="px-2 sm:px-3 py-1 bg-green-100 text-green-800 text-xs sm:text-sm rounded-full">
+                        {category}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Availability */}
+          {volunteer.availability && (
+            <div className="mt-4 sm:mt-8">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Availability</h3>
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4 overflow-x-auto">
+                <pre className="text-xs sm:text-sm text-gray-700 whitespace-pre-wrap">
+                  {JSON.stringify(volunteer.availability, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          {volunteer.notes && (
+            <div className="mt-4 sm:mt-8">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Notes</h3>
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                <p className="text-xs sm:text-sm text-gray-700">{volunteer.notes}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Registration Info */}
+          <div className="mt-4 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-xs sm:text-sm">
+              <div>
+                <span className="font-medium text-gray-700">Status:</span>
+                <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                  volunteer.status === 'active' ? 'bg-green-100 text-green-800' :
+                  volunteer.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-gray-100 text-gray-600'
+                }`}>
+                  {volunteer.status}
+                </span>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Registered:</span>
+                <span className="ml-2 text-gray-600">{new Date(volunteer.created_at).toLocaleDateString()}</span>
+              </div>
+              {volunteer.updated_at && (
+                <div>
+                  <span className="font-medium text-gray-700">Last Updated:</span>
+                  <span className="ml-2 text-gray-600">{new Date(volunteer.updated_at).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 mt-4 sm:mt-8 pt-4 sm:pt-6 border-t border-gray-200">
+            <button
+              onClick={onClose}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors order-2 sm:order-1 text-sm sm:text-base"
+            >
+              Close
+            </button>
+            <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors order-1 sm:order-2 text-sm sm:text-base">
+              Edit Volunteer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ApplicationDetailsModal Component - IMPROVED
+export const ApplicationDetailsModal: React.FC<{
+  application: JobApplication | null;
+  onClose: () => void;
+  onUpdateStatus: (id: number, status: string, feedback?: string) => void;
+}> = ({ application, onClose, onUpdateStatus }) => {
+  const [feedback, setFeedback] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  if (!application) return null;
+
+  const handleStatusUpdate = async (status: string) => {
+    setIsUpdating(true);
+    try {
+      await onUpdateStatus(application.id, status, feedback);
+      onClose();
+    } catch (error) {
+      console.error('Error updating status:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-screen overflow-y-auto">
+        <div className="p-3 sm:p-6">
+          <div className="flex justify-between items-start mb-4 sm:mb-6">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2">Application Details</h2>
+              <p className="text-gray-600 text-xs sm:text-base truncate">
+                {application.volunteer_name || `${application.first_name} ${application.last_name}`} • {application.job_title}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors ml-2"
+            >
+              <X className="w-5 h-5 sm:w-6 sm:h-6" />
+            </button>
+          </div>
+
+          <div className="space-y-4 sm:space-y-6">
+            {/* Application Info */}
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Application Information</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Applicant</label>
+                  <p className="text-sm sm:text-base text-gray-900">{application.volunteer_name || `${application.first_name} ${application.last_name}`}</p>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Email</label>
+                  <p className="text-sm sm:text-base text-gray-900 break-all">{application.email}</p>
+                </div>
+                {application.phone && (
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700">Phone</label>
+                    <p className="text-sm sm:text-base text-gray-900">{application.phone}</p>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Status</label>
+                  <span className={`inline-flex px-3 py-1 text-sm rounded-full font-medium ${
+                    application.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                    application.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                    application.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-gray-100 text-gray-600'
+                  }`}>
+                    {application.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Job Information */}
+            <div>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Job Information</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Job Title</label>
+                  <p className="text-sm sm:text-base text-gray-900">{application.job_title}</p>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Category</label>
+                  <p className="text-sm sm:text-base text-gray-900">{application.job_category}</p>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Location</label>
+                  <p className="text-sm sm:text-base text-gray-900">{application.job_city}, {application.job_state}</p>
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-medium text-gray-700">Applied Date</label>
+                  <p className="text-sm sm:text-base text-gray-900">{new Date(application.applied_at).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Application Message */}
+            {application.message && (
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Cover Letter / Message</h3>
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-gray-700 whitespace-pre-wrap">{application.message}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Current Feedback */}
+            {application.feedback && (
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Current Feedback</h3>
+                <div className="bg-blue-50 rounded-lg p-3 sm:p-4">
+                  <p className="text-xs sm:text-sm text-blue-700">{application.feedback}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Status Update Section */}
+            {application.status === 'pending' && (
+              <div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">Update Application Status</h3>
+                <div className="space-y-3 sm:space-y-4">
+                  <div>
+                    <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                      Feedback (optional)
+                    </label>
+                    <textarea
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-xs sm:text-sm"
+                      placeholder="Add feedback for the applicant..."
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                    <button
+                      onClick={() => handleStatusUpdate('accepted')}
+                      disabled={isUpdating}
+                      className="flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 flex-1 sm:flex-none text-xs sm:text-sm"
+                    >
+                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>{isUpdating ? 'Updating...' : 'Accept Application'}</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => handleStatusUpdate('rejected')}
+                      disabled={isUpdating}
+                      className="flex items-center justify-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex-1 sm:flex-none text-xs sm:text-sm"
+                    >
+                      <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span>{isUpdating ? 'Updating...' : 'Reject Application'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Timestamps */}
+            <div className="pt-4 sm:pt-6 border-t border-gray-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                <div>
+                  <span className="font-medium">Applied:</span>
+                  <span className="ml-2">{new Date(application.applied_at).toLocaleString()}</span>
+                </div>
+                {application.updated_at && (
+                  <div>
+                    <span className="font-medium">Last Updated:</span>
+                    <span className="ml-2">{new Date(application.updated_at).toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 pt-4 sm:pt-6 border-t border-gray-200">
+              <button
+                onClick={onClose}
+                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors order-2 sm:order-1 text-xs sm:text-sm"
+              >
+                Close
+              </button>
+              
+              {application.status !== 'pending' && (
+                <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors order-1 sm:order-2 text-xs sm:text-sm">
+                  Contact Applicant
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
