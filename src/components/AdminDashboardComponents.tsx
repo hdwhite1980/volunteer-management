@@ -124,21 +124,6 @@ const VolunteerManagementAdminDashboard = () => {
     }
   }, [volunteers, volunteerLogs, jobs, searchTerm, selectedSkills, selectedCategories, experienceFilter, statusFilter, locationFilter, sortBy, sortOrder, activeTab]);
 
-  const generateUsername = (firstName: string, lastName: string, birthDate?: string): string => {
-    const firstTwoLetters = firstName.substring(0, 2).toLowerCase();
-    const fullLastName = lastName.toLowerCase();
-    
-    let year = '';
-    if (birthDate) {
-      year = new Date(birthDate).getFullYear().toString();
-    } else {
-      // If no birth date, use current year as fallback
-      year = new Date().getFullYear().toString();
-    }
-    
-    return `${firstTwoLetters}${fullLastName}${year}`;
-  };
-
   const loadAllData = async () => {
     try {
       setLoading(true);
@@ -162,7 +147,6 @@ const VolunteerManagementAdminDashboard = () => {
       
       if (response.ok) {
         const data = await response.json();
-        // Username should now come from the database, generated during signup
         setVolunteers(data.volunteers || []);
       }
     } catch (error) {
@@ -317,15 +301,10 @@ const VolunteerManagementAdminDashboard = () => {
               body { font-family: Arial, sans-serif; margin: 20px; color: #374151; }
               .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #3b82f6; }
               .header h1 { color: #1f2937; font-size: 28px; margin-bottom: 10px; }
-              .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 30px 0; }
-              .stat { text-align: center; padding: 15px; border: 2px solid #e5e7eb; border-radius: 8px; }
-              .stat-number { font-size: 24px; font-weight: bold; color: #1f2937; }
-              .stat-label { color: #6b7280; font-size: 12px; margin-top: 5px; }
               table { width: 100%; border-collapse: collapse; margin-top: 20px; }
               th { background: #3b82f6; color: white; padding: 12px 8px; font-size: 11px; }
               td { border: 1px solid #e5e7eb; padding: 8px; font-size: 10px; }
               tbody tr:nth-child(even) { background: #f9fafb; }
-              .fully-booked { background-color: #fef3c7; }
             </style>
           </head>
           <body>
@@ -335,106 +314,6 @@ const VolunteerManagementAdminDashboard = () => {
               <p>Generated on: ${new Date().toLocaleDateString()}</p>
               <p>Total Records: ${currentData.length}</p>
             </div>
-            
-            ${activeTab === 'registrations' ? `
-              <div class="stats">
-                <div class="stat">
-                  <div class="stat-number">${volunteers.length}</div>
-                  <div class="stat-label">Total Volunteers</div>
-                </div>
-                <div class="stat">
-                  <div class="stat-number">${volunteers.filter((v: any) => v.experience_level === 'expert').length}</div>
-                  <div class="stat-label">Expert Level</div>
-                </div>
-                <div class="stat">
-                  <div class="stat-number">${volunteers.filter((v: any) => v.background_check_consent).length}</div>
-                  <div class="stat-label">Background Checks</div>
-                </div>
-                <div class="stat">
-                  <div class="stat-number">${new Set(volunteers.map((v: any) => v.zipcode)).size}</div>
-                  <div class="stat-label">Zip Codes</div>
-                </div>
-              </div>
-              
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Username</th>
-                    <th>Contact</th>
-                    <th>Location</th>
-                    <th>Experience</th>
-                    <th>Skills</th>
-                    <th>Registered</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${filteredVolunteers.map((vol: any) => `
-                    <tr>
-                      <td><strong>${vol.first_name} ${vol.last_name}</strong></td>
-                      <td><strong>${vol.username}</strong></td>
-                      <td>${vol.email}<br>${vol.phone || 'No phone'}</td>
-                      <td>${vol.city}, ${vol.state}<br>${vol.zipcode}</td>
-                      <td>${vol.experience_level}</td>
-                      <td>${vol.skills?.slice(0, 3).join(', ') || 'None listed'}</td>
-                      <td>${new Date(vol.created_at).toLocaleDateString()}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            ` : activeTab === 'database' ? `
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Organization</th>
-                    <th>Total Hours</th>
-                    <th>Type</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${filteredLogs.map((log: any) => `
-                    <tr>
-                      <td><strong>${log.name}</strong></td>
-                      <td>${log.email}</td>
-                      <td>${log.organization}</td>
-                      <td>${Math.round(log.total_hours || 0)}</td>
-                      <td>${log.log_type}</td>
-                      <td>${new Date(log.created_at).toLocaleDateString()}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            ` : `
-              <table>
-                <thead>
-                  <tr>
-                    <th>Job Title</th>
-                    <th>Category</th>
-                    <th>Location</th>
-                    <th>Volunteers Needed</th>
-                    <th>Assigned</th>
-                    <th>Status</th>
-                    <th>Start Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${filteredJobs.map((job: any) => `
-                    <tr class="${job.volunteers_assigned >= job.volunteers_needed ? 'fully-booked' : ''}">
-                      <td><strong>${job.title}</strong></td>
-                      <td>${job.category}</td>
-                      <td>${job.city}, ${job.state}</td>
-                      <td>${job.volunteers_needed}</td>
-                      <td>${job.volunteers_assigned || 0}</td>
-                      <td>${job.volunteers_assigned >= job.volunteers_needed ? 'FULLY BOOKED' : job.status}</td>
-                      <td>${new Date(job.start_date).toLocaleDateString()}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            `}
           </body>
         </html>
       `);
@@ -540,47 +419,6 @@ const VolunteerManagementAdminDashboard = () => {
             </div>
           </div>
         )}
-
-        {volunteer.categories_interested && volunteer.categories_interested.length > 0 && (
-          <div>
-            <div className="flex items-center text-sm text-gray-500 mb-2">
-              <Tag className="w-4 h-4 mr-1" />
-              <span>Interests</span>
-            </div>
-            <div className="flex flex-wrap gap-1">
-              {volunteer.categories_interested.slice(0, 2).map((category, index) => (
-                <span key={index} className="px-2 py-1 bg-green-50 text-green-700 text-xs rounded-md">
-                  {category}
-                </span>
-              ))}
-              {volunteer.categories_interested.length > 2 && (
-                <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-md">
-                  +{volunteer.categories_interested.length - 2} more
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-        <div className="flex items-center space-x-3">
-          {volunteer.background_check_consent && (
-            <div className="flex items-center text-green-600 text-xs">
-              <CheckCircle className="w-3 h-3 mr-1" />
-              <span>Background Check</span>
-            </div>
-          )}
-          {volunteer.email_notifications && (
-            <div className="flex items-center text-blue-600 text-xs">
-              <Mail className="w-3 h-3 mr-1" />
-              <span>Email OK</span>
-            </div>
-          )}
-        </div>
-        <div className="text-xs text-gray-500">
-          Max Distance: {volunteer.max_distance || 25} miles
-        </div>
       </div>
     </div>
   );
@@ -630,25 +468,6 @@ const VolunteerManagementAdminDashboard = () => {
             <Users className="w-4 h-4 mr-2 text-gray-400" />
             <span>{job.volunteers_assigned || 0} / {job.volunteers_needed} volunteers</span>
           </div>
-
-          {job.description && (
-            <p className="text-sm text-gray-700 line-clamp-2">{job.description}</p>
-          )}
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-gray-100">
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div 
-              className={`h-2 rounded-full transition-all duration-300 ${
-                isFullyBooked ? 'bg-yellow-500' : 'bg-blue-500'
-              }`}
-              style={{ width: `${Math.min(((job.volunteers_assigned || 0) / job.volunteers_needed) * 100, 100)}%` }}
-            ></div>
-          </div>
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>Progress</span>
-            <span>{Math.round(((job.volunteers_assigned || 0) / job.volunteers_needed) * 100)}%</span>
-          </div>
         </div>
       </div>
     );
@@ -671,9 +490,6 @@ const VolunteerManagementAdminDashboard = () => {
                     {selectedVolunteer.first_name} {selectedVolunteer.last_name}
                   </h2>
                   <p className="text-gray-600">{selectedVolunteer.email}</p>
-                  <p className="text-sm font-mono bg-gray-100 text-gray-700 px-2 py-1 rounded mt-1">
-                    Username: @{selectedVolunteer.username}
-                  </p>
                 </div>
               </div>
               <button
@@ -684,206 +500,8 @@ const VolunteerManagementAdminDashboard = () => {
               </button>
             </div>
           </div>
-
-          <div className="p-6 space-y-8">
-            {/* Contact Information */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <User className="w-5 h-5 mr-2" />
-                Contact Information
-              </h3>
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700">Email:</span>
-                  <p className="text-gray-900">{selectedVolunteer.email}</p>
-                </div>
-                {selectedVolunteer.phone && (
-                  <div>
-                    <span className="font-medium text-gray-700">Phone:</span>
-                    <p className="text-gray-900">{selectedVolunteer.phone}</p>
-                  </div>
-                )}
-                <div>
-                  <span className="font-medium text-gray-700">Address:</span>
-                  <p className="text-gray-900">
-                    {selectedVolunteer.address}<br />
-                    {selectedVolunteer.city}, {selectedVolunteer.state} {selectedVolunteer.zipcode}
-                  </p>
-                </div>
-                {selectedVolunteer.birth_date && (
-                  <div>
-                    <span className="font-medium text-gray-700">Birth Date:</span>
-                    <p className="text-gray-900">{new Date(selectedVolunteer.birth_date).toLocaleDateString()}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Emergency Contact */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <AlertCircle className="w-5 h-5 mr-2" />
-                Emergency Contact
-              </h3>
-              <div className="grid md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700">Name:</span>
-                  <p className="text-gray-900">{selectedVolunteer.emergency_contact_name}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Phone:</span>
-                  <p className="text-gray-900">{selectedVolunteer.emergency_contact_phone}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Relationship:</span>
-                  <p className="text-gray-900">{selectedVolunteer.emergency_contact_relationship}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Skills & Experience */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Star className="w-5 h-5 mr-2" />
-                Skills & Experience
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <span className="font-medium text-gray-700">Experience Level:</span>
-                  <span className={`ml-2 px-3 py-1 rounded-full text-sm font-medium ${
-                    selectedVolunteer.experience_level === 'expert' ? 'bg-purple-100 text-purple-800' :
-                    selectedVolunteer.experience_level === 'experienced' ? 'bg-blue-100 text-blue-800' :
-                    selectedVolunteer.experience_level === 'some' ? 'bg-green-100 text-green-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {selectedVolunteer.experience_level}
-                  </span>
-                </div>
-                
-                {selectedVolunteer.skills && selectedVolunteer.skills.length > 0 && (
-                  <div>
-                    <span className="font-medium text-gray-700 block mb-2">Skills:</span>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedVolunteer.skills.map((skill, index) => (
-                        <span key={index} className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-lg">
-                          {skill}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {selectedVolunteer.categories_interested && selectedVolunteer.categories_interested.length > 0 && (
-                  <div>
-                    <span className="font-medium text-gray-700 block mb-2">Categories of Interest:</span>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedVolunteer.categories_interested.map((category, index) => (
-                        <span key={index} className="px-3 py-1 bg-green-50 text-green-700 text-sm rounded-lg">
-                          {category}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Availability & Preferences */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Clock className="w-5 h-5 mr-2" />
-                Availability & Preferences
-              </h3>
-              <div className="grid md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700">Maximum Distance:</span>
-                  <p className="text-gray-900">{selectedVolunteer.max_distance || 25} miles</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Transportation:</span>
-                  <p className="text-gray-900">{selectedVolunteer.transportation}</p>
-                </div>
-              </div>
-              
-              {selectedVolunteer.availability && (
-                <div className="mt-4">
-                  <span className="font-medium text-gray-700 block mb-2">Availability:</span>
-                  <div className="bg-gray-50 rounded-lg p-3">
-                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {JSON.stringify(selectedVolunteer.availability, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Preferences & Notes */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                <Settings className="w-5 h-5 mr-2" />
-                Preferences & Notes
-              </h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center">
-                    <span className="font-medium text-gray-700 mr-2">Background Check Consent:</span>
-                    {selectedVolunteer.background_check_consent ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <X className="w-5 h-5 text-red-500" />
-                    )}
-                  </div>
-                  <div className="flex items-center">
-                    <span className="font-medium text-gray-700 mr-2">Email Notifications:</span>
-                    {selectedVolunteer.email_notifications ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <X className="w-5 h-5 text-red-500" />
-                    )}
-                  </div>
-                  <div className="flex items-center">
-                    <span className="font-medium text-gray-700 mr-2">SMS Notifications:</span>
-                    {selectedVolunteer.sms_notifications ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <X className="w-5 h-5 text-red-500" />
-                    )}
-                  </div>
-                </div>
-
-                {selectedVolunteer.notes && (
-                  <div>
-                    <span className="font-medium text-gray-700 block mb-2">Notes:</span>
-                    <div className="bg-gray-50 rounded-lg p-3">
-                      <p className="text-gray-700">{selectedVolunteer.notes}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Registration Info */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="font-medium text-gray-900 mb-2">Registration Information</h4>
-              <div className="grid md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="font-medium text-gray-700">Status:</span>
-                  <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                    selectedVolunteer.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {selectedVolunteer.status}
-                  </span>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Registered:</span>
-                  <p className="text-gray-900">{new Date(selectedVolunteer.created_at).toLocaleDateString()}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">ID:</span>
-                  <p className="text-gray-900">#{selectedVolunteer.id}</p>
-                </div>
-              </div>
-            </div>
+          <div className="p-6">
+            <p>Volunteer details would be displayed here...</p>
           </div>
         </div>
       </div>
@@ -1016,275 +634,19 @@ const VolunteerManagementAdminDashboard = () => {
           </div>
         )}
 
-        {activeTab === 'database' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                  <Users className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Entries</p>
-                  <p className="text-2xl font-bold text-gray-900">{volunteerLogs.length}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                  <Clock className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Hours</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {Math.round(volunteerLogs.reduce((sum, log) => sum + (log.total_hours || 0), 0))}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                  <Building2 className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Organizations</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {new Set(volunteerLogs.map(log => log.organization)).size}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'jobs' && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
-                  <Briefcase className="w-6 h-6 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Jobs</p>
-                  <p className="text-2xl font-bold text-gray-900">{jobs.length}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
-                  <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Available Jobs</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {jobs.filter(job => (job.volunteers_assigned || 0) < job.volunteers_needed).length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
-                  <Award className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Fully Booked</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {jobs.filter(job => (job.volunteers_assigned || 0) >= job.volunteers_needed).length}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                  <Users className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Volunteers Needed</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {jobs.reduce((sum, job) => sum + Math.max(0, job.volunteers_needed - (job.volunteers_assigned || 0)), 0)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Search and Filters */}
+        {/* Search Bar */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
           <div className="p-6">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search Bar */}
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
-                  <input
-                    type="text"
-                    placeholder={
-                      activeTab === 'registrations' ? "Search by name, email, username, city, or zip code..." :
-                      activeTab === 'database' ? "Search by name, email, or organization..." :
-                      "Search by job title, category, or location..."
-                    }
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              {/* Quick Filters */}
-              {(activeTab === 'registrations' || activeTab === 'jobs') && (
-                <div className="flex gap-3">
-                  {activeTab === 'registrations' && (
-                    <>
-                      <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                        <option value="pending">Pending</option>
-                      </select>
-
-                      <select
-                        value={experienceFilter}
-                        onChange={(e) => setExperienceFilter(e.target.value)}
-                        className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="all">All Experience</option>
-                        <option value="beginner">Beginner</option>
-                        <option value="some">Some Experience</option>
-                        <option value="experienced">Experienced</option>
-                        <option value="expert">Expert</option>
-                      </select>
-
-                      <button
-                        onClick={() => setShowFilters(!showFilters)}
-                        className="flex items-center space-x-2 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                      >
-                        <Filter className="w-4 h-4" />
-                        <span>More Filters</span>
-                        {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
+            <div className="relative">
+              <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search volunteers, logs, or jobs..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
             </div>
-
-            {/* Advanced Filters for Registrations */}
-            {showFilters && activeTab === 'registrations' && (
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Skills Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Skills</label>
-                    <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3">
-                      {availableSkills.map(skill => (
-                        <label key={skill} className="flex items-center space-x-2 mb-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedSkills.includes(skill)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedSkills([...selectedSkills, skill]);
-                              } else {
-                                setSelectedSkills(selectedSkills.filter(s => s !== skill));
-                              }
-                            }}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-gray-700">{skill}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Categories Filter */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Categories</label>
-                    <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-3">
-                      {availableCategories.map(category => (
-                        <label key={category} className="flex items-center space-x-2 mb-2">
-                          <input
-                            type="checkbox"
-                            checked={selectedCategories.includes(category)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedCategories([...selectedCategories, category]);
-                              } else {
-                                setSelectedCategories(selectedCategories.filter(c => c !== category));
-                              }
-                            }}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-sm text-gray-700">{category}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Location & Sort */}
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                      <input
-                        type="text"
-                        placeholder="City, State, or Zip"
-                        value={locationFilter}
-                        onChange={(e) => setLocationFilter(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                      <div className="flex space-x-2">
-                        <select
-                          value={sortBy}
-                          onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'location')}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                          <option value="date">Registration Date</option>
-                          <option value="name">Name</option>
-                          <option value="location">Location</option>
-                        </select>
-                        <button
-                          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                          className="px-3 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-                        >
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </button>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => {
-                        setSearchTerm('');
-                        setSelectedSkills([]);
-                        setSelectedCategories([]);
-                        setExperienceFilter('all');
-                        setLocationFilter('');
-                        setSortBy('date');
-                        setSortOrder('desc');
-                      }}
-                      className="w-full px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      Clear All Filters
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
@@ -1306,17 +668,6 @@ const VolunteerManagementAdminDashboard = () => {
                   {activeTab === 'database' && `Volunteer Database (${filteredLogs.length})`}
                   {activeTab === 'jobs' && `Job Opportunities (${filteredJobs.length})`}
                 </h2>
-                <p className="text-sm text-gray-600">
-                  {activeTab === 'registrations' && filteredVolunteers.length !== volunteers.length && 
-                    `${filteredVolunteers.length} of ${volunteers.length} volunteers shown`
-                  }
-                  {activeTab === 'database' && filteredLogs.length !== volunteerLogs.length && 
-                    `${filteredLogs.length} of ${volunteerLogs.length} entries shown`
-                  }
-                  {activeTab === 'jobs' && filteredJobs.length !== jobs.length && 
-                    `${filteredJobs.length} of ${jobs.length} jobs shown`
-                  }
-                </p>
               </div>
             </div>
 
@@ -1340,58 +691,48 @@ const VolunteerManagementAdminDashboard = () => {
             )}
 
             {activeTab === 'database' && (
-              filteredLogs.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
-                    <Activity className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No volunteer records found</h3>
-                  <p className="text-gray-600">Try adjusting your search criteria.</p>
-                </div>
-              ) : (
-                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Organization</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Hours</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                          <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Organization</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Total Hours</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {filteredLogs.map((log, index) => (
+                        <tr key={index} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="font-medium text-gray-900">{log.name}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.email}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.organization}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="font-semibold text-gray-900">{Math.round(log.total_hours || 0)}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                              log.log_type === 'partnership' 
+                                ? 'bg-blue-100 text-blue-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
+                              {log.log_type}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                            {new Date(log.created_at).toLocaleDateString()}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {filteredLogs.map((log, index) => (
-                          <tr key={index} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="font-medium text-gray-900">{log.name}</div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.email}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-gray-600">{log.organization}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="font-semibold text-gray-900">{Math.round(log.total_hours || 0)}</span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                                log.log_type === 'partnership' 
-                                  ? 'bg-blue-100 text-blue-800' 
-                                  : 'bg-green-100 text-green-800'
-                              }`}>
-                                {log.log_type}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                              {new Date(log.created_at).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              )
+              </div>
             )}
 
             {activeTab === 'jobs' && (
@@ -1424,9 +765,9 @@ const VolunteerManagementAdminDashboard = () => {
           <div className="h-full overflow-y-auto">
             <UploadComponent 
               currentUser={{ 
-                id: 1, // You'll need to get this from your auth context
-                username: 'admin', // You'll need to get this from your auth context
-                email: 'admin@example.com', // You'll need to get this from your auth context
+                id: 1,
+                username: 'admin',
+                email: 'admin@example.com',
                 role: 'admin' 
               }} 
               onBack={() => setShowUpload(false)} 
