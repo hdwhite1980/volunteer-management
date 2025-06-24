@@ -6,6 +6,7 @@ import {
   ChevronDown, ChevronUp, X, Plus, UserPlus, Navigation, Sparkles,
   Award, Shield, Rocket, Globe, UserCheck, CreditCard
 } from 'lucide-react';
+import { VOLUNTEER_CATEGORIES, getCategoryDisplayLabel, parseCategoryValue } from '@/lib/categories';
 
 interface JobBoardProps {
   jobId?: string | number;
@@ -119,6 +120,60 @@ function JobBoard({ jobId }: JobBoardProps) {
     cover_letter: '',
     experience: ''
   });
+
+  // Helper function to get category display with hierarchical support
+  const getCategoryDisplay = (category: string) => {
+    if (!category) return 'Uncategorized';
+    
+    const parsed = parseCategoryValue(category);
+    const parentLabel = VOLUNTEER_CATEGORIES[parsed.parent]?.label || parsed.parent;
+    
+    if (parsed.subcategory) {
+      const subcatDisplay = getCategoryDisplayLabel(category);
+      return `${parentLabel} • ${subcatDisplay}`;
+    }
+    
+    return parentLabel;
+  };
+
+  // Get category color scheme
+  const getCategoryColor = (category: string) => {
+    if (!category) return 'bg-gray-100 text-gray-800';
+    
+    const parsed = parseCategoryValue(category);
+    switch (parsed.parent) {
+      case 'administration-documentation':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'construction-repair':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'health-safety':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'community-support':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'education-outreach':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'logistics':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      default:
+        // Handle legacy categories
+        switch (category.toLowerCase()) {
+          case 'environment':
+            return 'bg-green-100 text-green-800 border-green-200';
+          case 'education':
+            return 'bg-purple-100 text-purple-800 border-purple-200';
+          case 'health':
+            return 'bg-red-100 text-red-800 border-red-200';
+          case 'human services':
+            return 'bg-blue-100 text-blue-800 border-blue-200';
+          case 'community':
+            return 'bg-green-100 text-green-800 border-green-200';
+          case 'emergency services':
+            return 'bg-red-100 text-red-800 border-red-200';
+          default:
+            return 'bg-gray-100 text-gray-800 border-gray-200';
+        }
+    }
+  };
 
   // Fetch jobs from API
   const fetchJobs = async (): Promise<void> => {
@@ -366,6 +421,7 @@ function JobBoard({ jobId }: JobBoardProps) {
   // If jobId is provided and we have job details, show job details view
   if (jobId && jobDetails) {
     const urgencyStyles = getUrgencyStyles(jobDetails.urgency);
+    const categoryColor = getCategoryColor(jobDetails.category);
     
     return (
       <div className="min-h-screen bg-gray-100">
@@ -395,6 +451,14 @@ function JobBoard({ jobId }: JobBoardProps) {
             <div className="max-w-4xl mx-auto">
               <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
                 <div className={`p-8 ${urgencyStyles.bg} text-white`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`px-4 py-2 rounded-full text-sm font-medium ${categoryColor} bg-white/20 text-white border border-white/30`}>
+                      {getCategoryDisplay(jobDetails.category)}
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-sm font-medium ${urgencyStyles.badge} bg-white/20 text-white border border-white/30`}>
+                      {jobDetails.urgency} priority
+                    </div>
+                  </div>
                   <h1 className="text-4xl font-bold mb-4">{jobDetails.title}</h1>
                   <div className="flex items-center space-x-6 text-lg">
                     <div className="flex items-center">
@@ -438,7 +502,9 @@ function JobBoard({ jobId }: JobBoardProps) {
                           </div>
                           <div className="flex items-center">
                             <Calendar className="w-5 h-5 mr-3 text-green-600" />
-                            <span className="capitalize">{jobDetails.category}</span>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${categoryColor}`}>
+                              {getCategoryDisplay(jobDetails.category)}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -689,13 +755,17 @@ function JobBoard({ jobId }: JobBoardProps) {
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
                   >
                     <option value="all">All Categories</option>
-                    <option value="Environment">Environment</option>
-                    <option value="Education">Education</option>
-                    <option value="Health">Health</option>
-                    <option value="Human Services">Human Services</option>
-                    <option value="Community">Community</option>
-                    <option value="Emergency Services">Emergency Services</option>
-                    <option value="Arts & Culture">Arts & Culture</option>
+                    {Object.entries(VOLUNTEER_CATEGORIES).map(([key, category]) => (
+                      <option key={key} value={key}>{category.label}</option>
+                    ))}
+                    {/* Legacy categories for backward compatibility */}
+                    <option value="Environment">Environment (Legacy)</option>
+                    <option value="Education">Education (Legacy)</option>
+                    <option value="Health">Health (Legacy)</option>
+                    <option value="Human Services">Human Services (Legacy)</option>
+                    <option value="Community">Community (Legacy)</option>
+                    <option value="Emergency Services">Emergency Services (Legacy)</option>
+                    <option value="Arts & Culture">Arts & Culture (Legacy)</option>
                   </select>
                 </div>
 
@@ -778,6 +848,7 @@ function JobBoard({ jobId }: JobBoardProps) {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {urgentJobs.map((job: Job) => {
                   const urgencyStyles = getUrgencyStyles(job.urgency);
+                  const categoryColor = getCategoryColor(job.category);
                   return (
                     <div key={job.id} className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 overflow-hidden border-2 border-red-200">
                       <div className={`${urgencyStyles.bg} text-white p-4 text-center`}>
@@ -792,8 +863,8 @@ function JobBoard({ jobId }: JobBoardProps) {
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">
                             <h3 className="text-xl font-bold text-gray-800 mb-2">{job.title}</h3>
-                            <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${urgencyStyles.badge}`}>
-                              {job.category}
+                            <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium border ${categoryColor}`}>
+                              {getCategoryDisplay(job.category)}
                             </div>
                           </div>
                           <Heart className="w-6 h-6 text-gray-400 hover:text-red-500 cursor-pointer transition-colors" />
@@ -884,13 +955,14 @@ function JobBoard({ jobId }: JobBoardProps) {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {regularJobs.map((job: Job) => {
                   const urgencyStyles = getUrgencyStyles(job.urgency);
+                  const categoryColor = getCategoryColor(job.category);
                   return (
                     <div key={job.id} className={`bg-white rounded-3xl shadow-xl ${urgencyStyles.glow} hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden`}>
                       <div className="p-6">
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-center space-x-3">
                             <div className={`w-4 h-4 rounded-full ${urgencyStyles.bg}`}></div>
-                            <div className={`px-3 py-1 rounded-full text-sm font-medium ${urgencyStyles.badge}`}>
+                            <div className={`px-3 py-1 rounded-full text-sm font-medium border ${urgencyStyles.badge}`}>
                               {job.urgency} priority
                             </div>
                           </div>
@@ -906,6 +978,14 @@ function JobBoard({ jobId }: JobBoardProps) {
                         </div>
 
                         <h3 className="text-xl font-bold text-gray-800 mb-3">{job.title}</h3>
+                        
+                        {/* Category Display */}
+                        <div className="mb-3">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${categoryColor}`}>
+                            {getCategoryDisplay(job.category)}
+                          </span>
+                        </div>
+
                         <p className="text-gray-600 mb-4 line-clamp-3">{job.description}</p>
 
                         <div className="space-y-3 mb-6">
@@ -1260,7 +1340,6 @@ function JobBoard({ jobId }: JobBoardProps) {
         }
         .line-clamp-3 {
           display: -webkit-box;
-          -webkit-line-clamp: 3;
           -webkit-box-orient: vertical;
           overflow: hidden;
         }
