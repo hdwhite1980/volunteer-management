@@ -440,7 +440,7 @@ export async function POST(request: NextRequest) {
 
     // Validate files
     const allowedTypes = [
-      'application/pdf',
+      // 'application/pdf', // Removed - PDFs not supported by gpt-4o
       'image/jpeg',
       'image/png',
       'image/jpg'
@@ -452,11 +452,25 @@ export async function POST(request: NextRequest) {
     for (const file of files) {
       console.log(`📄 Upload API: Processing file: ${file.name}, type: ${file.type}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
 
-      // Validate file type
+      // Validate file type - provide helpful error for PDFs
       if (!allowedTypes.includes(file.type)) {
         console.log(`❌ Upload API: Invalid file type for OCR: ${file.type}`);
+        
+        if (file.type === 'application/pdf') {
+          return NextResponse.json(
+            { 
+              error: `PDF files are not currently supported. Please convert "${file.name}" to an image format (JPG or PNG) and try again. You can use online tools like PDF-to-Image converters.`,
+              supportedFormats: 'JPG, PNG'
+            },
+            { status: 400 }
+          );
+        }
+        
         return NextResponse.json(
-          { error: `Invalid file type: ${file.type}. OCR supports: PDF, JPG, PNG` },
+          { 
+            error: `Invalid file type: ${file.type}. Supported formats: JPG, PNG`,
+            supportedFormats: 'JPG, PNG' 
+          },
           { status: 400 }
         );
       }
