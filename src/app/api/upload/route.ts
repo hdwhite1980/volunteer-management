@@ -214,7 +214,7 @@ async function extractVolunteerData(fileBuffer: Buffer, fileName: string, mimeTy
     console.log(`📤 Sending request to OpenAI for ${fileName}...`);
     
     const response = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
+      model: "gpt-4o", // Updated to current model
       messages: [
         {
           role: "user",
@@ -232,7 +232,6 @@ async function extractVolunteerData(fileBuffer: Buffer, fileName: string, mimeTy
       ],
       max_tokens: 2000, // Increased even more for complex extraction
       temperature: 0.2, // Slightly higher for more creative extraction
-      response_format: { type: "text" }
     });
 
     console.log(`📥 Received response from OpenAI for ${fileName}`);
